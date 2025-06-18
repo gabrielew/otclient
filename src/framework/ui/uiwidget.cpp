@@ -1291,6 +1291,24 @@ UIAnchorLayoutPtr UIWidget::getAnchoredLayout()
     return nullptr;
 }
 
+std::vector<Fw::AnchorEdge> UIWidget::getAnchorsEdge() {
+    if (const auto& layout = getAnchoredLayout()) {
+        const auto& self = static_self_cast<UIWidget>();
+        if (layout->hasAnchors(self)) {
+            const auto& anchors = layout->getGroups()[self]->getAnchors();
+            std::vector<Fw::AnchorEdge> anchorsVec;
+            anchorsVec.reserve(anchors.size());
+            for (const auto& anchor : anchors) {
+                anchorsVec.emplace_back(anchor->getAnchoredEdge());
+            }
+
+            return anchorsVec;
+        }
+    }
+
+    return {};
+}
+
 UIWidgetPtr UIWidget::getRootParent()
 {
     if (const auto& parent = getParent())

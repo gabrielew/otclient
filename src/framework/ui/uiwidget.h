@@ -215,6 +215,8 @@ public:
     UIWidgetList recursiveGetChildrenByStyleName(std::string_view styleName);
     UIWidgetPtr backwardsGetWidgetById(std::string_view id);
 
+    std::vector<Fw::AnchorEdge> getAnchorsEdge();
+
     void setShader(std::string_view name);
     bool hasShader() { return m_shader != nullptr; }
 

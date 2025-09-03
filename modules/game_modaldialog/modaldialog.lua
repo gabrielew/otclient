@@ -28,6 +28,19 @@ function destroyDialog()
     end
 end
 
+local function parseSimpleHtml(text)
+    local hasHtml = false
+    local parsed = text:gsub('<br ?/?>', '\n')
+    parsed = parsed:gsub('<font%s+color="?(#[%x]+)"?>(.-)</font>', function(color, content)
+        hasHtml = true
+        return string.format('{%s,%s}', content, color)
+    end)
+    parsed = parsed:gsub('</?[bB]>', '')
+    parsed = parsed:gsub('</?[iI]>', '')
+    parsed = parsed:gsub('</?[uU]>', '')
+    return parsed, hasHtml
+end
+
 function onModalDialog(id, title, message, buttons, enterButton, escapeButton, choices, priority)
     -- priority parameter is unused, not sure what its use is.
     if modalDialog then
@@ -42,7 +55,13 @@ function onModalDialog(id, title, message, buttons, enterButton, escapeButton, c
     local buttonsPanel = modalDialog:getChildById('buttonsPanel')
 
     modalDialog:setText(title)
-    messageLabel:setText(message)
+
+    local parsedMessage, messageHasHtml = parseSimpleHtml(message)
+    if messageHasHtml then
+        messageLabel:setColoredText(parsedMessage)
+    else
+        messageLabel:setText(parsedMessage)
+    end
 
     local labelHeight
     for i = 1, #choices do
@@ -51,7 +70,13 @@ function onModalDialog(id, title, message, buttons, enterButton, escapeButton, c
 
         local label = g_ui.createWidget('ChoiceListLabel', choiceList)
         label.choiceId = choiceId
-        label:setText(choiceName)
+
+        local parsedChoice, choiceHasHtml = parseSimpleHtml(choiceName)
+        if choiceHasHtml then
+            label:setColoredText(parsedChoice)
+        else
+            label:setText(parsedChoice)
+        end
         label:setPhantom(false)
         if not labelHeight then
             labelHeight = label:getHeight()

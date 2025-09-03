@@ -30,7 +30,15 @@ end
 
 local function parseSimpleHtml(text)
     local hasHtml = false
+    local images = {}
     local parsed = text:gsub('<br ?/?>', '\n')
+
+    parsed = parsed:gsub('<img%s+src="([^"]+)"%s*/?>', function(src)
+        hasHtml = true
+        table.insert(images, src)
+        return ''
+    end)
+
     parsed = parsed:gsub('<font%s+color="?(#[%x]+)"?>(.-)</font>', function(color, content)
         hasHtml = true
         return string.format('{%s,%s}', content, color)
@@ -38,7 +46,7 @@ local function parseSimpleHtml(text)
     parsed = parsed:gsub('</?[bB]>', '')
     parsed = parsed:gsub('</?[iI]>', '')
     parsed = parsed:gsub('</?[uU]>', '')
-    return parsed, hasHtml
+    return parsed, hasHtml, images
 end
 
 function onModalDialog(id, title, message, buttons, enterButton, escapeButton, choices, priority)
@@ -56,11 +64,35 @@ function onModalDialog(id, title, message, buttons, enterButton, escapeButton, c
 
     modalDialog:setText(title)
 
-    local parsedMessage, messageHasHtml = parseSimpleHtml(message)
+    local parsedMessage, messageHasHtml, messageImages = parseSimpleHtml(message)
     if messageHasHtml then
         messageLabel:setColoredText(parsedMessage)
     else
         messageLabel:setText(parsedMessage)
+    end
+
+    local insertIndex = modalDialog:getChildIndex(choiceList)
+    local anchorId = 'messageLabel'
+    local imageWidgets = {}
+    for i = 1, #messageImages do
+        local src = messageImages[i]
+        local image = g_ui.createWidget('ImageView')
+        image:setId('modalImage' .. i)
+        image:setImageSource(src)
+        image:setMarginTop(4)
+        image:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+        image:addAnchor(AnchorTop, anchorId, AnchorBottom)
+        modalDialog:insertChild(insertIndex, image)
+        insertIndex = insertIndex + 1
+        anchorId = image:getId()
+        table.insert(imageWidgets, image)
+    end
+
+    if #imageWidgets > 0 then
+        choiceList:removeAnchor(AnchorTop)
+        choiceList:addAnchor(AnchorTop, anchorId, AnchorBottom)
+        choiceScrollbar:removeAnchor(AnchorTop)
+        choiceScrollbar:addAnchor(AnchorTop, anchorId, AnchorBottom)
     end
 
     local labelHeight
@@ -128,7 +160,13 @@ function onModalDialog(id, title, message, buttons, enterButton, escapeButton, c
     messageLabel:setWidth(math.min(modalDialog.maximumWidth,
                                    math.max(buttonsWidth, messageLabel:getWidth(), modalDialog.minimumWidth)) -
                               horizontalPadding)
-    modalDialog:setHeight(modalDialog:getHeight() + additionalHeight + messageLabel:getHeight() - 8)
+
+    local contentHeight = messageLabel:getHeight()
+    for i = 1, #imageWidgets do
+        contentHeight = contentHeight + imageWidgets[i]:getHeight() + imageWidgets[i]:getMarginTop()
+    end
+
+    modalDialog:setHeight(modalDialog:getHeight() + additionalHeight + contentHeight - 8)
 
     local enterFunc = function()
         local focusedChoice = choiceList:getFocusedChild()

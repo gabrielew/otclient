@@ -4378,59 +4378,79 @@ void ProtocolGame::parsePassiveCooldown(const InputMessagePtr& msg)
 void ProtocolGame::parseClientCheck(const InputMessagePtr& msg)
 {
     const uint32_t payloadSize = msg->getU32();
-    const auto unreadBytes = msg->getUnreadSize();
-    auto bytesToSkip = std::min<uint32_t>(payloadSize, unreadBytes);
-    while (bytesToSkip > 0) {
-        const auto step = std::min<uint32_t>(bytesToSkip, std::numeric_limits<uint16_t>::max());
-        msg->skipBytes(static_cast<uint16_t>(step));
-        bytesToSkip -= step;
-    }
+    const int unread = msg->getUnreadSize();
+    const uint32_t unreadBytes = unread > 0 ? static_cast<uint32_t>(unread) : 0;
+
+    const auto skipBytes = [&msg](uint32_t count) {
+        while (count > 0) {
+            const uint32_t maxStep = static_cast<uint32_t>(std::numeric_limits<uint16_t>::max());
+            const uint16_t step = static_cast<uint16_t>(count > maxStep ? maxStep : count);
+            msg->skipBytes(step);
+            count -= step;
+        }
+    };
 
     if (payloadSize > unreadBytes) {
         g_logger.debug("ProtocolGame::parseClientCheck: malformed payload, expected {} bytes but only {} were available", payloadSize, unreadBytes);
+        skipBytes(unreadBytes);
         return;
     }
 
-    if (msg->getUnreadSize() == 0)
+    if (payloadSize == 0)
         return;
 
-    const auto readStringVector = [&msg](const uint8_t count) {
-        for (uint8_t i = 0; i < count && msg->getUnreadSize() > 0; ++i) {
+    const int payloadStart = msg->getReadPos();
+    const int payloadEnd = payloadStart + static_cast<int>(payloadSize);
+
+    const auto payloadRemaining = [&msg, payloadEnd]() -> uint32_t {
+        const int current = msg->getReadPos();
+        if (current >= payloadEnd)
+            return 0;
+        return static_cast<uint32_t>(payloadEnd - current);
+    };
+
+    const auto canReadPayload = [&msg, &payloadRemaining]() {
+        return payloadRemaining() > 0 && msg->getUnreadSize() > 0;
+    };
+
+    if (!canReadPayload())
+        return;
+
+    const auto readStringVector = [&msg, &canReadPayload](const uint8_t count) {
+        for (uint8_t i = 0; i < count && canReadPayload(); ++i) {
             msg->getString();
         }
     };
 
     const uint8_t groupCount = msg->getU8();
-    for (uint8_t group = 0; group < groupCount && msg->getUnreadSize() > 0; ++group) {
+    for (uint8_t group = 0; group < groupCount && canReadPayload(); ++group) {
         msg->getString(); // group identifier
 
-        if (msg->getUnreadSize() == 0)
+        if (!canReadPayload())
             break;
 
         const uint8_t fileCount = msg->getU8();
         readStringVector(fileCount);
 
-        if (msg->getUnreadSize() == 0)
+        if (!canReadPayload())
             break;
 
         const uint8_t signatureCount = msg->getU8();
         readStringVector(signatureCount);
 
-        if (msg->getUnreadSize() == 0)
+        if (!canReadPayload())
             break;
 
         const uint8_t extraCount = msg->getU8();
         readStringVector(extraCount);
     }
 
-    if (msg->getUnreadSize() > 0) {
-        const auto trailing = msg->getUnreadSize();
-        g_logger.traceDebug("ProtocolGame::parseClientCheck: skipping {} trailing bytes", trailing);
-        auto remaining = trailing;
-        while (remaining > 0) {
-            const auto step = std::min<uint32_t>(remaining, std::numeric_limits<uint16_t>::max());
-            msg->skipBytes(static_cast<uint16_t>(step));
-            remaining -= step;
+    const int consumed = msg->getReadPos() - payloadStart;
+    if (consumed < static_cast<int>(payloadSize)) {
+        const uint32_t trailing = payloadSize - static_cast<uint32_t>(consumed);
+        if (trailing > 0) {
+            g_logger.traceDebug("ProtocolGame::parseClientCheck: skipping {} trailing bytes", trailing);
+            skipBytes(trailing);
         }
     }
 }

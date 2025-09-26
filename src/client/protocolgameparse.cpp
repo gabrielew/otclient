@@ -4382,9 +4382,9 @@ void ProtocolGame::parseClientCheck(const InputMessagePtr& msg)
     const uint32_t unreadBytes = unread > 0 ? static_cast<uint32_t>(unread) : 0;
 
     const auto skipBytes = [&msg](uint32_t count) {
+        constexpr uint32_t kMaxSkipStep = 0xFFFFu;
         while (count > 0) {
-            const uint32_t maxStep = static_cast<uint32_t>(std::numeric_limits<uint16_t>::max());
-            const uint16_t step = static_cast<uint16_t>(count > maxStep ? maxStep : count);
+            const uint16_t step = static_cast<uint16_t>(count > kMaxSkipStep ? kMaxSkipStep : count);
             msg->skipBytes(step);
             count -= step;
         }
@@ -4402,21 +4402,21 @@ void ProtocolGame::parseClientCheck(const InputMessagePtr& msg)
     const int payloadStart = msg->getReadPos();
     const int payloadEnd = payloadStart + static_cast<int>(payloadSize);
 
-    const auto payloadRemaining = [&msg, payloadEnd]() -> uint32_t {
+    const auto payloadRemaining = [&, payloadEnd]() -> uint32_t {
         const int current = msg->getReadPos();
         if (current >= payloadEnd)
             return 0;
         return static_cast<uint32_t>(payloadEnd - current);
     };
 
-    const auto canReadPayload = [&msg, &payloadRemaining]() {
+    const auto canReadPayload = [&]() {
         return payloadRemaining() > 0 && msg->getUnreadSize() > 0;
     };
 
     if (!canReadPayload())
         return;
 
-    const auto readStringVector = [&msg, &canReadPayload](const uint8_t count) {
+    const auto readStringVector = [&](const uint8_t count) {
         for (uint8_t i = 0; i < count && canReadPayload(); ++i) {
             msg->getString();
         }

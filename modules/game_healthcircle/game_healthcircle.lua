@@ -214,9 +214,6 @@ function whenHealthChange()
 
         local yhppc = math.floor(imageSizeBroad * (1 - (healthPercent / 100)))
         local restYhppc = imageSizeBroad - yhppc
-        local yhppcExtra = math.floor(extraImageSizeBroad * (1 - (healthPercent / 100)))
-
-        local restYhppcExtra = extraImageSizeBroad - yhppcExtra
 
         healthCircleFront:setY(healthCircle:getY() + yhppc)
         healthCircleFront:setHeight(restYhppc)
@@ -227,26 +224,64 @@ function whenHealthChange()
             height = restYhppc
         })
 
-        healthCircleExtraFront:setY(healthCircleExtra:getY() + yhppcExtra)
-        healthCircleExtraFront:setHeight(restYhppcExtra)
-        -- local harmony = g_game.getLocalPlayer():getHarmony()
-        -- g_logger.info(("harmony %s, yhppcExtra %s, restYhppcExtra %s, result %s"):format(harmony, yhppcExtra,
-        --     restYhppcExtra,
-        --     yhppcExtra + restYhppcExtra));
-
-        healthCircleExtraFront:setImageClip({
-            x = 0,
-            y = yhppcExtra,
-            width = extraImageSizeThin,
-            height = restYhppcExtra
-        })
-
         healthCircle:setHeight(yhppc)
         healthCircle:setImageClip({
             x = 0,
             y = 0,
             width = imageSizeThin,
             height = yhppc
+        })
+
+        if healthPercent > 92 then
+            healthCircleFront:setImageColor('#00BC00')
+        elseif healthPercent > 60 then
+            healthCircleFront:setImageColor('#50A150')
+        elseif healthPercent > 30 then
+            healthCircleFront:setImageColor('#A1A100')
+        elseif healthPercent > 8 then
+            healthCircleFront:setImageColor('#BF0A0A')
+        elseif healthPercent > 3 then
+            healthCircleFront:setImageColor('#910F0F')
+        else
+            healthCircleFront:setImageColor('#850C0C')
+        end
+    end
+
+    whenHarmonyChange()
+end
+
+function whenHarmonyChange()
+    if g_game.isOnline() then
+        local player = g_game.getLocalPlayer()
+        local harmony = player:getHarmony()
+        local maxSquares = 5
+        if harmony < 0 then harmony = 0 end
+        if harmony > maxSquares then harmony = maxSquares end
+        local squareSize = extraImageSizeBroad / maxSquares
+
+        -- pixels "preenchidos" devem ser múltiplos exatos de squareSize
+        -- arredonda para o inteiro mais próximo de pixel p/ evitar serrilhado
+        local filledPixels = math.floor(harmony * squareSize + 0.5)
+        if filledPixels > extraImageSizeBroad then
+            filledPixels = extraImageSizeBroad
+        end
+
+        local yhppcExtra = extraImageSizeBroad - filledPixels -- parte vazia (em cima)
+
+        local restYhppcExtra = filledPixels                   -- parte preenchida (em baix
+
+        healthCircleExtraFront:setY(healthCircleExtra:getY() + yhppcExtra)
+        healthCircleExtraFront:setHeight(restYhppcExtra)
+
+        g_logger.info(("harmony %s, yhppcExtra %s, restYhppcExtra %s, result %s"):format(harmony, yhppcExtra,
+            restYhppcExtra,
+            yhppcExtra + restYhppcExtra));
+
+        healthCircleExtraFront:setImageClip({
+            x = 0,
+            y = yhppcExtra,
+            width = extraImageSizeThin,
+            height = restYhppcExtra
         })
 
         healthCircleExtra:setHeight(yhppcExtra)
@@ -257,25 +292,8 @@ function whenHealthChange()
             height = yhppcExtra
         })
 
-        if healthPercent > 92 then
-            healthCircleFront:setImageColor('#00BC00')
-            healthCircleExtraFront:setImageColor('#BE713E')
-        elseif healthPercent > 60 then
-            healthCircleFront:setImageColor('#50A150')
-            healthCircleExtraFront:setImageColor('#BE713E')
-        elseif healthPercent > 30 then
-            healthCircleFront:setImageColor('#A1A100')
-            healthCircleExtraFront:setImageColor('#BE713E')
-        elseif healthPercent > 8 then
-            healthCircleFront:setImageColor('#BF0A0A')
-            healthCircleExtraFront:setImageColor('#BE713E')
-        elseif healthPercent > 3 then
-            healthCircleFront:setImageColor('#910F0F')
-            healthCircleExtraFront:setImageColor('#BE713E')
-        else
-            healthCircleFront:setImageColor('#850C0C')
-            healthCircleExtraFront:setImageColor('#BE713E')
-        end
+
+        healthCircleExtraFront:setImageColor('#BE713E')
     end
 end
 

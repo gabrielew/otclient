@@ -148,7 +148,7 @@ VocationsClient = {
     RoyalPaladin = 12,
     MasterSorcerer = 13,
     ElderDruid = 14,
-    ExhaltedMonk = 15,
+    ExaltedMonk = 15,
 }
 
 vocationNamesByClientId = {
@@ -158,7 +158,7 @@ vocationNamesByClientId = {
     [VocationsClient.Sorcerer] = "Sorcerer",
     [VocationsClient.Druid] = "Druid",
     [VocationsClient.Monk] = "Monk",
-    [VocationsClient.ExhaltedMonk] = "Exhalted Monk",
+    [VocationsClient.ExaltedMonk] = "Exalted Monk",
     [VocationsClient.EliteKnight] = "Elite Knight",
     [VocationsClient.RoyalPaladin] = "Royal Paladin",
     [VocationsClient.MasterSorcerer] = "Master Sorcerer",

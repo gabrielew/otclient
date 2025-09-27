@@ -374,17 +374,15 @@ local function showMonkStats()
 end
 
 function StatsBar.reloadCurrentStatsBarHarmony(localPlayer, harmonies, oldHarmonies)
-    if harmonies == oldHarmonies then
-        return
+    local currentHarmony = 0
+    if localPlayer and localPlayer.getHarmony then
+        currentHarmony = localPlayer:getHarmony()
+    elseif harmonies then
+        currentHarmony = harmonies
     end
-    local player = g_game.getLocalPlayer()
+
     forEachStatsBar(function(barElement)
         if barElement.harmonies then
-            local currentHarmony = harmonies or 0
-            if player and player.getHarmony then
-                currentHarmony = player:getHarmony()
-            end
-
             local childCount = barElement.harmonies:getChildCount()
             local filledHarmony = math.min(currentHarmony, childCount)
             for i = 1, childCount do

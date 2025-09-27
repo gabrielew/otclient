@@ -727,9 +727,11 @@ namespace Otc
         ITEM_DESC_PERFECT = 21,
         ITEM_DESC_UPGRADECLASS = 22,
         ITEM_DESC_CURRENTTIER = 23,
+        ITEM_DESC_ELEMENTAL_BOND = 24,
+        ITEM_DESC_MANTRA = 25,
 
         ITEM_DESC_FIRST = ITEM_DESC_ARMOR,
-        ITEM_DESC_LAST = ITEM_DESC_CURRENTTIER,
+        ITEM_DESC_LAST = ITEM_DESC_MANTRA,
     };
 
     enum MarketAction : uint8_t

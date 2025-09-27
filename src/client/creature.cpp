@@ -29,6 +29,8 @@
 #include "thingtypemanager.h"
 #include "tile.h"
 
+#include <algorithm>
+
 #include <framework/core/clock.h>
 #include <framework/core/eventdispatcher.h>
 #include <framework/core/graphicalapplication.h>
@@ -230,12 +232,14 @@ void Creature::drawInformation(const MapPosInfo& mapRect, const Point& dest, con
                     // Harmony
                     backgroundRect.moveTop(backgroundRect.bottom());
                     g_drawPool.addFilledRect(backgroundRect, Color::black);
-                    for (int i = 0; i < 5; i++) {
+                    constexpr int harmonySlots = 5;
+                    const auto filledHarmony = std::min<int>(player->getHarmony(), harmonySlots);
+                    for (int i = 0; i < harmonySlots; i++) {
                         Rect subBarRect = backgroundRect.expanded(-1);
                         subBarRect.setX(backgroundRect.x() + 1 + i * (5 + 1));
                         subBarRect.setWidth(5);
                         Color subBarColor;
-                        if (i < player->getHarmony()) {
+                        if (i < filledHarmony) {
                             subBarColor = Color(0xFF, 0x98, 0x54);
                         } else {
                             subBarColor = Color(64, 64, 64);

@@ -65,6 +65,8 @@ function init()
 
     healthCircleFront = g_ui.createWidget('HealthCircleFront', mapPanel)
     healthCircleExtraFront = g_ui.createWidget('HealthCircleExtraFront', mapPanel)
+    -- Ensure the harmony circle uses the expected tint before the first update
+    healthCircleExtraFront:setImageColor('#BE713E')
     healthCircleVirtue = g_ui.createWidget('HealthCircleVirtue', mapPanel)
     manaCircleFront = g_ui.createWidget('ManaCircleFront', mapPanel)
     expCircleFront = g_ui.createWidget('ExpCircleFront', mapPanel)
@@ -158,6 +160,7 @@ end
 function initOnHpAndMpChange()
     connect(LocalPlayer, {
         onHealthChange = whenHealthChange,
+        onHarmonyChange = whenHarmonyChange,
         onManaChange = whenManaChange,
         onSkillChange = whenSkillsChange,
         onMagicLevelChange = whenSkillsChange,
@@ -168,6 +171,7 @@ end
 function terminateOnHpAndMpChange()
     disconnect(LocalPlayer, {
         onHealthChange = whenHealthChange,
+        onHarmonyChange = whenHarmonyChange,
         onManaChange = whenManaChange,
         onSkillChange = whenSkillsChange,
         onMagicLevelChange = whenSkillsChange,
@@ -189,7 +193,7 @@ end
 
 function initOnLoginChange()
     connect(g_game, {
-        onGameStart = whenMapResizeChange,
+        onGameStart = onHealthCircleGameStart,
         onVirtueProtocol = onVirtueProtocol,
         onSereneProtocol = onSereneProtocol,
         onHarmonyProtocol = onHarmonyProtocol,
@@ -198,8 +202,16 @@ end
 
 function terminateOnLoginChange()
     disconnect(g_game, {
-        onGameStart = whenMapResizeChange
+        onGameStart = onHealthCircleGameStart,
+        onVirtueProtocol = onVirtueProtocol,
+        onSereneProtocol = onSereneProtocol,
+        onHarmonyProtocol = onHarmonyProtocol,
     })
+end
+
+function onHealthCircleGameStart()
+    whenMapResizeChange()
+    whenHarmonyChange()
 end
 
 function whenHealthChange()
@@ -207,15 +219,13 @@ function whenHealthChange()
         -- Fix By TheMaoci ~ if your server doesn't have this properly implemented,
         -- it will cause alot of unnecessary deaths from players which will be unfair.
         -- My friend reported me that while he was using his otcv8 and asked for a fix so here you go :)
-        local healthPercent = math.floor(g_game.getLocalPlayer():getHealth() / g_game.getLocalPlayer():getMaxHealth() * 100)
+        local healthPercent = math.floor(g_game.getLocalPlayer():getHealth() / g_game.getLocalPlayer():getMaxHealth() *
+            100)
         -- Old leaved for ppl who have that implemented correctly
         --local healthPercent = math.floor(g_game.getLocalPlayer():getHealthPercent())
 
         local yhppc = math.floor(imageSizeBroad * (1 - (healthPercent / 100)))
         local restYhppc = imageSizeBroad - yhppc
-
-        local yhppcExtra = math.floor(extraImageSizeBroad * (1 - (healthPercent / 100)))
-        local restYhppcExtra = extraImageSizeBroad - yhppcExtra
 
         healthCircleFront:setY(healthCircle:getY() + yhppc)
         healthCircleFront:setHeight(restYhppc)
@@ -226,21 +236,59 @@ function whenHealthChange()
             height = restYhppc
         })
 
-        healthCircleExtraFront:setY(healthCircleExtra:getY() + yhppcExtra)
-        healthCircleExtraFront:setHeight(restYhppcExtra)
-        healthCircleExtraFront:setImageClip({
-            x = 0,
-            y = yhppcExtra,
-            width = extraImageSizeThin,
-            height = restYhppcExtra
-        })
-
         healthCircle:setHeight(yhppc)
         healthCircle:setImageClip({
             x = 0,
             y = 0,
             width = imageSizeThin,
             height = yhppc
+        })
+
+        if healthPercent > 92 then
+            healthCircleFront:setImageColor('#00BC00')
+        elseif healthPercent > 60 then
+            healthCircleFront:setImageColor('#50A150')
+        elseif healthPercent > 30 then
+            healthCircleFront:setImageColor('#A1A100')
+        elseif healthPercent > 8 then
+            healthCircleFront:setImageColor('#BF0A0A')
+        elseif healthPercent > 3 then
+            healthCircleFront:setImageColor('#910F0F')
+        else
+            healthCircleFront:setImageColor('#850C0C')
+        end
+    end
+end
+
+function whenHarmonyChange()
+    if g_game.isOnline() then
+        local player = g_game.getLocalPlayer()
+        local harmony = player:getHarmony()
+        local maxSquares = 5
+        if harmony < 0 then harmony = 0 end
+        if harmony > maxSquares then harmony = maxSquares end
+        local squareSize = extraImageSizeBroad / maxSquares
+
+        -- pixels "preenchidos" devem ser múltiplos exatos de squareSize
+        -- arredonda para o inteiro mais próximo de pixel p/ evitar serrilhado
+        local filledPixels = math.floor(harmony * squareSize + 0.5)
+        if filledPixels > extraImageSizeBroad then
+            filledPixels = extraImageSizeBroad
+        end
+
+        local yhppcExtra = extraImageSizeBroad - filledPixels -- parte vazia (em cima)
+
+        local restYhppcExtra = filledPixels                   -- parte preenchida (em baixo)
+
+        healthCircleExtraFront:setX(healthCircleExtra:getX())
+        healthCircleExtraFront:setY(healthCircleExtra:getY() + yhppcExtra)
+        healthCircleExtraFront:setHeight(restYhppcExtra)
+
+        healthCircleExtraFront:setImageClip({
+            x = 0,
+            y = yhppcExtra,
+            width = extraImageSizeThin,
+            height = restYhppcExtra
         })
 
         healthCircleExtra:setHeight(yhppcExtra)
@@ -251,25 +299,7 @@ function whenHealthChange()
             height = yhppcExtra
         })
 
-        if healthPercent > 92 then
-            healthCircleFront:setImageColor('#00BC00')
-            healthCircleExtraFront:setImageColor('#BE713E')
-        elseif healthPercent > 60 then
-            healthCircleFront:setImageColor('#50A150')
-            healthCircleExtraFront:setImageColor('#BE713E')
-        elseif healthPercent > 30 then
-            healthCircleFront:setImageColor('#A1A100')
-            healthCircleExtraFront:setImageColor('#BE713E')
-        elseif healthPercent > 8 then
-            healthCircleFront:setImageColor('#BF0A0A')
-            healthCircleExtraFront:setImageColor('#BE713E')
-        elseif healthPercent > 3 then
-            healthCircleFront:setImageColor('#910F0F')
-            healthCircleExtraFront:setImageColor('#BE713E')
-        else
-            healthCircleFront:setImageColor('#850C0C')
-            healthCircleExtraFront:setImageColor('#BE713E')
-        end
+        healthCircleExtraFront:setImageColor('#BE713E')
     end
 end
 
@@ -391,81 +421,81 @@ function whenSkillsChange()
 end
 
 function whenMapResizeChange()
+    local barDistance = 90
+    if not (math.floor(mapPanel:getHeight() / 2 * 0.2) < 100) then -- 0.381
+        barDistance = math.floor(mapPanel:getHeight() / 2 * 0.2)
+    end
+
+    if currentViewMode() == 2 then
+        healthCircleFront:setX(math.floor(mapPanel:getWidth() / 2 - barDistance - imageSizeThin) -
+            distanceFromCenter)
+        manaCircleFront:setX(math.floor(mapPanel:getWidth() / 2 + barDistance) + distanceFromCenter)
+
+        healthCircle:setX(math.floor(mapPanel:getWidth() / 2 - barDistance - imageSizeThin) - distanceFromCenter)
+        manaCircle:setX(math.floor((mapPanel:getWidth() / 2 + barDistance)) + distanceFromCenter)
+
+        healthCircleExtra:setX(healthCircle:getX() + imageSizeThin + extraCircleOffsetX)
+        healthCircleExtraFront:setX(healthCircleExtra:getX())
+        healthCircleVirtue:setX(healthCircleExtra:getX() + extraImageSizeThin + virtueOffsetX)
+        healthCircle:setY(mapPanel:getHeight() / 2 - imageSizeBroad / 2 + 0)
+        manaCircle:setY(mapPanel:getHeight() / 2 - imageSizeBroad / 2 + 0)
+        healthCircleExtra:setY(healthCircle:getY() + extraCircleOffsetY)
+        healthCircleExtraFront:setY(healthCircleExtra:getY())
+        healthCircleVirtue:setY(healthCircleExtra:getY() + virtueOffsetY)
+
+        if isExpCircle then
+            expCircleFront:setY(math.floor(mapPanel:getHeight() / 2 - barDistance - imageSizeThin) -
+                distanceFromCenter)
+
+            expCircleFront:setX(math.floor(mapPanel:getWidth() / 2 - imageSizeBroad / 2))
+            expCircle:setY(math.floor(mapPanel:getHeight() / 2 - barDistance - imageSizeThin) - distanceFromCenter)
+        end
+
+        if isSkillCircle then
+            skillCircleFront:setY(math.floor(mapPanel:getHeight() / 2 + barDistance) + distanceFromCenter)
+
+            skillCircleFront:setX(math.floor(mapPanel:getWidth() / 2 - imageSizeBroad / 2))
+            skillCircle:setY(math.floor(mapPanel:getHeight() / 2 + barDistance) + distanceFromCenter)
+        end
+    else
+        healthCircleFront:setX(mapPanel:getX() + mapPanel:getWidth() / 2 - imageSizeThin - barDistance -
+            distanceFromCenter)
+        manaCircleFront:setX(mapPanel:getX() + mapPanel:getWidth() / 2 + barDistance + distanceFromCenter)
+
+        healthCircle:setX(mapPanel:getX() + mapPanel:getWidth() / 2 - imageSizeThin - barDistance -
+            distanceFromCenter)
+        manaCircle:setX(mapPanel:getX() + mapPanel:getWidth() / 2 + barDistance + distanceFromCenter)
+
+        healthCircleExtra:setX(healthCircle:getX() + imageSizeThin + extraCircleOffsetX)
+        healthCircleExtraFront:setX(healthCircleExtra:getX())
+        healthCircleVirtue:setX(healthCircleExtra:getX() + extraImageSizeThin + virtueOffsetX)
+
+        healthCircle:setY(mapPanel:getY() + mapPanel:getHeight() / 2 - imageSizeBroad / 2)
+        manaCircle:setY(mapPanel:getY() + mapPanel:getHeight() / 2 - imageSizeBroad / 2)
+        healthCircleExtra:setY(healthCircle:getY() + extraCircleOffsetY)
+        healthCircleExtraFront:setY(healthCircleExtra:getY())
+        healthCircleVirtue:setY(healthCircleExtra:getY() + virtueOffsetY)
+
+        if isExpCircle then
+            expCircleFront:setY(mapPanel:getY() + mapPanel:getHeight() / 2 - imageSizeThin - barDistance -
+                distanceFromCenter)
+
+            expCircleFront:setX(mapPanel:getX() + mapPanel:getWidth() / 2 - imageSizeBroad / 2)
+            expCircle:setY(mapPanel:getY() + mapPanel:getHeight() / 2 - imageSizeThin - barDistance -
+                distanceFromCenter)
+        end
+
+        if isSkillCircle then
+            skillCircleFront:setY(mapPanel:getY() + mapPanel:getHeight() / 2 + barDistance + distanceFromCenter)
+
+            skillCircleFront:setX(mapPanel:getX() + mapPanel:getWidth() / 2 - imageSizeBroad / 2)
+            skillCircle:setY(mapPanel:getY() + mapPanel:getHeight() / 2 + barDistance + distanceFromCenter)
+        end
+    end
+
     if g_game.isOnline() then
-
-        local barDistance = 90
-        if not (math.floor(mapPanel:getHeight() / 2 * 0.2) < 100) then -- 0.381
-            barDistance = math.floor(mapPanel:getHeight() / 2 * 0.2)
-        end
-
-        if currentViewMode() == 2 then
-            healthCircleFront:setX(math.floor(mapPanel:getWidth() / 2 - barDistance - imageSizeThin) -
-                                       distanceFromCenter)
-            manaCircleFront:setX(math.floor(mapPanel:getWidth() / 2 + barDistance) + distanceFromCenter)
-
-            healthCircle:setX(math.floor(mapPanel:getWidth() / 2 - barDistance - imageSizeThin) - distanceFromCenter)
-            manaCircle:setX(math.floor((mapPanel:getWidth() / 2 + barDistance)) + distanceFromCenter)
-
-            healthCircleExtra:setX(healthCircle:getX() + imageSizeThin + extraCircleOffsetX)
-            healthCircleExtraFront:setX(healthCircleExtra:getX())
-            healthCircleVirtue:setX(healthCircleExtra:getX() + extraImageSizeThin + virtueOffsetX)
-            healthCircle:setY(mapPanel:getHeight() / 2 - imageSizeBroad / 2 + 0)
-            manaCircle:setY(mapPanel:getHeight() / 2 - imageSizeBroad / 2 + 0)
-            healthCircleExtra:setY(healthCircle:getY() + extraCircleOffsetY)
-            healthCircleExtraFront:setY(healthCircleExtra:getY())
-            healthCircleVirtue:setY(healthCircleExtra:getY() + virtueOffsetY)
-
-            if isExpCircle then
-                expCircleFront:setY(math.floor(mapPanel:getHeight() / 2 - barDistance - imageSizeThin) -
-                                        distanceFromCenter)
-
-                expCircleFront:setX(math.floor(mapPanel:getWidth() / 2 - imageSizeBroad / 2))
-                expCircle:setY(math.floor(mapPanel:getHeight() / 2 - barDistance - imageSizeThin) - distanceFromCenter)
-            end
-
-            if isSkillCircle then
-                skillCircleFront:setY(math.floor(mapPanel:getHeight() / 2 + barDistance) + distanceFromCenter)
-
-                skillCircleFront:setX(math.floor(mapPanel:getWidth() / 2 - imageSizeBroad / 2))
-                skillCircle:setY(math.floor(mapPanel:getHeight() / 2 + barDistance) + distanceFromCenter)
-            end
-        else
-            healthCircleFront:setX(mapPanel:getX() + mapPanel:getWidth() / 2 - imageSizeThin - barDistance -
-                                       distanceFromCenter)
-            manaCircleFront:setX(mapPanel:getX() + mapPanel:getWidth() / 2 + barDistance + distanceFromCenter)
-
-            healthCircle:setX(mapPanel:getX() + mapPanel:getWidth() / 2 - imageSizeThin - barDistance -
-                                  distanceFromCenter)
-            manaCircle:setX(mapPanel:getX() + mapPanel:getWidth() / 2 + barDistance + distanceFromCenter)
-
-            healthCircleExtra:setX(healthCircle:getX() + imageSizeThin + extraCircleOffsetX)
-            healthCircleExtraFront:setX(healthCircleExtra:getX())
-            healthCircleVirtue:setX(healthCircleExtra:getX() + extraImageSizeThin + virtueOffsetX)
-
-            healthCircle:setY(mapPanel:getY() + mapPanel:getHeight() / 2 - imageSizeBroad / 2)
-            manaCircle:setY(mapPanel:getY() + mapPanel:getHeight() / 2 - imageSizeBroad / 2)
-            healthCircleExtra:setY(healthCircle:getY() + extraCircleOffsetY)
-            healthCircleExtraFront:setY(healthCircleExtra:getY())
-            healthCircleVirtue:setY(healthCircleExtra:getY() + virtueOffsetY)
-
-            if isExpCircle then
-                expCircleFront:setY(mapPanel:getY() + mapPanel:getHeight() / 2 - imageSizeThin - barDistance -
-                                        distanceFromCenter)
-
-                expCircleFront:setX(mapPanel:getX() + mapPanel:getWidth() / 2 - imageSizeBroad / 2)
-                expCircle:setY(mapPanel:getY() + mapPanel:getHeight() / 2 - imageSizeThin - barDistance -
-                                   distanceFromCenter)
-            end
-
-            if isSkillCircle then
-                skillCircleFront:setY(mapPanel:getY() + mapPanel:getHeight() / 2 + barDistance + distanceFromCenter)
-
-                skillCircleFront:setX(mapPanel:getX() + mapPanel:getWidth() / 2 - imageSizeBroad / 2)
-                skillCircle:setY(mapPanel:getY() + mapPanel:getHeight() / 2 + barDistance + distanceFromCenter)
-            end
-        end
-
         whenHealthChange()
+        whenHarmonyChange()
         whenManaChange()
         if isExpCircle or isSkillCircle then
             whenSkillsChange()
@@ -545,7 +575,6 @@ function setSkillCircle(value)
     g_settings.set('healthcircle_skillcircle', value)
 end
 
-
 function setMonkCircleSide(side)
     if side ~= 'left' and side ~= 'right' then return end
     monkCircleSide = side
@@ -618,7 +647,7 @@ opacityScrollbar = nil
 
 function addToOptionsModule()
     -- Add to options module
-    optionPanel = g_ui.loadUI('option_healthcircle',modules.client_options:getPanel())
+    optionPanel = g_ui.loadUI('option_healthcircle', modules.client_options:getPanel())
 
     -- UI values
     healthCheckBox = optionPanel:recursiveGetChildById('healthCheckBox')
@@ -673,7 +702,8 @@ end
 
 function updateStatsBar()
     if statsBarMenuLoaded then
-        modules.game_interface.updateStatsBar(chooseStatsBarDimension:getCurrentOption().data, chooseStatsBarPlacement:getCurrentOption().data)
+        modules.game_interface.updateStatsBar(chooseStatsBarDimension:getCurrentOption().data,
+            chooseStatsBarPlacement:getCurrentOption().data)
     end
 end
 

@@ -161,7 +161,8 @@ function initOnHpAndMpChange()
         onManaChange = whenManaChange,
         onSkillChange = whenSkillsChange,
         onMagicLevelChange = whenSkillsChange,
-        onLevelChange = whenSkillsChange
+        onLevelChange = whenSkillsChange,
+        onHarmonyChange = whenHealthChange
     })
 end
 
@@ -171,7 +172,8 @@ function terminateOnHpAndMpChange()
         onManaChange = whenManaChange,
         onSkillChange = whenSkillsChange,
         onMagicLevelChange = whenSkillsChange,
-        onLevelChange = whenSkillsChange
+        onLevelChange = whenSkillsChange,
+        onHarmonyChange = whenHealthChange
     })
 end
 
@@ -204,17 +206,26 @@ end
 
 function whenHealthChange()
     if g_game.isOnline() then
+        local player = g_game.getLocalPlayer()
+        if not player then
+            return
+        end
+
         -- Fix By TheMaoci ~ if your server doesn't have this properly implemented,
         -- it will cause alot of unnecessary deaths from players which will be unfair.
         -- My friend reported me that while he was using his otcv8 and asked for a fix so here you go :)
-        local healthPercent = math.floor(g_game.getLocalPlayer():getHealth() / g_game.getLocalPlayer():getMaxHealth() * 100)
+        local maxHealth = math.max(player:getMaxHealth(), 1)
+        local healthPercent = math.floor(player:getHealth() / maxHealth * 100)
         -- Old leaved for ppl who have that implemented correctly
         --local healthPercent = math.floor(g_game.getLocalPlayer():getHealthPercent())
 
         local yhppc = math.floor(imageSizeBroad * (1 - (healthPercent / 100)))
         local restYhppc = imageSizeBroad - yhppc
 
-        local yhppcExtra = math.floor(extraImageSizeBroad * (1 - (healthPercent / 100)))
+        local maxHarmony = 5
+        local harmony = math.max(math.min(player:getHarmony() or 0, maxHarmony), 0)
+        local harmonyPercent = (harmony / maxHarmony) * 100
+        local yhppcExtra = math.floor(extraImageSizeBroad * (1 - (harmonyPercent / 100)))
         local restYhppcExtra = extraImageSizeBroad - yhppcExtra
 
         healthCircleFront:setY(healthCircle:getY() + yhppc)
@@ -713,6 +724,6 @@ function onSereneProtocol(test)
     print("onSereneProtocol", test)
 end
 
-function onHarmonyProtocol(test)
-    print("onHarmonyProtocol", test)
+function onHarmonyProtocol(_)
+    whenHealthChange()
 end

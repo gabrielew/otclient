@@ -5579,6 +5579,8 @@ void ProtocolGame::parseMarketDetail(const InputMessagePtr& msg)
 {
     const uint16_t itemId = msg->getU16();
     uint8_t itemTier = 0;
+
+    // Tier byte só quando há classificação (>0) e cliente >= 1281 (mantém seu comportamento)
     if (g_game.getClientVersion() >= 1281) {
         const auto& thing = g_things.getThingType(itemId, ThingCategoryItem);
         if (thing) {
@@ -5591,45 +5593,81 @@ void ProtocolGame::parseMarketDetail(const InputMessagePtr& msg)
 
     std::unordered_map<int, std::string> descriptions;
 
+    // Define até onde o loop genérico de descrições vai
     Otc::MarketItemDescription lastAttribute = Otc::ITEM_DESC_WEIGHT;
     if (g_game.getClientVersion() >= 1100) {
         lastAttribute = Otc::ITEM_DESC_IMBUINGSLOTS;
     }
-
     if (g_game.getClientVersion() >= 1270) {
-        lastAttribute = Otc::ITEM_DESC_UPGRADECLASS;
+        lastAttribute = Otc::ITEM_DESC_UPGRADECLASS; // até aqui já inclui classification
     }
-
     if (g_game.getClientVersion() >= 1282) {
-        lastAttribute = Otc::ITEM_DESC_CURRENTTIER;
-    }
-    if (g_game.getClientVersion() >= 1500) {
-        lastAttribute = Otc::ITEM_DESC_LAST;
+        lastAttribute = Otc::ITEM_DESC_LAST; // seu limite atual (inclui 12.70 new skills, augment etc.)
     }
 
-    for (int_fast32_t i = Otc::ITEM_DESC_FIRST; i <= lastAttribute; i++) {
+    // Loop padrão: lê cada atributo (string) ou consome 0x00
+    for (int_fast32_t i = Otc::ITEM_DESC_FIRST; i <= lastAttribute; ++i) {
         if (i == Otc::ITEM_DESC_AUGMENT && !g_game.getFeature(Otc::GameItemAugment)) {
             continue;
         }
 
         if (msg->peekU16() != 0x00) {
             const auto& sentString = msg->getString();
-            descriptions.try_emplace(i, sentString);
+            descriptions.try_emplace(static_cast<int>(i), sentString);
         } else {
+            // Consome o 0x00 (u16)
             msg->getU16();
         }
     }
 
+    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // NOVO: elemental bond e mantra somente para clientes >= 1500
+    // Alinhar com o envio no servidor: após classification vêm elementalBond e mantra.
+    // Se ainda não existem no enum, adicione:
+    // enum MarketItemDescription { ... ITEM_DESC_UPGRADECLASS=..., ITEM_DESC_ELEMENTAL_BOND, ITEM_DESC_MANTRA, ITEM_DESC_LAST1500=ITEM_DESC_MANTRA, ... }
+    // Ou ajuste para caber no seu layout.
+    if (g_game.getClientVersion() >= 1500) {
+        // ELEMENTAL BOND
+        if (msg->peekU16() != 0x00) {
+            const auto& elementalBond = msg->getString();
+            descriptions.try_emplace(static_cast<int>(Otc::ITEM_DESC_ELEMENTAL_BOND), elementalBond);
+        } else {
+            msg->getU16(); // consome 0x00
+        }
+
+        // MANTRA
+        if (msg->peekU16() != 0x00) {
+            const auto& mantra = msg->getString();
+            descriptions.try_emplace(static_cast<int>(Otc::ITEM_DESC_MANTRA), mantra);
+        } else {
+            msg->getU16(); // consome 0x00
+        }
+
+        // TIER / DETAIL
+        if (msg->peekU16() != 0x00) {
+            descriptions.try_emplace(static_cast<int>(Otc::ITEM_DESC_UPGRADECLASS_TIER), msg->getString());
+        } else {
+            msg->getU16();
+        }
+    } else {
+        // Para clientes antigos (<1500), o servidor ainda pode ter enviado esses campos?
+        // Pelo seu requisito, "mantra e elemental bond é para versões acima de 1500",
+        // então não consuma nada extra aqui: mantenha compatibilidade.
+        // (Se o servidor por acaso enviar, isso quebraria o alinhamento.
+        // Garanta no servidor que só envia esses 2 campos para versões >=1500.)
+    }
     const uint32_t timeThing = (time(nullptr) / 1000) * 86400;
 
     const uint8_t purchaseStatsListCount = msg->getU8();
     std::vector<std::vector<uint64_t>> purchaseStatsList;
+    purchaseStatsList.reserve(purchaseStatsListCount);
 
-    for (auto i = 0; i < purchaseStatsListCount; ++i) {
-        uint32_t transactions = msg->getU32();
+    for (uint8_t i = 0; i < purchaseStatsListCount; ++i) {
+        const uint32_t transactions = msg->getU32();
         uint64_t totalPrice = 0;
         uint64_t highestPrice = 0;
         uint64_t lowestPrice = 0;
+
         if (g_game.getClientVersion() >= 1281) {
             totalPrice = msg->getU64();
             highestPrice = msg->getU64();
@@ -5646,12 +5684,14 @@ void ProtocolGame::parseMarketDetail(const InputMessagePtr& msg)
 
     const uint8_t saleStatsListCount = msg->getU8();
     std::vector<std::vector<uint64_t>> saleStatsList;
+    saleStatsList.reserve(saleStatsListCount);
 
-    for (auto i = 0; i < saleStatsListCount; ++i) {
+    for (uint8_t i = 0; i < saleStatsListCount; ++i) {
         const uint32_t transactions = msg->getU32();
         uint64_t totalPrice = 0;
         uint64_t highestPrice = 0;
         uint64_t lowestPrice = 0;
+
         if (g_game.getClientVersion() >= 1281) {
             totalPrice = msg->getU64();
             highestPrice = msg->getU64();
@@ -5668,6 +5708,7 @@ void ProtocolGame::parseMarketDetail(const InputMessagePtr& msg)
 
     g_lua.callGlobalField("g_game", "onMarketDetail", itemId, descriptions, purchaseStatsList, saleStatsList, itemTier);
 }
+
 
 MarketOffer ProtocolGame::readMarketOffer(const InputMessagePtr& msg, const uint8_t action, const uint16_t var)
 {

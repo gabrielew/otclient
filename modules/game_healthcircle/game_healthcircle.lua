@@ -223,10 +223,13 @@ function whenHealthChange()
         local restYhppc = imageSizeBroad - yhppc
 
         local maxHarmony = 5
-        local harmony = math.max(math.min(player:getHarmony() or 0, maxHarmony), 0)
-        local harmonyPercent = (harmony / maxHarmony) * 100
-        local yhppcExtra = math.floor(extraImageSizeBroad * (1 - (harmonyPercent / 100)))
-        local restYhppcExtra = extraImageSizeBroad - yhppcExtra
+        local harmony = player:getHarmony() or 0
+        harmony = math.floor(harmony)
+        harmony = math.max(math.min(harmony, maxHarmony), 0)
+        local filledPixels = math.floor((extraImageSizeBroad / maxHarmony) * harmony + 0.5)
+        filledPixels = math.min(math.max(filledPixels, 0), extraImageSizeBroad)
+        local yhppcExtra = extraImageSizeBroad - filledPixels
+        local restYhppcExtra = filledPixels
 
         healthCircleFront:setY(healthCircle:getY() + yhppc)
         healthCircleFront:setHeight(restYhppc)
@@ -237,6 +240,15 @@ function whenHealthChange()
             height = restYhppc
         })
 
+        healthCircleExtra:setHeight(extraImageSizeBroad)
+        healthCircleExtra:setImageClip({
+            x = 0,
+            y = 0,
+            width = extraImageSizeThin,
+            height = extraImageSizeBroad
+        })
+
+        healthCircleExtraFront:setVisible(restYhppcExtra > 0)
         healthCircleExtraFront:setY(healthCircleExtra:getY() + yhppcExtra)
         healthCircleExtraFront:setHeight(restYhppcExtra)
         healthCircleExtraFront:setImageClip({
@@ -254,13 +266,9 @@ function whenHealthChange()
             height = yhppc
         })
 
-        healthCircleExtra:setHeight(yhppcExtra)
-        healthCircleExtra:setImageClip({
-            x = 0,
-            y = 0,
-            width = extraImageSizeThin,
-            height = yhppcExtra
-        })
+        if restYhppcExtra == 0 then
+            healthCircleExtraFront:setHeight(0)
+        end
 
         if healthPercent > 92 then
             healthCircleFront:setImageColor('#00BC00')

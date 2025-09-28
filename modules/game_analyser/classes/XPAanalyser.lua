@@ -340,11 +340,14 @@ function XPAnalyser:updateNextLevel(hours, minutes)
 end
 
 -- updaters
-function XPAnalyser:addRawXPGain(value) 
-	-- Calculate the actual raw XP by removing rate modifiers
-	local actualRawXP = calculateRawXP(value)
-	XPAnalyser.rawXPGain = XPAnalyser.rawXPGain + actualRawXP
-	XPAnalyser:updateWindow()
+function XPAnalyser:addRawXPGain(value, valueIsRaw)
+        if not value or value <= 0 then
+                return
+        end
+
+        local actualRawXP = valueIsRaw and value or calculateRawXP(value)
+        XPAnalyser.rawXPGain = XPAnalyser.rawXPGain + actualRawXP
+        XPAnalyser:updateWindow()
 end
 
 function XPAnalyser:addXpGain(value) 

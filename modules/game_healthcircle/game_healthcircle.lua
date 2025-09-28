@@ -66,6 +66,12 @@ local defaultHealthCircleFull = '/data/images/game/healthcircle/left_full'
 local monkHealthCircleEmpty = '/data/images/game/healthcircle/left_empty_test'
 local monkHealthCircleFull = '/data/images/game/healthcircle/left_full_test'
 
+local defaultHealthCircleDimensions = { width = 63, height = 208 }
+local monkHealthCircleDimensions = { width = 71, height = 244 }
+
+local healthCircleTextureWidth = monkHealthCircleDimensions.width
+local healthCircleTextureHeight = monkHealthCircleDimensions.height
+
 local function shouldUseMonkHealthCircle()
     if not g_game.isOnline() then
         return false
@@ -88,8 +94,14 @@ local function updateHealthCircleImages()
     local emptySource = useMonkCircle and monkHealthCircleEmpty or defaultHealthCircleEmpty
     local fullSource = useMonkCircle and monkHealthCircleFull or defaultHealthCircleFull
 
+    local dimensions = useMonkCircle and monkHealthCircleDimensions or defaultHealthCircleDimensions
+    healthCircleTextureWidth = dimensions.width
+    healthCircleTextureHeight = dimensions.height
+
     healthCircle:setImageSource(emptySource)
     healthCircleFront:setImageSource(fullSource)
+
+    whenHealthChange()
 end
 
 local function shouldShowHealthCircleExtra()
@@ -316,24 +328,31 @@ function whenHealthChange()
         -- Old leaved for ppl who have that implemented correctly
         --local healthPercent = math.floor(g_game.getLocalPlayer():getHealthPercent())
 
+        if imageSizeBroad <= 0 or healthCircleTextureHeight <= 0 then
+            return
+        end
+
         local yhppc = math.floor(imageSizeBroad * (1 - (healthPercent / 100)))
         local restYhppc = imageSizeBroad - yhppc
+        local textureClipStart = math.floor(healthCircleTextureHeight * yhppc / imageSizeBroad)
+        textureClipStart = math.max(0, math.min(textureClipStart, healthCircleTextureHeight))
+        local textureClipHeight = healthCircleTextureHeight - textureClipStart
 
         healthCircleFront:setY(healthCircle:getY() + yhppc)
         healthCircleFront:setHeight(restYhppc)
         healthCircleFront:setImageClip({
             x = 0,
-            y = yhppc,
-            width = imageSizeThin,
-            height = restYhppc
+            y = textureClipStart,
+            width = healthCircleTextureWidth,
+            height = textureClipHeight
         })
 
         healthCircle:setHeight(yhppc)
         healthCircle:setImageClip({
             x = 0,
             y = 0,
-            width = imageSizeThin,
-            height = yhppc
+            width = healthCircleTextureWidth,
+            height = textureClipStart
         })
 
         if healthPercent > 92 then

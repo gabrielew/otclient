@@ -6,6 +6,7 @@ end
 
 openedWindows = {}
 cancelNextRelease = nil
+local experienceTrackerActive = false
 
 local analyserWindows = {
   huntingButton = 'styles/hunting',
@@ -217,6 +218,8 @@ function terminate()
 end
 
 function startNewSession(login)
+  experienceTrackerActive = false
+
   -- Hunting
   HuntingAnalyser:reset()
   if login then
@@ -381,31 +384,36 @@ end
 function onExperienceChange(localPlayer, value)
   HuntingAnalyser:setupStartExp(value)
   XPAnalyser:setupStartExp(value)
-  
-  -- Calculate XP gain from experience change
-  -- Use XPAnalyser.lastExp since both analyzers should track the same XP values
-  if XPAnalyser.lastExp and value > XPAnalyser.lastExp then
-    local gain = value - XPAnalyser.lastExp
-    HuntingAnalyser:addRawXPGain(gain)
-    HuntingAnalyser:addXpGain(gain)
-    XPAnalyser:addRawXPGain(gain)
-    XPAnalyser:addXpGain(gain)
+
+  if not experienceTrackerActive then
+    -- Calculate XP gain from experience change
+    -- Use XPAnalyser.lastExp since both analyzers should track the same XP values
+    if XPAnalyser.lastExp and value > XPAnalyser.lastExp then
+      local gain = value - XPAnalyser.lastExp
+      HuntingAnalyser:addRawXPGain(gain, false)
+      HuntingAnalyser:addXpGain(gain)
+      XPAnalyser:addRawXPGain(gain, false)
+      XPAnalyser:addXpGain(gain)
+    end
   end
-  
+
   -- Store the current experience for next comparison in both analyzers
   XPAnalyser.lastExp = value
   HuntingAnalyser.lastExp = value
 end
 
 function onUpdateExperience(rawExp, exp)
-  -- Both rawExp and exp might already have rate modifiers applied
-  -- We need to calculate the true raw experience value (base rate only)
-  
-  -- For raw XP gain, we'll use the exp value and remove all rate modifiers to get true base XP
-  HuntingAnalyser:addRawXPGain(exp)  -- This will be processed by calculateRawXP() internally
-  HuntingAnalyser:addXpGain(exp)
-  XPAnalyser:addRawXPGain(exp)       -- This will be processed by calculateRawXP() internally  
-  XPAnalyser:addXpGain(exp)
+  experienceTrackerActive = true
+
+  if rawExp and rawExp > 0 then
+    HuntingAnalyser:addRawXPGain(rawExp, true)
+    XPAnalyser:addRawXPGain(rawExp, true)
+  end
+
+  if exp and exp > 0 then
+    HuntingAnalyser:addXpGain(exp)
+    XPAnalyser:addXpGain(exp)
+  end
 end
 
 function onLootStats(item, name)

@@ -4151,8 +4151,10 @@ void ProtocolGame::parseTaskHuntingData(const InputMessagePtr& msg)
 
 void ProtocolGame::parseExperienceTracker(const InputMessagePtr& msg)
 {
-    msg->get64(); // raw exp
-    msg->get64(); // final exp
+    const uint64_t rawExp = msg->get64();
+    const uint64_t finalExp = msg->get64();
+
+    g_lua.callGlobalField("g_game", "onUpdateExperience", rawExp, finalExp);
 }
 
 void ProtocolGame::parseLootContainers(const InputMessagePtr& msg)

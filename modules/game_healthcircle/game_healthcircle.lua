@@ -72,6 +72,9 @@ local monkHealthCircleDimensions = { width = 71, height = 244 }
 local healthCircleTextureWidth = monkHealthCircleDimensions.width
 local healthCircleTextureHeight = monkHealthCircleDimensions.height
 
+local manaCircleDisplayWidth = defaultHealthCircleDimensions.width
+local manaCircleDisplayHeight = defaultHealthCircleDimensions.height
+
 local function applyHealthCircleDimensions(dimensions)
     if not dimensions then
         return
@@ -102,6 +105,9 @@ local function applyHealthCircleDimensions(dimensions)
     if healthCircleExtraFront then
         healthCircleExtraFront:setHeight(height)
     end
+
+    manaCircleDisplayWidth = width
+    manaCircleDisplayHeight = height
 
     if manaCircle then
         manaCircle:setHeight(height)
@@ -482,17 +488,53 @@ local defaultManaWithManaShieldCircleFull = '/data/images/game/healthcircle/righ
 local manaShieldManaCircleEmpty = '/data/images/game/healthcircle/right_extra_empty'
 local manaShieldManaCircleFull = '/data/images/game/healthcircle/right_extra_full'
 
-local defaultManaCircleDimensions = { width = 74, height = 244 }
-local manaCircleTextureWidth = defaultManaCircleDimensions.width
-local manaCircleTextureHeight = defaultManaCircleDimensions.height
+local defaultManaCircleTextureDimensions = { width = 74, height = 244 }
+local manaCircleTextureWidth = defaultManaCircleTextureDimensions.width
+local manaCircleTextureHeight = defaultManaCircleTextureDimensions.height
 
-local function setManaCircleTextureDimensions(dimensions)
-    if not dimensions or not dimensions.width or not dimensions.height then
+local function applyManaCircleDisplayDimensions()
+    if not manaCircleDisplayWidth or manaCircleDisplayWidth <= 0 or not manaCircleDisplayHeight or
+        manaCircleDisplayHeight <= 0 then
         return
     end
 
-    manaCircleTextureWidth = dimensions.width
-    manaCircleTextureHeight = dimensions.height
+    if manaCircle then
+        manaCircle:setWidth(manaCircleDisplayWidth)
+        manaCircle:setHeight(manaCircleDisplayHeight)
+    end
+
+    if manaCircleFront then
+        manaCircleFront:setWidth(manaCircleDisplayWidth)
+        manaCircleFront:setHeight(manaCircleDisplayHeight)
+    end
+end
+
+local function refreshManaCircleTextureDimensions()
+    local function tryUpdate(widget)
+        if not widget or not widget.getImageSize then
+            return false
+        end
+
+        local size = widget:getImageSize()
+        if not size or not size.width or not size.height or size.width <= 0 or size.height <= 0 then
+            return false
+        end
+
+        manaCircleTextureWidth = size.width
+        manaCircleTextureHeight = size.height
+        return true
+    end
+
+    if tryUpdate(manaCircle) then
+        return
+    end
+
+    if tryUpdate(manaCircleFront) then
+        return
+    end
+
+    manaCircleTextureWidth = defaultManaCircleTextureDimensions.width
+    manaCircleTextureHeight = defaultManaCircleTextureDimensions.height
 end
 
 local function resetManaCircleImages()
@@ -504,7 +546,8 @@ local function resetManaCircleImages()
         manaCircleFront:setImageSource(defaultManaCircleFull)
     end
 
-    setManaCircleTextureDimensions(defaultManaCircleDimensions)
+    applyManaCircleDisplayDimensions()
+    refreshManaCircleTextureDimensions()
 end
 
 local function updateManaShieldDisplay()
@@ -542,7 +585,8 @@ local function updateManaShieldDisplay()
     manaCircleFront:setImageSource(defaultManaWithManaShieldCircleFull)
     manaShieldCircle:setImageSource(manaShieldManaCircleEmpty)
     manaShieldCircleFront:setImageSource(manaShieldManaCircleFull)
-    setManaCircleTextureDimensions({ width = healthCircleTextureWidth, height = healthCircleTextureHeight })
+    applyManaCircleDisplayDimensions()
+    refreshManaCircleTextureDimensions()
     manaShieldCircle:setVisible(true)
     manaShieldCircleFront:setVisible(true)
 
@@ -607,17 +651,32 @@ function whenManaChange()
 
         updateManaShieldDisplay()
 
-        if imageSizeBroad <= 0 or manaCircleTextureHeight <= 0 then
+        local displayHeight = manaCircleDisplayHeight and manaCircleDisplayHeight > 0 and manaCircleDisplayHeight or
+            imageSizeBroad
+        if displayHeight <= 0 or manaCircleTextureHeight <= 0 then
             return
         end
 
         local manaPercent = math.floor(maxMana - (maxMana - player:getMana())) * 100 / maxMana
 
-        local ymppc = math.floor(imageSizeBroad * (1 - (manaPercent / 100)))
-        local restYmppc = imageSizeBroad - ymppc
-        local textureClipStart = math.floor(manaCircleTextureHeight * ymppc / imageSizeBroad)
+        local ymppc = math.floor(displayHeight * (1 - (manaPercent / 100)))
+        local restYmppc = displayHeight - ymppc
+        local textureClipStart = math.floor(manaCircleTextureHeight * ymppc / displayHeight)
         textureClipStart = math.max(0, math.min(textureClipStart, manaCircleTextureHeight))
         local textureClipHeight = manaCircleTextureHeight - textureClipStart
+        local displayWidth = manaCircleDisplayWidth and manaCircleDisplayWidth > 0 and manaCircleDisplayWidth or
+            imageSizeThin
+        local textureClipOffsetX = 0
+        local textureClipWidth = manaCircleTextureWidth
+
+        if displayWidth and displayWidth > 0 then
+            if manaCircleTextureWidth > displayWidth then
+                textureClipOffsetX = manaCircleTextureWidth - displayWidth
+                textureClipWidth = displayWidth
+            else
+                textureClipWidth = manaCircleTextureWidth
+            end
+        end
 
         if restYmppc <= 0 then
             manaCircleFront:setVisible(false)
@@ -627,20 +686,26 @@ function whenManaChange()
             if isManaCircle then
                 manaCircleFront:setY(manaCircle:getY() + ymppc)
                 manaCircleFront:setHeight(restYmppc)
+                if displayWidth and displayWidth > 0 then
+                    manaCircleFront:setWidth(displayWidth)
+                end
                 manaCircleFront:setImageClip({
-                    x = 0,
+                    x = textureClipOffsetX,
                     y = textureClipStart,
-                    width = manaCircleTextureWidth,
+                    width = textureClipWidth,
                     height = textureClipHeight
                 })
             end
         end
 
+        if displayWidth and displayWidth > 0 then
+            manaCircle:setWidth(displayWidth)
+        end
         manaCircle:setHeight(ymppc)
         manaCircle:setImageClip({
-            x = 0,
+            x = textureClipOffsetX,
             y = 0,
-            width = manaCircleTextureWidth,
+            width = textureClipWidth,
             height = textureClipStart
         })
     end

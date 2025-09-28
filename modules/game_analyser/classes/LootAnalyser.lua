@@ -3,27 +3,68 @@ local function formatMoney(value, separator)
     return comma_value(tostring(value))
 end
 
-local function resolveLootValue(item)
+local function fallbackLootPrice(item)
     if not item then
         return 0
     end
 
     local cyclopedia = modules.game_cyclopedia and modules.game_cyclopedia.CyclopediaItems
     if cyclopedia and cyclopedia.getCurrentItemValue then
-        return cyclopedia.getCurrentItemValue(item) or 0
+        local cyclopediaPrice = cyclopedia.getCurrentItemValue(item)
+        if cyclopediaPrice and cyclopediaPrice > 0 then
+            return cyclopediaPrice
+        end
     end
 
-    local sellPrice = item:getDefaultSellPrice()
-    if sellPrice and sellPrice > 0 then
-        return sellPrice
+    if item.getMeanPrice then
+        local meanPrice = item:getMeanPrice()
+        if meanPrice and meanPrice > 0 then
+            return meanPrice
+        end
     end
 
-    local buyPrice = item:getDefaultBuyPrice()
-    if buyPrice and buyPrice > 0 then
-        return buyPrice
+    if item.getNpcSaleData then
+        local npcData = item:getNpcSaleData()
+        if npcData then
+            for _, npc in ipairs(npcData) do
+                if npc.buyPrice and npc.buyPrice > 0 then
+                    return npc.buyPrice
+                end
+            end
+        end
     end
 
     return 0
+end
+
+local function resolveLootValue(item, explicitTotalValue, count, previousPrice)
+    local itemCount = count or (item and item.getCount and item:getCount()) or 1
+    local fallbackPrice = fallbackLootPrice(item)
+    local referencePrice = previousPrice or fallbackPrice
+
+    if explicitTotalValue and explicitTotalValue > 0 then
+        local dropValue = explicitTotalValue
+        if itemCount > 0 then
+            if referencePrice and referencePrice > 0 then
+                local expectedTotal = referencePrice * itemCount
+                if math.abs(explicitTotalValue - expectedTotal) <= 0.5 then
+                    return referencePrice, expectedTotal
+                end
+
+                if math.abs(explicitTotalValue - referencePrice) <= 0.5 then
+                    return referencePrice, expectedTotal
+                end
+            end
+
+            return explicitTotalValue / itemCount, dropValue
+        end
+
+        return explicitTotalValue, dropValue
+    end
+
+    local price = referencePrice or 0
+    local totalValue = price * itemCount
+    return price, totalValue
 end
 
 -- Add capitalize function to string library if it doesn't exist
@@ -180,28 +221,28 @@ function LootAnalyser:updateBasePriceFromLootedItems(itemId, newPriceValue)
 			itemPtr = nil
 		end
 
-		if itemInfo.basePrice ~= newPriceValue then
-			itemInfo.basePrice = newPriceValue
-			LootAnalyser.forceUpdateBalance = true
-			LootAnalyser:updateWindow(true)
-		end
-	end
+                if itemInfo.basePrice ~= newPriceValue then
+                        itemInfo.basePrice = newPriceValue
+                        itemInfo.totalValue = newPriceValue * itemInfo.count
+                        LootAnalyser.forceUpdateBalance = true
+                        LootAnalyser:updateWindow(true)
+                end
+        end
 end
 
 function LootAnalyser:checkBalance()
 	local oldBalance = LootAnalyser.goldValue
-	if LootAnalyser.forceUpdateBalance then
-		local loot = 0
-		for itemId, itemInfo in pairs(LootAnalyser.lootedItems) do
-			local count = itemInfo.count
-			local price = count * itemInfo.basePrice
+        if LootAnalyser.forceUpdateBalance then
+                local loot = 0
+                for itemId, itemInfo in pairs(LootAnalyser.lootedItems) do
+                        local totalValue = itemInfo.totalValue or (itemInfo.basePrice * itemInfo.count)
 
-			loot = loot + price
-		end
+                        loot = loot + totalValue
+                end
 
-		LootAnalyser.goldValue = loot
-		LootAnalyser.forceUpdateBalance = false
-	end
+                LootAnalyser.goldValue = loot
+                LootAnalyser.forceUpdateBalance = false
+        end
 
 	if LootAnalyser.updateBalance or oldBalance ~= LootAnalyser.goldValue then
 		LootAnalyser:updateWindow(false)
@@ -247,7 +288,8 @@ function LootAnalyser:updateWindow(updateScroll, ignoreVisible)
 				widget:setItemId(itemId)
 			end
 			widget:setItemCount(info.count)
-			widget:setTooltip(string.format("%s (Value: %dgp, Sum: %dgp)", string.capitalize(info.name), info.basePrice, info.basePrice * info.count))
+                        local totalValue = info.totalValue or (info.basePrice * info.count)
+                        widget:setTooltip(string.format("%s (Value: %dgp, Sum: %dgp)", string.capitalize(info.name), info.basePrice, totalValue))
 			numOfItems = numOfItems + 1
 			if numOfItems == 4 then
 				numOfItems = 0
@@ -277,35 +319,38 @@ function LootAnalyser:updateGraphics()
 	LootAnalyser.window.contentsPanel.graphPanel:addValue(1, LootAnalyser.goldHour)
 end
 
-function LootAnalyser:addLootedItems(item, name)
-	local itemId = item:getId()
-	local itemInfo = LootAnalyser.lootedItems[itemId]
-	if not itemInfo then
-		LootAnalyser.lootedItems[itemId] = {count = 0, name = name, basePrice = 0}
-		itemInfo = LootAnalyser.lootedItems[itemId]
-	end
+function LootAnalyser:addLootedItems(item, name, price)
+        local itemId = item:getId()
+        local itemInfo = LootAnalyser.lootedItems[itemId]
+        if not itemInfo then
+                itemInfo = {count = 0, name = name, basePrice = 0, totalValue = 0}
+                LootAnalyser.lootedItems[itemId] = itemInfo
+        end
 
         local count = item:getCount()
-        local previousPrice = itemInfo.basePrice
-        local previousCount = itemInfo.count
+        local previousPrice = nil
+        if itemInfo.totalValue and itemInfo.count and itemInfo.count > 0 then
+                previousPrice = itemInfo.totalValue / itemInfo.count
+        elseif itemInfo.basePrice > 0 then
+                previousPrice = itemInfo.basePrice
+        end
+        local resolvedPrice, dropValue = resolveLootValue(item, price, count, previousPrice)
 
         itemInfo.count = itemInfo.count + count
-
-        local price = resolveLootValue(item)
-        if price ~= previousPrice then
-                LootAnalyser.goldValue = LootAnalyser.goldValue - (previousPrice * previousCount)
-                itemInfo.basePrice = price
-                LootAnalyser.goldValue = LootAnalyser.goldValue + (itemInfo.basePrice * itemInfo.count)
+        itemInfo.totalValue = (itemInfo.totalValue or 0) + dropValue
+        if itemInfo.count > 0 then
+                itemInfo.basePrice = math.floor((itemInfo.totalValue / itemInfo.count) + 0.5)
         else
-                itemInfo.basePrice = price
-                LootAnalyser.goldValue = LootAnalyser.goldValue + (itemInfo.basePrice * count)
+                itemInfo.basePrice = resolvedPrice
         end
+
+        LootAnalyser.goldValue = LootAnalyser.goldValue + dropValue
 
         LootAnalyser.updateBalance = true
 
-	LootAnalyser:checkBalance()
-	LootAnalyser:updateGraphics()
-	LootAnalyser:updateWindow(true)
+        LootAnalyser:checkBalance()
+        LootAnalyser:updateGraphics()
+        LootAnalyser:updateWindow(true)
 end
 
 function LootAnalyser:setLootPerHourGauge(value)

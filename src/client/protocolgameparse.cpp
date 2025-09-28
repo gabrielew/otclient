@@ -4530,8 +4530,14 @@ void ProtocolGame::parseUpdateLootTracker(const InputMessagePtr& msg)
 {
     const ItemPtr& item = getItem(msg);
     const std::string itemName = msg->getString();
+    uint64_t itemPrice = 0;
+    if (g_game.getClientVersion() >= 1281) {
+        itemPrice = msg->getU64();
+    } else {
+        itemPrice = msg->getU32();
+    }
 
-    g_lua.callGlobalField("g_game", "onLootStats", item, itemName);
+    g_lua.callGlobalField("g_game", "onLootStats", item, itemName, itemPrice);
 }
 
 void ProtocolGame::parseBestiaryEntryChanged(const InputMessagePtr& msg)

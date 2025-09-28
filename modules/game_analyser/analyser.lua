@@ -416,9 +416,9 @@ function onUpdateExperience(rawExp, exp)
   end
 end
 
-function onLootStats(item, name)
-  HuntingAnalyser:addLootedItems(item, name)
-  LootAnalyser:addLootedItems(item, name)
+function onLootStats(item, name, price)
+  HuntingAnalyser:addLootedItems(item, name, price)
+  LootAnalyser:addLootedItems(item, name, price)
 end
 
 function onSupplyTracker(itemId)

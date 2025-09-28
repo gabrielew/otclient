@@ -5,27 +5,68 @@ local function formatMoney(value, separator)
     return comma_value(tostring(value))
 end
 
-local function resolveLootValue(item)
+local function fallbackLootPrice(item)
     if not item then
         return 0
     end
 
     local cyclopedia = modules.game_cyclopedia and modules.game_cyclopedia.CyclopediaItems
     if cyclopedia and cyclopedia.getCurrentItemValue then
-        return cyclopedia.getCurrentItemValue(item) or 0
+        local cyclopediaPrice = cyclopedia.getCurrentItemValue(item)
+        if cyclopediaPrice and cyclopediaPrice > 0 then
+            return cyclopediaPrice
+        end
     end
 
-    local sellPrice = item:getDefaultSellPrice()
-    if sellPrice and sellPrice > 0 then
-        return sellPrice
+    if item.getMeanPrice then
+        local meanPrice = item:getMeanPrice()
+        if meanPrice and meanPrice > 0 then
+            return meanPrice
+        end
     end
 
-    local buyPrice = item:getDefaultBuyPrice()
-    if buyPrice and buyPrice > 0 then
-        return buyPrice
+    if item.getNpcSaleData then
+        local npcData = item:getNpcSaleData()
+        if npcData then
+            for _, npc in ipairs(npcData) do
+                if npc.buyPrice and npc.buyPrice > 0 then
+                    return npc.buyPrice
+                end
+            end
+        end
     end
 
     return 0
+end
+
+local function resolveLootValue(item, explicitTotalValue, count, previousPrice)
+    local itemCount = count or (item and item.getCount and item:getCount()) or 1
+    local fallbackPrice = fallbackLootPrice(item)
+    local referencePrice = previousPrice or fallbackPrice
+
+    if explicitTotalValue and explicitTotalValue > 0 then
+        local dropValue = explicitTotalValue
+        if itemCount > 0 then
+            if referencePrice and referencePrice > 0 then
+                local expectedTotal = referencePrice * itemCount
+                if math.abs(explicitTotalValue - expectedTotal) <= 0.5 then
+                    return referencePrice, expectedTotal
+                end
+
+                if math.abs(explicitTotalValue - referencePrice) <= 0.5 then
+                    return referencePrice, expectedTotal
+                end
+            end
+
+            return explicitTotalValue / itemCount, dropValue
+        end
+
+        return explicitTotalValue, dropValue
+    end
+
+    local price = referencePrice or 0
+    local totalValue = price * itemCount
+    return price, totalValue
 end
 
 local function tokformat(value)
@@ -515,32 +556,46 @@ function HuntingAnalyser:addXpGain(value)
 	HuntingAnalyser:updateWindow()
 end
 
-function HuntingAnalyser:addLootedItems(item, name)
-	local itemId = item:getId()
-	local count = item:getCount()
-	local data = HuntingAnalyser.lootedItems[itemId]
-        if not data then
-                local price = resolveLootValue(item)
-                HuntingAnalyser.loot = HuntingAnalyser.loot + (price * count)
-                HuntingAnalyser.lootedItems[itemId] = {itemId = itemId, name = name, count = count, price = price}
-        else
-                local previousPrice = data.price
-                local previousCount = data.count
-                data.count = data.count + count
-
-                local price = resolveLootValue(item)
-                if price ~= previousPrice then
-                        HuntingAnalyser.loot = HuntingAnalyser.loot - (previousPrice * previousCount)
-                        data.price = price
-                        HuntingAnalyser.loot = HuntingAnalyser.loot + (data.price * data.count)
+function HuntingAnalyser:addLootedItems(item, name, price)
+        local itemId = item:getId()
+        local count = item:getCount()
+        local data = HuntingAnalyser.lootedItems[itemId]
+        local previousPrice = nil
+        if data then
+                if data.totalValue and data.count and data.count > 0 then
+                        previousPrice = data.totalValue / data.count
                 else
-                        HuntingAnalyser.loot = HuntingAnalyser.loot + (data.price * count)
+                        previousPrice = data.price
                 end
         end
+        local resolvedPrice, dropValue = resolveLootValue(item, price, count, previousPrice)
 
-	if not HuntingAnalyser.lootedItemsName[name] then
-		HuntingAnalyser.lootedItemsName[name] = 0
-	end
+        HuntingAnalyser.loot = HuntingAnalyser.loot + dropValue
+
+        local entry = data
+        if not entry then
+                entry = {
+                        itemId = itemId,
+                        name = name,
+                        count = count,
+                        totalValue = dropValue,
+                        price = resolvedPrice
+                }
+                HuntingAnalyser.lootedItems[itemId] = entry
+        else
+                entry.count = entry.count + count
+                entry.totalValue = (entry.totalValue or 0) + dropValue
+        end
+
+        if entry.count > 0 then
+                entry.price = math.floor((entry.totalValue / entry.count) + 0.5)
+        else
+                entry.price = resolvedPrice
+        end
+
+        if not HuntingAnalyser.lootedItemsName[name] then
+                HuntingAnalyser.lootedItemsName[name] = 0
+        end
 
 	HuntingAnalyser.lootedItemsName[name] = HuntingAnalyser.lootedItemsName[name] + count
 end
@@ -568,11 +623,12 @@ function HuntingAnalyser:updateLootedItemValue(itemId, newPrice)
 		return
 	end
 
-	local oldTotalValue = itemData.price * itemData.count
-	local newTotalValue = newPrice * itemData.count
-	HuntingAnalyser.loot = HuntingAnalyser.loot - oldTotalValue + newTotalValue
+        local oldTotalValue = itemData.totalValue or (itemData.price * itemData.count)
+        local newTotalValue = newPrice * itemData.count
+        HuntingAnalyser.loot = HuntingAnalyser.loot - oldTotalValue + newTotalValue
 
-	itemData.price = newPrice
+        itemData.price = newPrice
+        itemData.totalValue = newTotalValue
 end
 
 function HuntingAnalyser:checkBalance()

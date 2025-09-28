@@ -61,6 +61,35 @@ opacityCircle = g_settings.getNumber('healthcircle_opacity', 0.35)
 monkCircleOffsetLeft = g_settings.getNumber('healthcircle_monkcircle_offset_left', 0)
 monkCircleOffsetRight = g_settings.getNumber('healthcircle_monkcircle_offset_right', -65)
 
+local function shouldShowHealthCircleExtra()
+    if not isHealthCircle or not g_game.isOnline() then
+        return false
+    end
+
+    local player = g_game.getLocalPlayer()
+    if not player or not player.isMonk then
+        return false
+    end
+
+    return player:isMonk()
+end
+
+local function updateHealthCircleExtraVisibility()
+    local visible = shouldShowHealthCircleExtra()
+
+    if healthCircleExtra then
+        healthCircleExtra:setVisible(visible)
+    end
+
+    if healthCircleExtraFront then
+        healthCircleExtraFront:setVisible(visible)
+    end
+
+    if healthCircleVirtue then
+        healthCircleVirtue:setVisible(visible)
+    end
+end
+
 function init()
     g_ui.importStyle("game_healthcircle.otui")
     healthCircle = g_ui.createWidget('HealthCircle', mapPanel)
@@ -103,6 +132,10 @@ function init()
         healthCircleExtra:setVisible(false)
         healthCircleExtraFront:setVisible(false)
         healthCircleVirtue:setVisible(false)
+    else
+        healthCircle:setVisible(true)
+        healthCircleFront:setVisible(true)
+        updateHealthCircleExtraVisibility()
     end
 
     if not isManaCircle then
@@ -236,6 +269,7 @@ function onHealthCircleGameStart()
     whenMapResizeChange()
     whenHarmonyChange()
     whenManaShieldChange()
+    updateHealthCircleExtraVisibility()
 end
 
 function whenHealthChange()
@@ -419,6 +453,7 @@ end
 
 function whenVocationChange()
     updateManaShieldDisplay()
+    updateHealthCircleExtraVisibility()
 end
 
 function whenManaChange()
@@ -668,9 +703,7 @@ function setHealthCircle(value)
     if value then
         healthCircle:setVisible(true)
         healthCircleFront:setVisible(true)
-        healthCircleExtra:setVisible(true)
-        healthCircleExtraFront:setVisible(true)
-        healthCircleVirtue:setVisible(true)
+        updateHealthCircleExtraVisibility()
         whenMapResizeChange()
     else
         healthCircle:setVisible(false)

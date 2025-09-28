@@ -72,6 +72,56 @@ local monkHealthCircleDimensions = { width = 71, height = 244 }
 local healthCircleTextureWidth = monkHealthCircleDimensions.width
 local healthCircleTextureHeight = monkHealthCircleDimensions.height
 
+local function applyHealthCircleDimensions(dimensions)
+    if not dimensions then
+        return
+    end
+
+    local width = dimensions.width or imageSizeThin
+    local height = dimensions.height or imageSizeBroad
+
+    imageSizeThin = width
+    imageSizeBroad = height
+
+    if healthCircle then
+        healthCircle:setWidth(width)
+        healthCircle:setHeight(height)
+    end
+
+    if healthCircleFront then
+        healthCircleFront:setWidth(width)
+        healthCircleFront:setHeight(height)
+    end
+
+    extraImageSizeBroad = height
+
+    if healthCircleExtra then
+        healthCircleExtra:setHeight(height)
+    end
+
+    if healthCircleExtraFront then
+        healthCircleExtraFront:setHeight(height)
+    end
+
+    if manaCircle then
+        manaCircle:setHeight(height)
+    end
+
+    if manaCircleFront then
+        manaCircleFront:setHeight(height)
+    end
+
+    manaShieldImageSizeBroad = height
+
+    if manaShieldCircle then
+        manaShieldCircle:setHeight(height)
+    end
+
+    if manaShieldCircleFront then
+        manaShieldCircleFront:setHeight(height)
+    end
+end
+
 local function shouldUseMonkHealthCircle()
     if not g_game.isOnline() then
         return false
@@ -98,10 +148,16 @@ local function updateHealthCircleImages()
     healthCircleTextureWidth = dimensions.width
     healthCircleTextureHeight = dimensions.height
 
+    applyHealthCircleDimensions(dimensions)
+
     healthCircle:setImageSource(emptySource)
     healthCircleFront:setImageSource(fullSource)
 
     whenHealthChange()
+
+    if mapPanel then
+        whenMapResizeChange()
+    end
 end
 
 local function shouldShowHealthCircleExtra()

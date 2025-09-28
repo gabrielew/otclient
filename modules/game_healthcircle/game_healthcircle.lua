@@ -61,6 +61,22 @@ opacityCircle = g_settings.getNumber('healthcircle_opacity', 0.35)
 monkCircleOffsetLeft = g_settings.getNumber('healthcircle_monkcircle_offset_left', 0)
 monkCircleOffsetRight = g_settings.getNumber('healthcircle_monkcircle_offset_right', -65)
 
+local function isMonkVocation(player)
+    local ok, result = pcall(player.isMonk, player)
+    if ok then
+        return result == true
+    end
+
+    local vocationName = player:getVocationName()
+    if type(vocationName) == 'string' then
+        local normalized = vocationName:upper()
+        return normalized == 'MONK' or normalized == 'EXALTED MONK'
+    end
+
+    g_logger.warning(string.format('Failed to determine monk vocation: %s', tostring(result)))
+    return false
+end
+
 local function shouldShowExtraHealthCircle()
     if not isHealthCircle then
         return false
@@ -75,7 +91,7 @@ local function shouldShowExtraHealthCircle()
         return false
     end
 
-    return player:isMonk()
+    return isMonkVocation(player)
 end
 
 local function updateExtraHealthCircleVisibility()

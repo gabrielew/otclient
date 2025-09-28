@@ -61,6 +61,37 @@ opacityCircle = g_settings.getNumber('healthcircle_opacity', 0.35)
 monkCircleOffsetLeft = g_settings.getNumber('healthcircle_monkcircle_offset_left', 0)
 monkCircleOffsetRight = g_settings.getNumber('healthcircle_monkcircle_offset_right', -65)
 
+local defaultHealthCircleEmpty = '/data/images/game/healthcircle/left_empty'
+local defaultHealthCircleFull = '/data/images/game/healthcircle/left_full'
+local monkHealthCircleEmpty = '/data/images/game/healthcircle/left_empty_test'
+local monkHealthCircleFull = '/data/images/game/healthcircle/left_full_test'
+
+local function shouldUseMonkHealthCircle()
+    if not g_game.isOnline() then
+        return false
+    end
+
+    local player = g_game.getLocalPlayer()
+    if not player or not player.isMonk then
+        return false
+    end
+
+    return player:isMonk()
+end
+
+local function updateHealthCircleImages()
+    if not healthCircle or not healthCircleFront then
+        return
+    end
+
+    local useMonkCircle = shouldUseMonkHealthCircle()
+    local emptySource = useMonkCircle and monkHealthCircleEmpty or defaultHealthCircleEmpty
+    local fullSource = useMonkCircle and monkHealthCircleFull or defaultHealthCircleFull
+
+    healthCircle:setImageSource(emptySource)
+    healthCircleFront:setImageSource(fullSource)
+end
+
 local function shouldShowHealthCircleExtra()
     if not isHealthCircle or not g_game.isOnline() then
         return false
@@ -137,6 +168,8 @@ function init()
         healthCircleFront:setVisible(true)
         updateHealthCircleExtraVisibility()
     end
+
+    updateHealthCircleImages()
 
     if not isManaCircle then
         manaCircle:setVisible(false)
@@ -270,6 +303,7 @@ function onHealthCircleGameStart()
     whenHarmonyChange()
     whenManaShieldChange()
     updateHealthCircleExtraVisibility()
+    updateHealthCircleImages()
 end
 
 function whenHealthChange()
@@ -454,6 +488,7 @@ end
 function whenVocationChange()
     updateManaShieldDisplay()
     updateHealthCircleExtraVisibility()
+    updateHealthCircleImages()
 end
 
 function whenManaChange()
@@ -704,6 +739,7 @@ function setHealthCircle(value)
         healthCircle:setVisible(true)
         healthCircleFront:setVisible(true)
         updateHealthCircleExtraVisibility()
+        updateHealthCircleImages()
         whenMapResizeChange()
     else
         healthCircle:setVisible(false)

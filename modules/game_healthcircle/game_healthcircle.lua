@@ -33,7 +33,7 @@ manaShieldImageSizeThin = 0
 
 extraCircleOffsetX = -60
 extraCircleOffsetY = 8
-manaShieldCircleOffsetX = 60
+manaShieldCircleOffsetX = 6
 manaShieldCircleOffsetY = 8
 
 healthCircleVirtue = nil
@@ -327,13 +327,6 @@ function whenHarmonyChange()
     end
 end
 
-local manaShieldMageVocations = {
-    [1] = true,
-    [2] = true,
-    [5] = true,
-    [6] = true
-}
-
 local defaultManaCircleEmpty = '/data/images/game/healthcircle/right_empty'
 local defaultManaCircleFull = '/data/images/game/healthcircle/right_full'
 local manaShieldManaCircleEmpty = '/data/images/game/healthcircle/right_empty_test'
@@ -366,15 +359,18 @@ local function updateManaShieldDisplay()
         return
     end
 
-    local vocation = player:getVocation()
     local maxShield = player:getMaxManaShield()
     local remainingShield = player:getManaShield()
 
-    if not manaShieldMageVocations[vocation] or maxShield <= 0 or remainingShield <= 0 then
+    if remainingShield <= 0 then
         manaShieldCircle:setVisible(false)
         manaShieldCircleFront:setVisible(false)
         resetManaCircleImages()
         return
+    end
+
+    if maxShield <= 0 then
+        maxShield = remainingShield
     end
 
     manaCircle:setImageSource(manaShieldManaCircleEmpty)
@@ -561,7 +557,7 @@ function whenMapResizeChange()
         manaCircle:setX(math.floor((mapPanel:getWidth() / 2 + barDistance)) + distanceFromCenter)
 
         if manaShieldCircle and manaShieldCircleFront then
-            manaShieldCircle:setX(manaCircle:getX() - manaShieldImageSizeThin + manaShieldCircleOffsetX)
+            manaShieldCircle:setX(manaCircle:getX() - manaShieldImageSizeThin - manaShieldCircleOffsetX)
             manaShieldCircleFront:setX(manaShieldCircle:getX())
         end
 
@@ -603,7 +599,7 @@ function whenMapResizeChange()
         manaCircle:setX(mapPanel:getX() + mapPanel:getWidth() / 2 + barDistance + distanceFromCenter)
 
         if manaShieldCircle and manaShieldCircleFront then
-            manaShieldCircle:setX(manaCircle:getX() - manaShieldImageSizeThin + manaShieldCircleOffsetX)
+            manaShieldCircle:setX(manaCircle:getX() - manaShieldImageSizeThin - manaShieldCircleOffsetX)
             manaShieldCircleFront:setX(manaShieldCircle:getX())
         end
 

@@ -33,8 +33,8 @@ manaShieldImageSizeThin = 0
 
 extraCircleOffsetX = -60
 extraCircleOffsetY = 8
-manaShieldCircleOffsetX = 6
-manaShieldCircleOffsetY = 8
+manaShieldCircleOffsetX = -62
+manaShieldCircleOffsetY = 7
 
 healthCircleVirtue = nil
 virtueOffsetX = -42
@@ -329,8 +329,10 @@ end
 
 local defaultManaCircleEmpty = '/data/images/game/healthcircle/right_empty'
 local defaultManaCircleFull = '/data/images/game/healthcircle/right_full'
-local manaShieldManaCircleEmpty = '/data/images/game/healthcircle/right_empty_test'
-local manaShieldManaCircleFull = '/data/images/game/healthcircle/right_full_test'
+local defaultManaWithManaShieldCircleEmpty = '/data/images/game/healthcircle/right_empty_test'
+local defaultManaWithManaShieldCircleFull = '/data/images/game/healthcircle/right_full_test'
+local manaShieldManaCircleEmpty = '/data/images/game/healthcircle/right_extra_empty'
+local manaShieldManaCircleFull = '/data/images/game/healthcircle/right_extra_full'
 
 local function resetManaCircleImages()
     if manaCircle then
@@ -373,8 +375,10 @@ local function updateManaShieldDisplay()
         maxShield = remainingShield
     end
 
-    manaCircle:setImageSource(manaShieldManaCircleEmpty)
-    manaCircleFront:setImageSource(manaShieldManaCircleFull)
+    manaCircle:setImageSource(defaultManaWithManaShieldCircleEmpty)
+    manaCircleFront:setImageSource(defaultManaWithManaShieldCircleFull)
+    manaShieldCircle:setImageSource(manaShieldManaCircleEmpty)
+    manaShieldCircleFront:setImageSource(manaShieldManaCircleFull)
     manaShieldCircle:setVisible(true)
     manaShieldCircleFront:setVisible(true)
 

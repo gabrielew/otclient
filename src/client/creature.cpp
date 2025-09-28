@@ -228,7 +228,7 @@ void Creature::drawInformation(const MapPosInfo& mapRect, const Point& dest, con
         if (drawFlags & Otc::DrawHarmony && isLocalPlayer()) {
             if (const auto& player = g_game.getLocalPlayer()) {
                 const uint8_t vocationId = player->getVocation();
-                if (vocationId == 5 || vocationId == 10) { // monk note todo use const Otc:: ( protobuf ? )
+                if (vocationId == 5 || vocationId == 15) { // monk note todo use const Otc:: ( protobuf ? )
                     // Harmony
                     backgroundRect.moveTop(backgroundRect.bottom());
                     g_drawPool.addFilledRect(backgroundRect, Color::black);

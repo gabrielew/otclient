@@ -2044,6 +2044,11 @@ void ProtocolGame::setCreatureVocation(const InputMessagePtr& msg, const uint32_
     }
 
     const uint8_t vocationId = msg->getU8();
+    if (creature == m_localPlayer) {
+        m_localPlayer->setVocation(vocationId);
+        return;
+    }
+
     creature->setVocation(vocationId);
 }
 
@@ -3775,7 +3780,11 @@ CreaturePtr ProtocolGame::getCreature(const InputMessagePtr& msg, int type) cons
                 }
             } else if (creatureType == Proto::CreatureTypePlayer) {
                 uint8_t vocationId = msg->getU8();
+                if (creature == m_localPlayer) {
+                    m_localPlayer->setVocation(vocationId);
+                } else {
                 creature->setVocation(vocationId);
+                }
             }
         }
 
@@ -5603,8 +5612,8 @@ void ProtocolGame::parseMarketDetail(const InputMessagePtr& msg)
     if (g_game.getClientVersion() >= 1270) {
         lastAttribute = Otc::ITEM_DESC_UPGRADECLASS; // até aqui já inclui classification
     }
-    if (g_game.getClientVersion() >= 1282) {
-        lastAttribute = Otc::ITEM_DESC_LAST; // seu limite atual (inclui 12.70 new skills, augment etc.)
+    if (g_game.getClientVersion() >= 1500) {
+        lastAttribute = Otc::ITEM_DESC_LAST; // seu limite atual (inclui 15.00 new skills, augment etc.)
     }
 
     // Loop padrão: lê cada atributo (string) ou consome 0x00

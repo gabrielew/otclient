@@ -105,20 +105,25 @@ local function applyHealthCircleDimensions(dimensions)
 
     if manaCircle then
         manaCircle:setHeight(height)
+        manaCircle:setWidth(width)
     end
 
     if manaCircleFront then
         manaCircleFront:setHeight(height)
+        manaCircleFront:setWidth(width)
     end
 
     manaShieldImageSizeBroad = height
+    manaShieldImageSizeThin = width
 
     if manaShieldCircle then
         manaShieldCircle:setHeight(height)
+        manaShieldCircle:setWidth(width)
     end
 
     if manaShieldCircleFront then
         manaShieldCircleFront:setHeight(height)
+        manaShieldCircleFront:setWidth(width)
     end
 end
 

@@ -4531,9 +4531,7 @@ void ProtocolGame::parseUpdateLootTracker(const InputMessagePtr& msg)
     const ItemPtr& item = getItem(msg);
     const std::string itemName = msg->getString();
     uint64_t itemPrice = 0;
-    if (g_game.getClientVersion() >= 1281) {
-        itemPrice = msg->getU64();
-    } else {
+    if (g_game.getFeature(Otc::GameColorizedLootValue)) {
         itemPrice = msg->getU32();
     }
 

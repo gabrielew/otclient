@@ -5,6 +5,25 @@ local function formatMoney(value, separator)
     return comma_value(tostring(value))
 end
 
+local function safeShortText(text, length)
+    if type(short_text) == 'function' then
+        local ok, shortened = pcall(short_text, text, length)
+        if ok and shortened then
+            return shortened
+        end
+    end
+
+    if not text then
+        return ''
+    end
+
+    if not length or length <= 0 or text:len() <= length then
+        return text
+    end
+
+    return text:sub(1, length) .. '...'
+end
+
 local function fallbackLootPrice(item)
     if not item then
         return 0
@@ -485,16 +504,17 @@ function HuntingAnalyser:updateWindow(ignoreVisible)
 		contentsPanel.lootedItems:setHeight(20)
 	else
 		local _count = 0
-		local text = '';
-		for name, count in pairs(HuntingAnalyser.lootedItemsName) do
-			_count = _count + 1
-			if text == '' then
-				text = string.format("%dx %s", count, short_text(name, 7))
-			else
-				text = string.format("%s\n%dx %s", text, count, name)
-			end
-		end
-		contentsPanel.lootedItems.loot:setText(text)
+                local text = '';
+                for name, count in pairs(HuntingAnalyser.lootedItemsName) do
+                        _count = _count + 1
+                        local displayName = safeShortText(name, 7)
+                        if text == '' then
+                                text = string.format("%dx %s", count, displayName)
+                        else
+                                text = string.format("%s\n%dx %s", text, count, displayName)
+                        end
+                end
+                contentsPanel.lootedItems.loot:setText(text)
 		contentsPanel.lootedItems.loot:setHeight(15 * _count)
 		contentsPanel.lootedItems:setHeight(15 * (_count))
 	end

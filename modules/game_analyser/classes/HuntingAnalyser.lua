@@ -5,6 +5,29 @@ local function formatMoney(value, separator)
     return comma_value(tostring(value))
 end
 
+local function resolveLootValue(item)
+    if not item then
+        return 0
+    end
+
+    local cyclopedia = modules.game_cyclopedia and modules.game_cyclopedia.CyclopediaItems
+    if cyclopedia and cyclopedia.getCurrentItemValue then
+        return cyclopedia.getCurrentItemValue(item) or 0
+    end
+
+    local sellPrice = item:getDefaultSellPrice()
+    if sellPrice and sellPrice > 0 then
+        return sellPrice
+    end
+
+    local buyPrice = item:getDefaultBuyPrice()
+    if buyPrice and buyPrice > 0 then
+        return buyPrice
+    end
+
+    return 0
+end
+
 local function tokformat(value)
     -- Simple number formatting - could be enhanced if needed
     if value >= 1000000000 then
@@ -496,14 +519,24 @@ function HuntingAnalyser:addLootedItems(item, name)
 	local itemId = item:getId()
 	local count = item:getCount()
 	local data = HuntingAnalyser.lootedItems[itemId]
-	if not data then
-		local price = modules.game_cyclopedia.CyclopediaItems.getCurrentItemValue(item)
-		HuntingAnalyser.loot = HuntingAnalyser.loot + (price * count)
-		HuntingAnalyser.lootedItems[itemId] = {itemId = itemId, name = name, count = count, price = price}
-	else
-		data.count = data.count + count
-		HuntingAnalyser.loot = HuntingAnalyser.loot + (data.price * count)
-	end
+        if not data then
+                local price = resolveLootValue(item)
+                HuntingAnalyser.loot = HuntingAnalyser.loot + (price * count)
+                HuntingAnalyser.lootedItems[itemId] = {itemId = itemId, name = name, count = count, price = price}
+        else
+                local previousPrice = data.price
+                local previousCount = data.count
+                data.count = data.count + count
+
+                local price = resolveLootValue(item)
+                if price ~= previousPrice then
+                        HuntingAnalyser.loot = HuntingAnalyser.loot - (previousPrice * previousCount)
+                        data.price = price
+                        HuntingAnalyser.loot = HuntingAnalyser.loot + (data.price * data.count)
+                else
+                        HuntingAnalyser.loot = HuntingAnalyser.loot + (data.price * count)
+                end
+        end
 
 	if not HuntingAnalyser.lootedItemsName[name] then
 		HuntingAnalyser.lootedItemsName[name] = 0

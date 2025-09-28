@@ -3,6 +3,29 @@ local function formatMoney(value, separator)
     return comma_value(tostring(value))
 end
 
+local function resolveLootValue(item)
+    if not item then
+        return 0
+    end
+
+    local cyclopedia = modules.game_cyclopedia and modules.game_cyclopedia.CyclopediaItems
+    if cyclopedia and cyclopedia.getCurrentItemValue then
+        return cyclopedia.getCurrentItemValue(item) or 0
+    end
+
+    local sellPrice = item:getDefaultSellPrice()
+    if sellPrice and sellPrice > 0 then
+        return sellPrice
+    end
+
+    local buyPrice = item:getDefaultBuyPrice()
+    if buyPrice and buyPrice > 0 then
+        return buyPrice
+    end
+
+    return 0
+end
+
 -- Add capitalize function to string library if it doesn't exist
 if not string.capitalize then
     function string.capitalize(str)
@@ -262,13 +285,23 @@ function LootAnalyser:addLootedItems(item, name)
 		itemInfo = LootAnalyser.lootedItems[itemId]
 	end
 
-	local count = item:getCount()
-	itemInfo.basePrice = modules.game_cyclopedia.CyclopediaItems.getCurrentItemValue(item)
-	itemInfo.count = itemInfo.count + count
+        local count = item:getCount()
+        local previousPrice = itemInfo.basePrice
+        local previousCount = itemInfo.count
 
-	-- update balance
-	LootAnalyser.goldValue = LootAnalyser.goldValue + (itemInfo.basePrice * count)
-	LootAnalyser.updateBalance = true
+        itemInfo.count = itemInfo.count + count
+
+        local price = resolveLootValue(item)
+        if price ~= previousPrice then
+                LootAnalyser.goldValue = LootAnalyser.goldValue - (previousPrice * previousCount)
+                itemInfo.basePrice = price
+                LootAnalyser.goldValue = LootAnalyser.goldValue + (itemInfo.basePrice * itemInfo.count)
+        else
+                itemInfo.basePrice = price
+                LootAnalyser.goldValue = LootAnalyser.goldValue + (itemInfo.basePrice * count)
+        end
+
+        LootAnalyser.updateBalance = true
 
 	LootAnalyser:checkBalance()
 	LootAnalyser:updateGraphics()

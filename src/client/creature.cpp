@@ -204,9 +204,15 @@ void Creature::drawInformation(const MapPosInfo& mapRect, const Point& dest, con
     if (backgroundRect.bottom() == parentRect.bottom())
         textRect.moveTop(backgroundRect.top() - offset);
 
-    // health rect is based on background rect, so no worries
+
+    const int innerBarWidth = std::max<int>(1, backgroundRect.width() - 2);
+    const auto computeBarWidth = [innerBarWidth](const double ratio) {
+        const double clampedRatio = std::clamp(ratio, 0.0, 1.0);
+        return static_cast<int>(std::round(clampedRatio * innerBarWidth));
+    };
+
     Rect healthRect = backgroundRect.expanded(-1);
-    healthRect.setWidth((m_healthPercent / 100.0) * 25);
+    healthRect.setWidth(computeBarWidth(m_healthPercent / 100.0));
 
     if (drawFlags & Otc::DrawBars) {
         g_drawPool.addFilledRect(backgroundRect, Color::black);
@@ -220,7 +226,8 @@ void Creature::drawInformation(const MapPosInfo& mapRect, const Point& dest, con
 
                 Rect manaRect = backgroundRect.expanded(-1);
                 const double maxMana = player->getMaxMana();
-                manaRect.setWidth((maxMana ? player->getMana() / maxMana : 1) * 25);
+                const double manaRatio = maxMana > 0.0 ? static_cast<double>(player->getMana()) / maxMana : 1.0;
+                manaRect.setWidth(computeBarWidth(manaRatio));
 
                 g_drawPool.addFilledRect(manaRect, Color::blue);
             }

@@ -12,11 +12,13 @@ end
 
 healthCircle = nil
 manaCircle = nil
+manaShieldCircle = nil
 expCircle = nil
 skillCircle = nil
 
 healthCircleFront = nil
 manaCircleFront = nil
+manaShieldCircleFront = nil
 expCircleFront = nil
 skillCircleFront = nil
 
@@ -26,9 +28,13 @@ healthCircleExtraFront = nil
 
 extraImageSizeBroad = 0
 extraImageSizeThin = 0
+manaShieldImageSizeBroad = 0
+manaShieldImageSizeThin = 0
 
 extraCircleOffsetX = -60
 extraCircleOffsetY = 8
+manaShieldCircleOffsetX = -62
+manaShieldCircleOffsetY = 7
 
 healthCircleVirtue = nil
 virtueOffsetX = -42
@@ -55,11 +61,145 @@ opacityCircle = g_settings.getNumber('healthcircle_opacity', 0.35)
 monkCircleOffsetLeft = g_settings.getNumber('healthcircle_monkcircle_offset_left', 0)
 monkCircleOffsetRight = g_settings.getNumber('healthcircle_monkcircle_offset_right', -65)
 
+local defaultHealthCircleEmpty = '/data/images/game/healthcircle/left_empty'
+local defaultHealthCircleFull = '/data/images/game/healthcircle/left_full'
+local monkHealthCircleEmpty = '/data/images/game/healthcircle/left_empty_test'
+local monkHealthCircleFull = '/data/images/game/healthcircle/left_full_test'
+
+local defaultHealthCircleDimensions = { width = 63, height = 208 }
+local monkHealthCircleDimensions = { width = 71, height = 244 }
+
+local healthCircleTextureWidth = monkHealthCircleDimensions.width
+local healthCircleTextureHeight = monkHealthCircleDimensions.height
+
+local function applyHealthCircleDimensions(dimensions)
+    if not dimensions then
+        return
+    end
+
+    local width = dimensions.width or imageSizeThin
+    local height = dimensions.height or imageSizeBroad
+
+    imageSizeThin = width
+    imageSizeBroad = height
+
+    if healthCircle then
+        healthCircle:setWidth(width)
+        healthCircle:setHeight(height)
+    end
+
+    if healthCircleFront then
+        healthCircleFront:setWidth(width)
+        healthCircleFront:setHeight(height)
+    end
+
+    extraImageSizeBroad = height
+
+    if healthCircleExtra then
+        healthCircleExtra:setHeight(height)
+    end
+
+    if healthCircleExtraFront then
+        healthCircleExtraFront:setHeight(height)
+    end
+
+    if manaCircle then
+        manaCircle:setHeight(height)
+        manaCircle:setWidth(width)
+    end
+
+    if manaCircleFront then
+        manaCircleFront:setHeight(height)
+        manaCircleFront:setWidth(width)
+    end
+
+    manaShieldImageSizeBroad = height
+    manaShieldImageSizeThin = width
+
+    if manaShieldCircle then
+        manaShieldCircle:setHeight(height)
+        manaShieldCircle:setWidth(width)
+    end
+
+    if manaShieldCircleFront then
+        manaShieldCircleFront:setHeight(height)
+        manaShieldCircleFront:setWidth(width)
+    end
+end
+
+local function shouldUseMonkHealthCircle()
+    if not g_game.isOnline() then
+        return false
+    end
+
+    local player = g_game.getLocalPlayer()
+    if not player or not player.isMonk then
+        return false
+    end
+
+    return player:isMonk()
+end
+
+local function updateHealthCircleImages()
+    if not healthCircle or not healthCircleFront then
+        return
+    end
+
+    local useMonkCircle = shouldUseMonkHealthCircle()
+    local emptySource = useMonkCircle and monkHealthCircleEmpty or defaultHealthCircleEmpty
+    local fullSource = useMonkCircle and monkHealthCircleFull or defaultHealthCircleFull
+
+    local dimensions = useMonkCircle and monkHealthCircleDimensions or defaultHealthCircleDimensions
+    healthCircleTextureWidth = dimensions.width
+    healthCircleTextureHeight = dimensions.height
+
+    applyHealthCircleDimensions(dimensions)
+
+    healthCircle:setImageSource(emptySource)
+    healthCircleFront:setImageSource(fullSource)
+
+    whenHealthChange()
+
+    if mapPanel then
+        whenMapResizeChange()
+    end
+end
+
+local function shouldShowHealthCircleExtra()
+    if not isHealthCircle or not g_game.isOnline() then
+        return false
+    end
+
+    local player = g_game.getLocalPlayer()
+    if not player or not player.isMonk then
+        return false
+    end
+
+    return player:isMonk()
+end
+
+local function updateHealthCircleExtraVisibility()
+    local visible = shouldShowHealthCircleExtra()
+
+    if healthCircleExtra then
+        healthCircleExtra:setVisible(visible)
+    end
+
+    if healthCircleExtraFront then
+        healthCircleExtraFront:setVisible(visible)
+    end
+
+    if healthCircleVirtue then
+        healthCircleVirtue:setVisible(visible)
+    end
+end
+
 function init()
     g_ui.importStyle("game_healthcircle.otui")
     healthCircle = g_ui.createWidget('HealthCircle', mapPanel)
     healthCircleExtra = g_ui.createWidget('HealthCircleExtra', mapPanel)
     manaCircle = g_ui.createWidget('ManaCircle', mapPanel)
+    manaShieldCircle = g_ui.createWidget('ManaShieldCircle', mapPanel)
     expCircle = g_ui.createWidget('ExpCircle', mapPanel)
     skillCircle = g_ui.createWidget('SkillCircle', mapPanel)
 
@@ -69,6 +209,7 @@ function init()
     healthCircleExtraFront:setImageColor('#BE713E')
     healthCircleVirtue = g_ui.createWidget('HealthCircleVirtue', mapPanel)
     manaCircleFront = g_ui.createWidget('ManaCircleFront', mapPanel)
+    manaShieldCircleFront = g_ui.createWidget('ManaShieldCircleFront', mapPanel)
     expCircleFront = g_ui.createWidget('ExpCircleFront', mapPanel)
     skillCircleFront = g_ui.createWidget('SkillCircleFront', mapPanel)
 
@@ -76,6 +217,11 @@ function init()
     imageSizeThin = healthCircle:getWidth()
     extraImageSizeBroad = healthCircleExtra:getHeight()
     extraImageSizeThin = healthCircleExtra:getWidth()
+    manaShieldImageSizeBroad = manaShieldCircle:getHeight()
+    manaShieldImageSizeThin = manaShieldCircle:getWidth()
+
+    manaShieldCircle:setVisible(false)
+    manaShieldCircleFront:setVisible(false)
     virtueImageSizeBroad = healthCircleVirtue:getHeight()
     virtueImageSizeThin = healthCircleVirtue:getWidth()
 
@@ -90,11 +236,19 @@ function init()
         healthCircleExtra:setVisible(false)
         healthCircleExtraFront:setVisible(false)
         healthCircleVirtue:setVisible(false)
+    else
+        healthCircle:setVisible(true)
+        healthCircleFront:setVisible(true)
+        updateHealthCircleExtraVisibility()
     end
+
+    updateHealthCircleImages()
 
     if not isManaCircle then
         manaCircle:setVisible(false)
         manaCircleFront:setVisible(false)
+        manaShieldCircle:setVisible(false)
+        manaShieldCircleFront:setVisible(false)
     end
 
     if not isExpCircle then
@@ -120,6 +274,8 @@ function terminate()
     healthCircle = nil
     manaCircle:destroy()
     manaCircle = nil
+    manaShieldCircle:destroy()
+    manaShieldCircle = nil
     expCircle:destroy()
     expCircle = nil
     skillCircle:destroy()
@@ -135,6 +291,8 @@ function terminate()
     healthCircleVirtue = nil
     manaCircleFront:destroy()
     manaCircleFront = nil
+    manaShieldCircleFront:destroy()
+    manaShieldCircleFront = nil
     expCircleFront:destroy()
     expCircleFront = nil
     skillCircleFront:destroy()
@@ -162,9 +320,11 @@ function initOnHpAndMpChange()
         onHealthChange = whenHealthChange,
         onHarmonyChange = whenHarmonyChange,
         onManaChange = whenManaChange,
+        onManaShieldChange = whenManaShieldChange,
         onSkillChange = whenSkillsChange,
         onMagicLevelChange = whenSkillsChange,
-        onLevelChange = whenSkillsChange
+        onLevelChange = whenSkillsChange,
+        onVocationChange = whenVocationChange
     })
 end
 
@@ -173,9 +333,11 @@ function terminateOnHpAndMpChange()
         onHealthChange = whenHealthChange,
         onHarmonyChange = whenHarmonyChange,
         onManaChange = whenManaChange,
+        onManaShieldChange = whenManaShieldChange,
         onSkillChange = whenSkillsChange,
         onMagicLevelChange = whenSkillsChange,
-        onLevelChange = whenSkillsChange
+        onLevelChange = whenSkillsChange,
+        onVocationChange = whenVocationChange
     })
 end
 
@@ -212,6 +374,9 @@ end
 function onHealthCircleGameStart()
     whenMapResizeChange()
     whenHarmonyChange()
+    whenManaShieldChange()
+    updateHealthCircleExtraVisibility()
+    updateHealthCircleImages()
 end
 
 function whenHealthChange()
@@ -224,24 +389,31 @@ function whenHealthChange()
         -- Old leaved for ppl who have that implemented correctly
         --local healthPercent = math.floor(g_game.getLocalPlayer():getHealthPercent())
 
+        if imageSizeBroad <= 0 or healthCircleTextureHeight <= 0 then
+            return
+        end
+
         local yhppc = math.floor(imageSizeBroad * (1 - (healthPercent / 100)))
         local restYhppc = imageSizeBroad - yhppc
+        local textureClipStart = math.floor(healthCircleTextureHeight * yhppc / imageSizeBroad)
+        textureClipStart = math.max(0, math.min(textureClipStart, healthCircleTextureHeight))
+        local textureClipHeight = healthCircleTextureHeight - textureClipStart
 
         healthCircleFront:setY(healthCircle:getY() + yhppc)
         healthCircleFront:setHeight(restYhppc)
         healthCircleFront:setImageClip({
             x = 0,
-            y = yhppc,
-            width = imageSizeThin,
-            height = restYhppc
+            y = textureClipStart,
+            width = healthCircleTextureWidth,
+            height = textureClipHeight
         })
 
         healthCircle:setHeight(yhppc)
         healthCircle:setImageClip({
             x = 0,
             y = 0,
-            width = imageSizeThin,
-            height = yhppc
+            width = healthCircleTextureWidth,
+            height = textureClipStart
         })
 
         if healthPercent > 92 then
@@ -303,38 +475,189 @@ function whenHarmonyChange()
     end
 end
 
+local defaultManaCircleEmpty = '/data/images/game/healthcircle/right_empty'
+local defaultManaCircleFull = '/data/images/game/healthcircle/right_full'
+local defaultManaWithManaShieldCircleEmpty = '/data/images/game/healthcircle/right_tiny_empty'
+local defaultManaWithManaShieldCircleFull = '/data/images/game/healthcircle/right_tiny_full'
+local manaShieldManaCircleEmpty = '/data/images/game/healthcircle/right_extra_empty'
+local manaShieldManaCircleFull = '/data/images/game/healthcircle/right_extra_full'
+
+local defaultManaCircleDimensions = { width = 74, height = 244 }
+local manaCircleTextureWidth = defaultManaCircleDimensions.width
+local manaCircleTextureHeight = defaultManaCircleDimensions.height
+
+local function setManaCircleTextureDimensions(dimensions)
+    if not dimensions or not dimensions.width or not dimensions.height then
+        return
+    end
+
+    manaCircleTextureWidth = dimensions.width
+    manaCircleTextureHeight = dimensions.height
+end
+
+-- PATCH: mantém o mana sempre com a MESMA altura/largura do health, mesmo sem shield
+local function resetManaCircleImages()
+    if manaCircle then
+        manaCircle:setImageSource(defaultManaCircleEmpty)
+    end
+
+    if manaCircleFront then
+        manaCircleFront:setImageSource(defaultManaCircleFull)
+    end
+
+    -- Em vez de voltar para defaultManaCircleDimensions (74x244),
+    -- usamos sempre as dimensões atuais do health.
+    setManaCircleTextureDimensions({
+        width  = healthCircleTextureWidth,
+        height = healthCircleTextureHeight
+    })
+
+    -- Garante que os widgets de mana acompanhem o tamanho atual do health
+    if manaCircle then
+        manaCircle:setWidth(imageSizeThin)
+        manaCircle:setHeight(imageSizeBroad)
+    end
+    if manaCircleFront then
+        manaCircleFront:setWidth(imageSizeThin)
+        manaCircleFront:setHeight(imageSizeBroad)
+    end
+end
+
+local function updateManaShieldDisplay()
+    if not manaShieldCircle or not manaShieldCircleFront or not manaCircle or not manaCircleFront then
+        return
+    end
+
+    if not g_game.isOnline() or not isManaCircle then
+        manaShieldCircle:setVisible(false)
+        manaShieldCircleFront:setVisible(false)
+        resetManaCircleImages()
+        return
+    end
+
+    local player = g_game.getLocalPlayer()
+    if not player then
+        return
+    end
+
+    local maxShield = player:getMaxManaShield()
+    local remainingShield = player:getManaShield()
+
+    if remainingShield <= 0 then
+        manaShieldCircle:setVisible(false)
+        manaShieldCircleFront:setVisible(false)
+        resetManaCircleImages()
+        return
+    end
+
+    if maxShield <= 0 then
+        maxShield = remainingShield
+    end
+
+    manaCircle:setImageSource(defaultManaWithManaShieldCircleEmpty)
+    manaCircleFront:setImageSource(defaultManaWithManaShieldCircleFull)
+    manaShieldCircle:setImageSource(manaShieldManaCircleEmpty)
+    manaShieldCircleFront:setImageSource(manaShieldManaCircleFull)
+    setManaCircleTextureDimensions({ width = healthCircleTextureWidth, height = healthCircleTextureHeight })
+    manaShieldCircle:setVisible(true)
+    manaShieldCircleFront:setVisible(true)
+
+    local clampedShield = math.max(math.min(remainingShield, maxShield), 0)
+    local shieldPercent = clampedShield / maxShield
+
+    local emptyPixels = math.floor(manaShieldImageSizeBroad * (1 - shieldPercent))
+    if emptyPixels < 0 then
+        emptyPixels = 0
+    end
+    if emptyPixels > manaShieldImageSizeBroad then
+        emptyPixels = manaShieldImageSizeBroad
+    end
+
+    local filledPixels = manaShieldImageSizeBroad - emptyPixels
+
+    manaShieldCircleFront:setY(manaShieldCircle:getY() + emptyPixels)
+    manaShieldCircleFront:setHeight(filledPixels)
+    manaShieldCircleFront:setImageClip({
+        x = 0,
+        y = emptyPixels,
+        width = manaShieldImageSizeThin,
+        height = filledPixels
+    })
+
+    manaShieldCircle:setHeight(emptyPixels)
+    manaShieldCircle:setImageClip({
+        x = 0,
+        y = 0,
+        width = manaShieldImageSizeThin,
+        height = emptyPixels
+    })
+end
+
+function whenManaShieldChange()
+    updateManaShieldDisplay()
+end
+
+function whenVocationChange()
+    updateManaShieldDisplay()
+    updateHealthCircleExtraVisibility()
+    updateHealthCircleImages()
+end
+
 function whenManaChange()
     if g_game.isOnline() then
-        local maxMana = g_game.getLocalPlayer():getMaxMana()
+        local player = g_game.getLocalPlayer()
+        local maxMana = player:getMaxMana()
         if maxMana <= 0 then
             manaCircle:setVisible(false)
             manaCircleFront:setVisible(false)
+            if manaShieldCircle and manaShieldCircleFront then
+                manaShieldCircle:setVisible(false)
+                manaShieldCircleFront:setVisible(false)
+            end
+            resetManaCircleImages()
             return
         elseif isManaCircle then
             manaCircle:setVisible(true)
             manaCircleFront:setVisible(true)
         end
 
-        local manaPercent = math.floor(maxMana - (maxMana - g_game.getLocalPlayer():getMana())) * 100 / maxMana
+        updateManaShieldDisplay()
+
+        if imageSizeBroad <= 0 or manaCircleTextureHeight <= 0 then
+            return
+        end
+
+        local manaPercent = math.floor(maxMana - (maxMana - player:getMana())) * 100 / maxMana
 
         local ymppc = math.floor(imageSizeBroad * (1 - (manaPercent / 100)))
         local restYmppc = imageSizeBroad - ymppc
+        local textureClipStart = math.floor(manaCircleTextureHeight * ymppc / imageSizeBroad)
+        textureClipStart = math.max(0, math.min(textureClipStart, manaCircleTextureHeight))
+        local textureClipHeight = manaCircleTextureHeight - textureClipStart
 
-        manaCircleFront:setY(manaCircle:getY() + ymppc)
-        manaCircleFront:setHeight(restYmppc)
-        manaCircleFront:setImageClip({
-            x = 0,
-            y = ymppc,
-            width = imageSizeThin,
-            height = restYmppc
-        })
+        if restYmppc <= 0 then
+            manaCircleFront:setVisible(false)
+        else
+            manaCircleFront:setVisible(isManaCircle)
+
+            if isManaCircle then
+                manaCircleFront:setY(manaCircle:getY() + ymppc)
+                manaCircleFront:setHeight(restYmppc)
+                manaCircleFront:setImageClip({
+                    x = 0,
+                    y = textureClipStart,
+                    width = manaCircleTextureWidth,
+                    height = textureClipHeight
+                })
+            end
+        end
 
         manaCircle:setHeight(ymppc)
         manaCircle:setImageClip({
             x = 0,
             y = 0,
-            width = imageSizeThin,
-            height = ymppc
+            width = manaCircleTextureWidth,
+            height = textureClipStart
         })
     end
 end
@@ -434,11 +757,21 @@ function whenMapResizeChange()
         healthCircle:setX(math.floor(mapPanel:getWidth() / 2 - barDistance - imageSizeThin) - distanceFromCenter)
         manaCircle:setX(math.floor((mapPanel:getWidth() / 2 + barDistance)) + distanceFromCenter)
 
+        if manaShieldCircle and manaShieldCircleFront then
+            manaShieldCircle:setX(manaCircle:getX() - manaShieldImageSizeThin - manaShieldCircleOffsetX)
+            manaShieldCircleFront:setX(manaShieldCircle:getX())
+        end
+
         healthCircleExtra:setX(healthCircle:getX() + imageSizeThin + extraCircleOffsetX)
         healthCircleExtraFront:setX(healthCircleExtra:getX())
         healthCircleVirtue:setX(healthCircleExtra:getX() + extraImageSizeThin + virtueOffsetX)
         healthCircle:setY(mapPanel:getHeight() / 2 - imageSizeBroad / 2 + 0)
         manaCircle:setY(mapPanel:getHeight() / 2 - imageSizeBroad / 2 + 0)
+
+        if manaShieldCircle and manaShieldCircleFront then
+            manaShieldCircle:setY(manaCircle:getY() + manaShieldCircleOffsetY)
+            manaShieldCircleFront:setY(manaShieldCircle:getY())
+        end
         healthCircleExtra:setY(healthCircle:getY() + extraCircleOffsetY)
         healthCircleExtraFront:setY(healthCircleExtra:getY())
         healthCircleVirtue:setY(healthCircleExtra:getY() + virtueOffsetY)
@@ -466,12 +799,22 @@ function whenMapResizeChange()
             distanceFromCenter)
         manaCircle:setX(mapPanel:getX() + mapPanel:getWidth() / 2 + barDistance + distanceFromCenter)
 
+        if manaShieldCircle and manaShieldCircleFront then
+            manaShieldCircle:setX(manaCircle:getX() - manaShieldImageSizeThin - manaShieldCircleOffsetX)
+            manaShieldCircleFront:setX(manaShieldCircle:getX())
+        end
+
         healthCircleExtra:setX(healthCircle:getX() + imageSizeThin + extraCircleOffsetX)
         healthCircleExtraFront:setX(healthCircleExtra:getX())
         healthCircleVirtue:setX(healthCircleExtra:getX() + extraImageSizeThin + virtueOffsetX)
 
         healthCircle:setY(mapPanel:getY() + mapPanel:getHeight() / 2 - imageSizeBroad / 2)
         manaCircle:setY(mapPanel:getY() + mapPanel:getHeight() / 2 - imageSizeBroad / 2)
+
+        if manaShieldCircle and manaShieldCircleFront then
+            manaShieldCircle:setY(manaCircle:getY() + manaShieldCircleOffsetY)
+            manaShieldCircleFront:setY(manaShieldCircle:getY())
+        end
         healthCircleExtra:setY(healthCircle:getY() + extraCircleOffsetY)
         healthCircleExtraFront:setY(healthCircleExtra:getY())
         healthCircleVirtue:setY(healthCircleExtra:getY() + virtueOffsetY)
@@ -501,6 +844,8 @@ function whenMapResizeChange()
             whenSkillsChange()
         end
     end
+
+    updateManaShieldDisplay()
 end
 
 -------------------------------------------------
@@ -513,9 +858,8 @@ function setHealthCircle(value)
     if value then
         healthCircle:setVisible(true)
         healthCircleFront:setVisible(true)
-        healthCircleExtra:setVisible(true)
-        healthCircleExtraFront:setVisible(true)
-        healthCircleVirtue:setVisible(true)
+        updateHealthCircleExtraVisibility()
+        updateHealthCircleImages()
         whenMapResizeChange()
     else
         healthCircle:setVisible(false)
@@ -535,9 +879,15 @@ function setManaCircle(value)
         manaCircle:setVisible(true)
         manaCircleFront:setVisible(true)
         whenMapResizeChange()
+        updateManaShieldDisplay()
     else
         manaCircle:setVisible(false)
         manaCircleFront:setVisible(false)
+        if manaShieldCircle and manaShieldCircleFront then
+            manaShieldCircle:setVisible(false)
+            manaShieldCircleFront:setVisible(false)
+        end
+        resetManaCircleImages()
     end
 
     g_settings.set('healthcircle_mpcircle', not value)
@@ -622,6 +972,12 @@ function setCircleOpacity(value)
     healthCircleVirtue:setOpacity(value)
     manaCircle:setOpacity(value)
     manaCircleFront:setOpacity(value)
+    if manaShieldCircle then
+        manaShieldCircle:setOpacity(value)
+    end
+    if manaShieldCircleFront then
+        manaShieldCircleFront:setOpacity(value)
+    end
     expCircle:setOpacity(value)
     expCircleFront:setOpacity(value)
     skillCircle:setOpacity(value)

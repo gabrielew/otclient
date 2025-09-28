@@ -4,6 +4,29 @@ if not configPopupWindow then
   configPopupWindow = {}
 end
 
+local ellipsis = '...'
+
+function short_text(text, maxLength)
+  if not text then
+    return ''
+  end
+
+  if not maxLength or maxLength <= 0 then
+    return ''
+  end
+
+  local stringified = tostring(text)
+  if string.len(stringified) <= maxLength then
+    return stringified
+  end
+
+  if maxLength <= string.len(ellipsis) then
+    return stringified:sub(1, maxLength)
+  end
+
+  return stringified:sub(1, maxLength - string.len(ellipsis)) .. ellipsis
+end
+
 openedWindows = {}
 cancelNextRelease = nil
 

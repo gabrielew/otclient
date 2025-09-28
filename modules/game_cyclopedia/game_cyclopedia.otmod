@@ -1,7 +1,7 @@
 Module
   name: game_cyclopedia
   description: game_cyclopedia
-  scripts: [ game_cyclopedia, tab/*, utils]
+  scripts: [ game_cyclopedia, cyclopedia_items, tab/*, utils]
   sandboxed: true
   @onLoad: controllerCyclopedia:init()
   @onUnload: controllerCyclopedia:terminate()

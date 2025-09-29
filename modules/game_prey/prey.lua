@@ -21,7 +21,7 @@ local PREY_ACTION_BONUSREROLL = 1
 local PREY_ACTION_MONSTERSELECTION = 2
 local PREY_ACTION_REQUEST_ALL_MONSTERS = 3
 local PREY_ACTION_CHANGE_FROM_ALL = 4
-local PREY_ACTION_LOCK_PREY = 5
+local PREY_ACTION_OPTION = 5
 
 local preyDescription = {}
 
@@ -198,7 +198,7 @@ function setUnsupportedSettings()
         panel.active.autoRerollPrice.text:setText('-')
         panel.active.lockPreyPrice.text:setText('-')
         panel.active.choose.price.text:setText(1)
-        panel.active.autoReroll.autoRerollCheck:disable()
+        -- panel.active.autoReroll.autoRerollCheck:disable()
         panel.active.lockPrey.lockPreyCheck:disable()
     end
 end
@@ -340,8 +340,9 @@ function setTimeUntilFreeReroll(slot, timeUntilFreeReroll) -- minutes
         return
     end
     local percent = (timeUntilFreeReroll / (20 * 60)) * 100
-    local desc = timeleftTranslation(timeUntilFreeReroll * 60)
-    for i, panel in pairs({prey.active, prey.inactive}) do
+    timeUntilFreeReroll = timeUntilFreeReroll > 720000 and 0 or timeUntilFreeReroll
+    local desc = timeleftTranslation(timeUntilFreeReroll)
+    for i, panel in pairs({ prey.active, prey.inactive }) do
         local reroll = panel.reroll.button.time
         reroll:setPercent(percent)
         reroll:setText(desc)
@@ -550,6 +551,11 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
     -- creature reroll
     prey.active.reroll.button.rerollButton.onClick = function()
         g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+    end
+
+    -- Ao clicar, e não estiver selecionado, deve abrir um modal de confirmar com a seguinte frase: "voce tem certeza? isto custara 1 prey card", se o player confirmar, enviar PREY_ACTION_OPTION e PREY_OPTION_TOGGLE_AUTOREROLL que foi declarado em const.h. Se já estiver selecionado, enviar PREY_ACTION_OPTION e PREY_OPTION_UNTOGGLE sem modal de confirmação
+    prey.active.autoReroll.autoRerollCheck.onClick = function()
+        g_game.preyAction(slot, 5, 1)
     end
 end
 

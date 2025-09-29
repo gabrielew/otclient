@@ -537,7 +537,7 @@ local function handleToggleOptions(checkbox, slot, currentOption)
             closeWindow()
         end
 
-        local description = currentOption == PREY_OPTION_TOGGLE_AUTOREREROLL and
+        local description = currentOption == PREY_OPTION_TOGGLE_AUTOREROLL and
             tr(descriptionTable['automaticBonusReroll']) or tr(descriptionTable['preyLock'])
 
         confirmWindow = displayGeneralBox(tr('Confirmation of Using Prey Wildcards'), description, {

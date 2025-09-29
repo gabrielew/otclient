@@ -203,12 +203,12 @@ ActivePreyPanel < Panel
       margin-top: 2
       anchors.verticalCenter: parent.verticalCenter
       anchors.left: parent.left
-      image-source: /images/ui/panel_flat
-      image-border: 1
+      anchors.right: parent.right
       size: 155 15
       font: verdana-11px-rounded
       text: Automatic Bonus Rer...
       margin-left: 5
+      text-offset: 20 1
 
   CardLabel
     id: autoRerollPrice
@@ -230,12 +230,12 @@ ActivePreyPanel < Panel
       margin-top: 2
       anchors.verticalCenter: parent.verticalCenter
       anchors.left: parent.left
-      image-source: /images/ui/panel_flat
-      image-border: 1
+      anchors.right: parent.right
       size: 155 15
       font: verdana-11px-rounded
       text: Lock Prey
       margin-left: 5
+      text-offset: 20 1
 
   CardLabel
     id: lockPreyPrice

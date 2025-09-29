@@ -511,13 +511,27 @@ function onItemBoxChecked(widget)
     widget:setChecked(true)
 end
 
-local function handleToggleOptions(checkbox, slot, currentOption)
-    local wasChecked = checkbox:isChecked()
+local suppressOptionCheckHandler = false
+
+local function setOptionCheckedSilently(checkbox, checked)
+    if checkbox:isChecked() == checked then
+        return
+    end
+    suppressOptionCheckHandler = true
+    checkbox:setChecked(checked)
+    suppressOptionCheckHandler = false
+end
+
+local function handleToggleOptions(checkbox, slot, currentOption, checked)
+    if suppressOptionCheckHandler then
+        return
+    end
+
     local function sendOption(option)
         g_game.preyAction(slot, PREY_ACTION_OPTION, option)
     end
 
-    if not wasChecked then
+    if checked then
         local confirmWindow
         local function closeWindow()
             if confirmWindow then
@@ -533,7 +547,7 @@ local function handleToggleOptions(checkbox, slot, currentOption)
         end
 
         local function cancel()
-            checkbox:setChecked(false)
+            setOptionCheckedSilently(checkbox, false)
             closeWindow()
         end
 
@@ -554,7 +568,6 @@ local function handleToggleOptions(checkbox, slot, currentOption)
         return
     end
 
-    checkbox:setChecked(false)
     sendOption(PREY_OPTION_UNTOGGLE)
 end
 
@@ -610,12 +623,11 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
         g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
     end
 
-    -- Ao clicar, e não estiver selecionado, deve abrir um modal de confirmar com a seguinte frase: "voce tem certeza? isto custara 1 prey card", se o player confirmar, enviar PREY_ACTION_OPTION e PREY_OPTION_TOGGLE_AUTOREROLL que foi declarado em const.h. Se já estiver selecionado, enviar PREY_ACTION_OPTION e PREY_OPTION_UNTOGGLE sem modal de confirmação
-    prey.active.autoReroll.autoRerollCheck.onClick = function()
-        handleToggleOptions(prey.active.autoReroll.autoRerollCheck, slot, PREY_OPTION_TOGGLE_AUTOREROLL)
+    prey.active.autoReroll.autoRerollCheck.onCheckChange = function(widget, checked)
+        handleToggleOptions(widget, slot, PREY_OPTION_TOGGLE_AUTOREROLL, checked)
     end
-    prey.active.lockPrey.lockPreyCheck.onClick = function()
-        handleToggleOptions(prey.active.lockPrey.lockPreyCheck, slot, PREY_OPTION_TOGGLE_LOCK_PREY)
+    prey.active.lockPrey.lockPreyCheck.onCheckChange = function(widget, checked)
+        handleToggleOptions(widget, slot, PREY_OPTION_TOGGLE_LOCK_PREY, checked)
     end
 end
 

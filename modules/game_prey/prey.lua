@@ -522,14 +522,29 @@ local function setOptionCheckedSilently(checkbox, checked)
     suppressOptionCheckHandler = false
 end
 
+local function getToggleCheckboxes(slot)
+    local prey = preyWindow and preyWindow['slot' .. (slot + 1)]
+    if not prey or not prey.active then
+        return nil, nil
+    end
+
+    local autoCheckbox = prey.active.autoReroll and prey.active.autoReroll.autoRerollCheck
+    local lockCheckbox = prey.active.lockPrey and prey.active.lockPrey.lockPreyCheck
+
+    return autoCheckbox, lockCheckbox
+end
+
+local function sendOption(slot, option)
+    g_game.preyAction(slot, PREY_ACTION_OPTION, option)
+end
+
 local function handleToggleOptions(checkbox, slot, currentOption, checked)
     if suppressOptionCheckHandler then
         return
     end
 
-    local function sendOption(option)
-        g_game.preyAction(slot, PREY_ACTION_OPTION, option)
-    end
+    local autoCheckbox, lockCheckbox = getToggleCheckboxes(slot)
+    local otherCheckbox = currentOption == PREY_OPTION_TOGGLE_AUTOREROLL and lockCheckbox or autoCheckbox
 
     if checked then
         local confirmWindow
@@ -541,7 +556,12 @@ local function handleToggleOptions(checkbox, slot, currentOption, checked)
         end
 
         local function confirm()
-            checkbox:setChecked(true)
+            if otherCheckbox and otherCheckbox:isChecked() then
+                setOptionCheckedSilently(otherCheckbox, false)
+                sendOption(PREY_OPTION_UNTOGGLE)
+            end
+
+            setOptionCheckedSilently(checkbox, true)
             sendOption(currentOption)
             closeWindow()
         end

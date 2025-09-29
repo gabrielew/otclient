@@ -22,6 +22,9 @@ local PREY_ACTION_MONSTERSELECTION = 2
 local PREY_ACTION_REQUEST_ALL_MONSTERS = 3
 local PREY_ACTION_CHANGE_FROM_ALL = 4
 local PREY_ACTION_OPTION = 5
+local PREY_OPTION_UNTOGGLE = 0
+local PREY_OPTION_TOGGLE_AUTOREROLL = 1
+local PREY_OPTION_TOGGLE_LOCK_PREY = 2
 
 local preyDescription = {}
 
@@ -126,15 +129,24 @@ function init()
 end
 
 local descriptionTable = {
-    ['shopPermButton'] = 'Go to the Store to purchase the Permanent Prey Slot. Once you have completed the purchase, you can activate a prey here, no matter if your character is on a free or a Premium account.',
+    ['shopPermButton'] =
+    'Go to the Store to purchase the Permanent Prey Slot. Once you have completed the purchase, you can activate a prey here, no matter if your character is on a free or a Premium account.',
     ['shopTempButton'] = 'You can activate this prey whenever your account has Premium Status.',
     ['preyWindow'] = '',
-    ['noBonusIcon'] = 'This prey is not available for your character yet.\nCheck the large blue button(s) to learn how to unlock this prey slot',
-    ['selectPrey'] = 'Click here to get a bonus with a higher value. The bonus for your prey will be selected randomly from one of the following: damage boost, damage reduction, bonus XP, improved loot. Your prey will be active for 2 hours hunting time again. Your prey creature will stay the same.',
+    ['noBonusIcon'] =
+    'This prey is not available for your character yet.\nCheck the large blue button(s) to learn how to unlock this prey slot',
+    ['selectPrey'] =
+    'Click here to get a bonus with a higher value. The bonus for your prey will be selected randomly from one of the following: damage boost, damage reduction, bonus XP, improved loot. Your prey will be active for 2 hours hunting time again. Your prey creature will stay the same.',
     ['pickSpecificPrey'] = 'Available only for protocols 12+',
-    ['rerollButton'] = 'If you like to select another prey crature, click here to get a new list with 9 creatures to choose from.\nThe newly selected prey will be active for 2 hours hunting time again.',
+    ['rerollButton'] =
+    'If you like to select another prey crature, click here to get a new list with 9 creatures to choose from.\nThe newly selected prey will be active for 2 hours hunting time again.',
     ['preyCandidate'] = 'Select a new prey creature for the next 2 hours hunting time.',
-    ['choosePreyButton'] = 'Click on this button to confirm selected monsters as your prey creature for the next 2 hours hunting time.'
+    ['choosePreyButton'] =
+    'Click on this button to confirm selected monsters as your prey creature for the next 2 hours hunting time.',
+    ['automaticBonusReroll'] =
+    'Do you want to enable the Automatic Bonus Reroll?\nEach time the Automatic Bonus Reroll is triggered, 1 of your Prey Wildcards will be consumed.',
+    ['preyLock'] =
+    'Do you want to enable the Lock Prey?\nEach time the Lock Prey is triggered, 5 of your Prey Wildcards will be consumed.'
 }
 
 function onHover(widget)
@@ -198,8 +210,6 @@ function setUnsupportedSettings()
         panel.active.autoRerollPrice.text:setText('-')
         panel.active.lockPreyPrice.text:setText('-')
         panel.active.choose.price.text:setText(1)
-        -- panel.active.autoReroll.autoRerollCheck:disable()
-        panel.active.lockPrey.lockPreyCheck:disable()
     end
 end
 
@@ -501,6 +511,53 @@ function onItemBoxChecked(widget)
     widget:setChecked(true)
 end
 
+local function handleToggleOptions(checkbox, slot, currentOption)
+    local wasChecked = checkbox:isChecked()
+    local function sendOption(option)
+        g_game.preyAction(slot, PREY_ACTION_OPTION, option)
+    end
+
+    if not wasChecked then
+        local confirmWindow
+        local function closeWindow()
+            if confirmWindow then
+                confirmWindow:destroy()
+                confirmWindow = nil
+            end
+        end
+
+        local function confirm()
+            checkbox:setChecked(true)
+            sendOption(currentOption)
+            closeWindow()
+        end
+
+        local function cancel()
+            checkbox:setChecked(false)
+            closeWindow()
+        end
+
+        local description = currentOption == PREY_OPTION_TOGGLE_AUTOREREROLL and
+            tr(descriptionTable['automaticBonusReroll']) or tr(descriptionTable['preyLock'])
+
+        confirmWindow = displayGeneralBox(tr('Confirmation of Using Prey Wildcards'), description, {
+            {
+                text = tr('No'),
+                callback = cancel
+            },
+            {
+                text = tr('Yes'),
+                callback = confirm
+            },
+        }, confirm, cancel)
+
+        return
+    end
+
+    checkbox:setChecked(false)
+    sendOption(PREY_OPTION_UNTOGGLE)
+end
+
 function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, bonusValue, bonusGrade, timeLeft,
                       timeUntilFreeReroll, wildcards) -- locktype always 0 for protocols <12
     local tracker = preyTracker.contentsPanel['slot' .. (slot + 1)]
@@ -555,7 +612,10 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
 
     -- Ao clicar, e não estiver selecionado, deve abrir um modal de confirmar com a seguinte frase: "voce tem certeza? isto custara 1 prey card", se o player confirmar, enviar PREY_ACTION_OPTION e PREY_OPTION_TOGGLE_AUTOREROLL que foi declarado em const.h. Se já estiver selecionado, enviar PREY_ACTION_OPTION e PREY_OPTION_UNTOGGLE sem modal de confirmação
     prey.active.autoReroll.autoRerollCheck.onClick = function()
-        g_game.preyAction(slot, 5, 1)
+        handleToggleOptions(prey.active.autoReroll.autoRerollCheck, slot, PREY_OPTION_TOGGLE_AUTOREROLL)
+    end
+    prey.active.lockPrey.lockPreyCheck.onClick = function()
+        handleToggleOptions(prey.active.lockPrey.lockPreyCheck, slot, PREY_OPTION_TOGGLE_LOCK_PREY)
     end
 end
 

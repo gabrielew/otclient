@@ -1,0 +1,99 @@
+PreyListItem < UIButton
+  height: 20
+  anchors.left: parent.left
+  anchors.right: parent.right
+  margin-top: 2
+  focusable: true
+  text-align: left
+  text-offset: 6 0
+  font: verdana-11px-monochrome
+  color: #d4d4d4
+  background-color: #2a2a2a
+  border: 1 #00000066
+
+  $hover:
+    background-color: #3a3a3a
+
+  $on:
+    background-color: #565656
+    border: 1 #7f7f7f
+
+MainWindow
+  id: preyListWindow
+  size: 260 360
+  !text: tr('Select your prey creature')
+  padding: 12
+  @onEscape: modules.game_prey.hidePreyListSelection()
+
+  Label
+    id: subtitle
+    anchors.left: parent.left
+    anchors.right: parent.right
+    text-align: left
+    color: #bcbcbc
+    !text: tr('Choose a creature from the list below.')
+
+  TextEdit
+    id: search
+    anchors.top: prev.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    margin-top: 6
+    placeholder: Type to search
+    color: #d4d4d4
+    font: verdana-11px-monochrome
+    padding: 2
+
+  ScrollableFlatPanel
+    id: listPanel
+    anchors.top: prev.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: buttons.top
+    margin-top: 8
+    padding: 4
+    vertical-scrollbar: listScrollBar
+    layout:
+      type: verticalBox
+      spacing: 0
+
+  VerticalScrollBar
+    id: listScrollBar
+    anchors.top: listPanel.top
+    anchors.bottom: listPanel.bottom
+    anchors.right: listPanel.right
+    step: 18
+    pixels-scroll: true
+
+  Label
+    id: counter
+    anchors.bottom: buttons.top
+    anchors.left: parent.left
+    width: 120
+    margin-bottom: 4
+    color: #a0a0a0
+    font: verdana-11px-monochrome
+
+  Panel
+    id: buttons
+    anchors.bottom: parent.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    height: 24
+    layout:
+      type: horizontalBox
+      spacing: 6
+
+    Button
+      id: cancelButton
+      width: 70
+      text: Cancel
+      font: cipsoftFont
+      @onClick: modules.game_prey.hidePreyListSelection()
+
+    Button
+      id: confirmButton
+      width: 70
+      text: Select
+      font: cipsoftFont
+      enabled: false

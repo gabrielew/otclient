@@ -28,6 +28,145 @@ local PREY_OPTION_TOGGLE_LOCK_PREY = 2
 
 local preyDescription = {}
 
+local preyListSelection = {
+    window = nil,
+    list = nil,
+    search = nil,
+    confirmButton = nil,
+    cancelButton = nil,
+    counterLabel = nil,
+    entries = {},
+    selectedItem = nil,
+    slot = nil,
+    ignoreSearchEvents = false,
+    ignoreFocusChange = false
+}
+
+local function hidePreyListSelectionWindow()
+    if not preyListSelection.window then
+        return
+    end
+
+    preyListSelection.window:hide()
+    preyListSelection.slot = nil
+    preyListSelection.selectedItem = nil
+    preyListSelection.entries = {}
+    if preyListSelection.list then
+        preyListSelection.ignoreFocusChange = true
+        preyListSelection.list:destroyChildren()
+        preyListSelection.ignoreFocusChange = false
+    end
+    if preyListSelection.confirmButton then
+        preyListSelection.confirmButton:disable()
+    end
+    if preyListSelection.counterLabel then
+        preyListSelection.counterLabel:setText('0 / 0')
+    end
+    if preyListSelection.search then
+        preyListSelection.ignoreSearchEvents = true
+        preyListSelection.search:setText('')
+        preyListSelection.ignoreSearchEvents = false
+    end
+end
+
+local function selectPreyListItem(widget, skipFocus)
+    if not widget or not widget.raceId then
+        return
+    end
+
+    if preyListSelection.selectedItem and preyListSelection.selectedItem ~= widget then
+        preyListSelection.selectedItem:setOn(false)
+    end
+
+    preyListSelection.selectedItem = widget
+    widget:setOn(true)
+
+    if not skipFocus and preyListSelection.list then
+        preyListSelection.list:focusChild(widget, MouseFocusReason)
+    end
+
+    if preyListSelection.confirmButton then
+        preyListSelection.confirmButton:enable()
+    end
+end
+
+local function confirmPreyListSelection()
+    if not preyListSelection.selectedItem or not preyListSelection.slot then
+        return
+    end
+
+    g_game.preyAction(preyListSelection.slot, PREY_ACTION_CHANGE_FROM_ALL, preyListSelection.selectedItem.raceId)
+    hidePreyListSelectionWindow()
+end
+
+local function refreshPreyListSelection(filterText)
+    if not preyListSelection.list then
+        return
+    end
+
+    preyListSelection.ignoreFocusChange = true
+    preyListSelection.list:destroyChildren()
+    preyListSelection.selectedItem = nil
+
+    if preyListSelection.confirmButton then
+        preyListSelection.confirmButton:disable()
+    end
+
+    local visibleCount = 0
+    filterText = filterText or ''
+    filterText = filterText:lower()
+
+    for _, entry in ipairs(preyListSelection.entries) do
+        if filterText == '' or entry.searchName:find(filterText, 1, true) then
+            local item = g_ui.createWidget('PreyListItem', preyListSelection.list)
+            item:setId(tostring(entry.raceId))
+            item:setText(entry.displayName)
+            item.raceId = entry.raceId
+
+            item.onClick = function()
+                selectPreyListItem(item)
+            end
+
+            item.onDoubleClick = function()
+                selectPreyListItem(item)
+                confirmPreyListSelection()
+            end
+
+            visibleCount = visibleCount + 1
+        end
+    end
+
+    if visibleCount == 0 then
+        local emptyLabel = g_ui.createWidget('Label', preyListSelection.list)
+        emptyLabel:setText(tr('No creatures found.'))
+        emptyLabel:setTextAlign(AlignCenter)
+        emptyLabel:setColor('#9d9d9d')
+        emptyLabel:setMarginTop(4)
+        emptyLabel:setFocusable(false)
+    else
+        local firstChild = preyListSelection.list:getFirstChild()
+        if firstChild then
+            preyListSelection.list:focusChild(firstChild, KeyboardFocusReason)
+        end
+    end
+
+    if preyListSelection.counterLabel then
+        preyListSelection.counterLabel:setText(string.format('%d / %d', visibleCount, #preyListSelection.entries))
+    end
+
+    preyListSelection.ignoreFocusChange = false
+end
+
+local function assignPickSpecificPreyHandler(panel, slot)
+    if not panel or not panel.select or not panel.select.pickSpecificPrey then
+        return
+    end
+
+    panel.select.pickSpecificPrey.onClick = function()
+        g_game.preyAction(slot, PREY_ACTION_REQUEST_ALL_MONSTERS, 0)
+    end
+end
+
 function bonusDescription(bonusType, bonusValue, bonusGrade)
     if bonusType == PREY_BONUS_DAMAGE_BOOST then
         return 'Damage bonus (' .. bonusGrade .. '/10)'
@@ -74,6 +213,64 @@ function init()
 
     preyWindow = g_ui.displayUI('prey')
     preyWindow:hide()
+
+    preyListSelection.window = g_ui.displayUI('prey_list_selection')
+    if preyListSelection.window then
+        preyListSelection.window:hide()
+        preyListSelection.list = preyListSelection.window.listPanel
+        preyListSelection.search = preyListSelection.window.search
+        preyListSelection.confirmButton = preyListSelection.window.confirmButton
+        preyListSelection.cancelButton = preyListSelection.window.cancelButton
+        preyListSelection.counterLabel = preyListSelection.window.counter
+
+        if preyListSelection.counterLabel then
+            preyListSelection.counterLabel:setText('0 / 0')
+        end
+
+        if preyListSelection.list then
+            preyListSelection.list.onChildFocusChange = function(list, child)
+                if preyListSelection.ignoreFocusChange then
+                    return
+                end
+                if child and child.raceId then
+                    selectPreyListItem(child, true)
+                end
+            end
+        end
+
+        if preyListSelection.search then
+            preyListSelection.search.onTextChange = function(widget, text)
+                if preyListSelection.ignoreSearchEvents then
+                    return
+                end
+                refreshPreyListSelection(text)
+            end
+        end
+
+        if preyListSelection.confirmButton then
+            preyListSelection.confirmButton.onClick = confirmPreyListSelection
+            preyListSelection.confirmButton:disable()
+        end
+
+        if preyListSelection.cancelButton then
+            preyListSelection.cancelButton.onClick = hidePreyListSelectionWindow
+        end
+
+        if preyListSelection.window.closeButton then
+            preyListSelection.window.closeButton.onClick = hidePreyListSelectionWindow
+        end
+
+        preyListSelection.window.onVisibilityChange = function(widget, visible)
+            if not visible then
+                preyListSelection.selectedItem = nil
+                preyListSelection.slot = nil
+                if preyListSelection.confirmButton then
+                    preyListSelection.confirmButton:disable()
+                end
+            end
+        end
+    end
+
     preyTracker = g_ui.createWidget('PreyTracker', modules.game_interface.getRightPanel())
     preyTracker:setup()
     preyTracker:setContentMaximumHeight(110)
@@ -193,6 +390,15 @@ function terminate()
     end
     preyWindow:destroy()
     preyTracker:destroy()
+    if preyListSelection.window then
+        preyListSelection.window:destroy()
+        preyListSelection.window = nil
+        preyListSelection.list = nil
+        preyListSelection.search = nil
+        preyListSelection.confirmButton = nil
+        preyListSelection.cancelButton = nil
+        preyListSelection.counterLabel = nil
+    end
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil
@@ -295,6 +501,7 @@ end
 
 function hide()
     preyWindow:hide()
+    hidePreyListSelectionWindow()
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil
@@ -457,6 +664,7 @@ function onPreyInactive(slot, timeUntilFreeReroll, wildcards)
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
+    assignPickSpecificPreyHandler(prey.inactive, slot)
     local rerollButton = prey.inactive.reroll.button.rerollButton
     rerollButton:setImageSource('/images/game/prey/prey_reroll_blocked')
     rerollButton:disable()
@@ -692,6 +900,7 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
     prey.inactive:hide()
     prey.locked:hide()
     prey.active:show()
+    assignPickSpecificPreyHandler(prey.active, slot)
     prey.title:setText(currentHolderName)
     local creatureAndBonus = prey.active.creatureAndBonus
     creatureAndBonus.creature:setOutfit(currentHolderOutfit)
@@ -748,6 +957,7 @@ function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards)
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
+    assignPickSpecificPreyHandler(prey.inactive, slot)
     prey.title:setText(tr('Select monster'))
     local rerollButton = prey.inactive.reroll.button.rerollButton
     rerollButton.onClick = function()
@@ -797,6 +1007,7 @@ function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValu
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
+    assignPickSpecificPreyHandler(prey.inactive, slot)
     prey.title:setText(tr('Select monster'))
     local rerollButton = prey.inactive.reroll.button.rerollButton
     rerollButton.onClick = function()
@@ -821,6 +1032,48 @@ function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValu
 end
 
 function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
+    if not preyListSelection.window then
+        return
+    end
+
+    preyListSelection.slot = slot
+    races = races or {}
+    preyListSelection.entries = {}
+
+    for _, raceId in ipairs(races) do
+        local raceData = g_things.getRaceData(raceId)
+        local name = raceData and raceData.name or ''
+
+        if not name or name == '' then
+            name = string.format('%s %d', tr('Unknown'), raceId)
+        end
+
+        local formattedName = capitalFormatStr(name)
+        table.insert(preyListSelection.entries, {
+            raceId = raceId,
+            displayName = formattedName,
+            searchName = formattedName:lower()
+        })
+    end
+
+    table.sort(preyListSelection.entries, function(a, b)
+        return a.searchName < b.searchName
+    end)
+
+    if preyListSelection.search then
+        preyListSelection.ignoreSearchEvents = true
+        preyListSelection.search:setText('')
+        preyListSelection.ignoreSearchEvents = false
+    end
+
+    refreshPreyListSelection('')
+    preyListSelection.window:show()
+    preyListSelection.window:raise()
+    preyListSelection.window:focus()
+end
+
+function hidePreyListSelection()
+    hidePreyListSelectionWindow()
 end
 
 function onPreyWildcardSelection(slot, races, nextFreeReroll, wildcards)

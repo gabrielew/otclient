@@ -1,3 +1,23 @@
+PreyListItem < UIButton
+  height: 20
+  anchors.left: parent.left
+  anchors.right: parent.right
+  margin-top: 2
+  focusable: true
+  text-align: left
+  text-offset: 6 0
+  font: verdana-11px-monochrome
+  color: #d4d4d4
+  background-color: #2a2a2a
+  border: 1 #00000066
+
+  $hover:
+    background-color: #3a3a3a
+
+  $on:
+    background-color: #565656
+    border: 1 #7f7f7f
+
 LockedPreyPanel < Panel
   size: 195 312
 
@@ -362,6 +382,115 @@ InactivePreyPanel < Panel
       cell-size: 60 60
       cell-spacing: 3
       num-columns: 3
+
+  Panel
+    id: listSelection
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    padding: 8
+    visible: false
+
+    Label
+      id: title
+      anchors.top: parent.top
+      anchors.left: parent.left
+      anchors.right: counter.left
+      margin-right: 6
+      font: verdana-11px-monochrome
+      color: #d4d4d4
+      !text: tr('Select your prey creature')
+
+    Label
+      id: counter
+      anchors.top: parent.top
+      anchors.right: parent.right
+      width: 80
+      font: verdana-11px-monochrome
+      color: #a0a0a0
+      text-align: right
+
+    ScrollableFlatPanel
+      id: listPanel
+      anchors.top: title.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: search.top
+      margin-top: 6
+      margin-bottom: 6
+      padding: 4
+      vertical-scrollbar: listScrollBar
+      layout:
+        type: verticalBox
+        spacing: 0
+
+    VerticalScrollBar
+      id: listScrollBar
+      anchors.top: listPanel.top
+      anchors.bottom: listPanel.bottom
+      anchors.right: listPanel.right
+      step: 18
+      pixels-scroll: true
+
+    TextEdit
+      id: search
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: preview.top
+      margin-bottom: 6
+      !placeholder: tr('Type to search')
+      color: #d4d4d4
+      font: verdana-11px-monochrome
+      padding: 2
+
+    FlatPanel
+      id: preview
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: buttons.top
+      height: 80
+      padding: 4
+      margin-bottom: 6
+      image-source: /images/ui/panel_flat
+      image-border: 1
+
+      UIWidget
+        id: previewPlaceholder
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        size: 66 66
+        image-source: /images/game/prey/prey_select_blocked
+
+      UICreature
+        id: previewCreature
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        size: 66 66
+        visible: false
+
+    Panel
+      id: buttons
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: parent.bottom
+      height: 24
+      layout:
+        type: horizontalBox
+        spacing: 6
+
+      Button
+        id: cancelButton
+        width: 70
+        text: Cancel
+        font: cipsoftFont
+
+      Button
+        id: confirmButton
+        width: 70
+        text: Select
+        font: cipsoftFont
+        enabled: false
 
 ChoosePrey < FlatPanel
   size: 55 92

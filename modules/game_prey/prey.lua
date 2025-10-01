@@ -615,10 +615,12 @@ local function getFullListEntriesContainer(fullList)
     if entries.getChildById then
         local contents = entries:getChildById('entriesContainer') or entries:getChildById('contentsPanel')
         if contents then
+            entries.entriesContainer = contents
             return contents
         end
     end
 
+    entries.entriesContainer = entries
     return entries
 end
 

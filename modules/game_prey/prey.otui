@@ -397,14 +397,8 @@ InactivePreyPanel < Panel
       padding-right: 14
       padding-bottom: 2
       vertical-scrollbar: entriesScroll
-      Panel
-        id: entriesContainer
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        layout:
-          type: verticalBox
+      layout:
+        type: verticalBox
 
     VerticalScrollBar
       id: entriesScroll

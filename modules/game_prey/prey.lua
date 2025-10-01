@@ -31,6 +31,7 @@ local preyDescription = {}
 local raceEntriesBySlot = {}
 local selectedRaceEntryBySlot = {}
 local selectedRaceWidgetBySlot = {}
+local raceSearchTextsBySlot = {}
 
 local refreshRaceList
 local setRaceSelection
@@ -638,6 +639,59 @@ local function clearFullListEntries(fullList)
     end
 end
 
+local suppressSearchTextHandler = false
+
+local function setSearchTextSilently(widget, text)
+    if not widget or widget:getText() == text then
+        return
+    end
+
+    suppressSearchTextHandler = true
+    widget:setText(text)
+    suppressSearchTextHandler = false
+end
+
+local function updateRaceSearchClearButton(slot)
+    local prey = getPreySlotWidget(slot)
+    if not prey or not prey.inactive or not prey.inactive.fullList then
+        return
+    end
+
+    local fullList = prey.inactive.fullList
+    local clearButton = fullList.searchClearButton
+    if not clearButton then
+        return
+    end
+
+    local text = raceSearchTextsBySlot[slot]
+    clearButton:setVisible(text and text:len() > 0)
+end
+
+local function updateRaceSearchUI(slot)
+    local prey = getPreySlotWidget(slot)
+    if not prey or not prey.inactive or not prey.inactive.fullList then
+        return
+    end
+
+    local fullList = prey.inactive.fullList
+    local searchEdit = fullList.searchEdit
+    local clearButton = fullList.searchClearButton
+    local text = raceSearchTextsBySlot[slot] or ''
+
+    if searchEdit then
+        searchEdit.preySlot = slot
+        setSearchTextSilently(searchEdit, text)
+        searchEdit:setCursorPos(-1)
+    end
+
+    if clearButton then
+        clearButton.preySlot = slot
+        clearButton.searchEdit = searchEdit
+    end
+
+    updateRaceSearchClearButton(slot)
+end
+
 local function uncheckChildrenExcept(parent, except)
     if not parent then
         return
@@ -796,6 +850,16 @@ updateRaceSelectionDisplay = function(slot)
         end
     end
 
+    if prey.title then
+        if entry then
+            setWidgetTextToFit(prey.title, entry.name, function(value)
+                return tr('Selected: %s', value)
+            end)
+        else
+            prey.title:setText(tr('Select your prey creature'))
+        end
+    end
+
     if fullList.preview then
         local creatureWidget = fullList.preview.creature
         local placeholder = fullList.preview.placeholder
@@ -883,7 +947,15 @@ refreshRaceList = function(slot)
     local backgroundB = '#414141'
     local useAlternate = false
 
+    local searchFilter = raceSearchTextsBySlot[slot]
+    if searchFilter and searchFilter:len() > 0 then
+        searchFilter = searchFilter:lower()
+    else
+        searchFilter = nil
+    end
+
     for _, entry in ipairs(raceEntriesBySlot[slot] or {}) do
+        if not searchFilter or (entry.searchName and entry.searchName:find(searchFilter, 1, true)) then
         local item = g_ui.createWidget('PreyCreatureListItem', entriesPanel)
         setWidgetTextToFit(item, entry.name)
         item:setTooltip(entry.name)
@@ -897,11 +969,12 @@ refreshRaceList = function(slot)
         end
         restoreRaceListItemBackground(item)
 
-        useAlternate = not useAlternate
+            useAlternate = not useAlternate
 
-        if currentSelectionId and entry.raceId == currentSelectionId then
-            setRaceSelection(slot, item, true)
-            selectionRestored = true
+            if currentSelectionId and entry.raceId == currentSelectionId then
+                setRaceSelection(slot, item, true)
+                selectionRestored = true
+            end
         end
     end
 
@@ -910,6 +983,62 @@ refreshRaceList = function(slot)
     elseif not currentSelectionId then
         updateRaceSelectionDisplay(slot)
     end
+end
+
+function onRaceSearchTextChanged(widget)
+    if not widget or not widget.preySlot then
+        return
+    end
+
+    if suppressSearchTextHandler then
+        updateRaceSearchClearButton(widget.preySlot)
+        return
+    end
+
+    local slot = widget.preySlot
+    local text = widget:getText() or ''
+    local trimmed = text:trim()
+
+    if text ~= trimmed then
+        setSearchTextSilently(widget, trimmed)
+        widget:setCursorPos(-1)
+        text = trimmed
+    end
+
+    if trimmed:len() == 0 then
+        raceSearchTextsBySlot[slot] = nil
+    else
+        raceSearchTextsBySlot[slot] = trimmed
+    end
+
+    updateRaceSearchClearButton(slot)
+    refreshRaceList(slot)
+end
+
+function onRaceSearchClearClicked(widget)
+    if not widget or not widget.preySlot then
+        return
+    end
+
+    local slot = widget.preySlot
+    local searchEdit = widget.searchEdit
+
+    if not searchEdit or searchEdit:isDestroyed() then
+        local prey = getPreySlotWidget(slot)
+        if prey and prey.inactive and prey.inactive.fullList then
+            searchEdit = prey.inactive.fullList.searchEdit
+        end
+    end
+
+    raceSearchTextsBySlot[slot] = nil
+
+    if searchEdit and not searchEdit:isDestroyed() then
+        setSearchTextSilently(searchEdit, '')
+        searchEdit:setCursorPos(0)
+    end
+
+    updateRaceSearchClearButton(slot)
+    refreshRaceList(slot)
 end
 
 function onPreyRaceListItemClicked(widget)
@@ -1224,7 +1353,7 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
 
     fullList:setVisible(true)
 
-    prey.title:setText(tr('Select monster'))
+    prey.title:setText(tr('Select your prey creature'))
 
     clearFullListEntries(fullList)
     if fullList.selectionTitle then
@@ -1247,6 +1376,9 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
 
     selectedRaceEntryBySlot[slot] = nil
     selectedRaceWidgetBySlot[slot] = nil
+
+    raceSearchTextsBySlot[slot] = nil
+    updateRaceSearchUI(slot)
 
     local chooseButton = prey.inactive.choose and prey.inactive.choose.choosePreyButton
     if chooseButton then

@@ -58,7 +58,7 @@ end
 function init()
     connect(g_game, {
         onGameStart = check,
-        onGameEnd = hide,
+        onGameEnd = onGameEnd,
         onResourcesBalanceChange = Prey.onResourcesBalanceChange,
         onPreyFreeRerolls = onPreyFreeRerolls,
         onPreyTimeLeft = onPreyTimeLeft,
@@ -171,7 +171,7 @@ end
 function terminate()
     disconnect(g_game, {
         onGameStart = check,
-        onGameEnd = hide,
+        onGameEnd = onGameEnd,
         onResourcesBalanceChange = Prey.onResourcesBalanceChange,
         onPreyFreeRerolls = onPreyFreeRerolls,
         onPreyTimeLeft = onPreyTimeLeft,
@@ -243,6 +243,54 @@ function toggleTracker()
         end
         preyTracker:show()
     end
+end
+
+local function resetPreyWindowState()
+    if not preyWindow then
+        return
+    end
+
+    preyWindow.description:setText('')
+    preyWindow.gold:setText('0')
+    preyWindow.wildCards:setText('0')
+
+    for slot = 0, 2 do
+        onPreyInactive(slot, 0, 0)
+
+        local prey = preyWindow['slot' .. (slot + 1)]
+        if prey then
+            if prey.title then
+                prey.title:setText('')
+            end
+
+            if prey.inactive and prey.inactive.list then
+                prey.inactive.list:destroyChildren()
+            end
+
+            if prey.active and prey.active.creatureAndBonus then
+                local creatureAndBonus = prey.active.creatureAndBonus
+                if creatureAndBonus.timeLeft then
+                    creatureAndBonus.timeLeft:setPercent(0)
+                    creatureAndBonus.timeLeft:setText('')
+                end
+
+                if creatureAndBonus.bonus and creatureAndBonus.bonus.grade then
+                    creatureAndBonus.bonus.grade:destroyChildren()
+                end
+            end
+        end
+    end
+
+    preyDescription = {}
+    rerollPrice = 0
+    bonusRerolls = 0
+    bankGold = 0
+    inventoryGold = 0
+end
+
+function onGameEnd()
+    resetPreyWindowState()
+    hide()
 end
 
 function hide()
@@ -664,9 +712,12 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
         g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
     end
 
+    setOptionCheckedSilently(prey.active.autoReroll.autoRerollCheck, option == PREY_ACTION_BONUSREROLL)
     prey.active.autoReroll.autoRerollCheck.onCheckChange = function(widget, checked)
         handleToggleOptions(widget, slot, PREY_OPTION_TOGGLE_AUTOREROLL, checked)
     end
+
+    setOptionCheckedSilently(prey.active.lockPrey.lockPreyCheck, option == PREY_OPTION_TOGGLE_LOCK_PREY)
     prey.active.lockPrey.lockPreyCheck.onCheckChange = function(widget, checked)
         handleToggleOptions(widget, slot, PREY_OPTION_TOGGLE_LOCK_PREY, checked)
     end

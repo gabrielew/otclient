@@ -363,6 +363,78 @@ InactivePreyPanel < Panel
       cell-spacing: 3
       num-columns: 3
 
+  FlatPanel
+    id: fullList
+    anchors.fill: list
+    padding: 6
+    visible: false
+    image-source: /images/ui/panel_flat
+    image-border: 1
+
+    Label
+      id: selectionTitle
+      anchors.left: parent.left
+      anchors.right: parent.right
+      text-align: center
+      font: verdana-11px-rounded
+      text: tr('Select your prey creature')
+
+    ScrollablePanel
+      id: entries
+      anchors.top: selectionTitle.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: search.top
+      margin-top: 4
+      padding-right: 12
+      layout:
+        type: verticalBox
+        fit-children: true
+        fit-children-last: true
+      vertical-scrollbar: entriesScroll
+
+    VerticalScrollBar
+      id: entriesScroll
+      anchors.top: entries.top
+      anchors.bottom: entries.bottom
+      anchors.right: entries.right
+      step: 20
+      pixel-scroll: true
+
+    TextEdit
+      id: search
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: preview.top
+      margin-top: 4
+      margin-bottom: 4
+      placeholder: tr('Type to search')
+
+    FlatPanel
+      id: preview
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: parent.bottom
+      height: 72
+      padding: 4
+      image-source: /images/ui/panel_flat
+      image-border: 1
+
+      Label
+        id: placeholder
+        anchors.centerIn: parent
+        font: verdana-11px-rounded
+        text-align: center
+        text: tr('No creature selected')
+        color: #cfcfcfff
+
+      UICreature
+        id: creature
+        anchors.centerIn: parent
+        size: 64 64
+        phantom: true
+        visible: false
+
 ChoosePrey < FlatPanel
   size: 55 92
   padding: 10
@@ -501,6 +573,31 @@ PreyCreatureBox < UICheckBox
   $!on:
     image-color: #ffffff88
     color: #aaaaaa88
+
+PreyCreatureListItem < UICheckBox
+  height: 22
+  margin-bottom: 2
+  padding: 3
+  focusable: false
+  text-align: left
+  font: verdana-11px-rounded
+  color: #cfcfcfff
+  border-width: 1
+  border-color: alpha
+  text-offset: 4 0
+  @onClick: modules.game_prey.onPreyRaceListItemClicked(self)
+
+  $hover:
+    background-color: #ffffff12
+
+  $checked on:
+    background-color: #1c4d75ff
+    border-color: #6fb1e9ff
+    color: #ffffffff
+
+  $!checked:
+    background-color: alpha
+    border-color: alpha
 
 SlotPanel < Panel
   size: 210 320

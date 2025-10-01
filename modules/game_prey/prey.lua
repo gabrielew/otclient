@@ -678,18 +678,59 @@ function onItemBoxChecked(widget)
     widget:setChecked(true)
 end
 
-local function formatCreatureListText(name)
-    if not name then
+local function setWidgetTextToFit(widget, text, formatter)
+    if not widget then
         return ''
     end
 
-    local maxLength = 16
+    text = text or ''
+    formatter = formatter or function(value) return value end
 
-    if #name > maxLength then
-        return name:sub(1, maxLength) .. '...'
+    local ellipsis = '...'
+    local paddingLeft = widget.getPaddingLeft and widget:getPaddingLeft() or 0
+    local paddingRight = widget.getPaddingRight and widget:getPaddingRight() or 0
+    local availableWidth = widget:getWidth() - paddingLeft - paddingRight
+
+    if availableWidth <= 0 then
+        local formatted = formatter(text)
+        widget:setText(formatted)
+        return formatted
     end
 
-    return name
+    local function setAndCheck(value)
+        local formattedValue = formatter(value)
+        widget:setText(formattedValue)
+        local textSize = widget:getTextSize()
+        return textSize.width <= availableWidth, formattedValue
+    end
+
+    local fits, formatted = setAndCheck(text)
+    if fits then
+        return formatted
+    end
+
+    local bestFormatted
+    local left, right = 0, #text
+    while left <= right do
+        local mid = math.floor((left + right) / 2)
+        local candidate = text:sub(1, mid) .. ellipsis
+        local candidateFits, candidateFormatted = setAndCheck(candidate)
+        if candidateFits then
+            bestFormatted = candidateFormatted
+            left = mid + 1
+        else
+            right = mid - 1
+        end
+    end
+
+    if bestFormatted then
+        widget:setText(bestFormatted)
+        return bestFormatted
+    end
+
+    local _, ellipsisFormatted = setAndCheck(ellipsis)
+    widget:setText(ellipsisFormatted)
+    return ellipsisFormatted
 end
 
 local function buildRaceEntry(raceId)
@@ -713,7 +754,6 @@ local function buildRaceEntry(raceId)
     return {
         raceId = raceId,
         name = name,
-        displayName = formatCreatureListText(name),
         searchName = name:lower(),
         outfit = outfit,
         realSize = realSize
@@ -748,8 +788,9 @@ updateRaceSelectionDisplay = function(slot)
 
     if fullList.selectionTitle then
         if entry then
-            local formattedName = formatCreatureListText(entry.name)
-            fullList.selectionTitle:setText(tr('Selected: %s', formattedName))
+            setWidgetTextToFit(fullList.selectionTitle, entry.name, function(value)
+                return tr('Selected: %s', value)
+            end)
         else
             fullList.selectionTitle:setText(tr('Select your prey creature'))
         end
@@ -844,7 +885,7 @@ refreshRaceList = function(slot)
 
     for _, entry in ipairs(raceEntriesBySlot[slot] or {}) do
         local item = g_ui.createWidget('PreyCreatureListItem', entriesPanel)
-        item:setText(entry.displayName or entry.name)
+        setWidgetTextToFit(item, entry.name)
         item:setTooltip(entry.name)
         item.raceData = entry
         item.preySlot = slot

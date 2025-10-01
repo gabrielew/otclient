@@ -365,7 +365,12 @@ InactivePreyPanel < Panel
 
   FlatPanel
     id: fullList
-    anchors.fill: list
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: parent.top
+    anchors.bottom: choose.top
+    margin-top: 20
+    margin-bottom: 8
     padding: 6
     visible: false
     image-source: /images/ui/panel_flat
@@ -384,20 +389,22 @@ InactivePreyPanel < Panel
       anchors.top: selectionTitle.bottom
       anchors.left: parent.left
       anchors.right: parent.right
-      anchors.bottom: search.top
-      margin-top: 4
-      padding-right: 12
+      anchors.bottom: preview.top
+      margin-top: 6
+      margin-bottom: 6
+      padding-left: 2
+      padding-right: 14
+      padding-bottom: 2
       layout:
         type: verticalBox
-        fit-children: true
-        fit-children-last: true
       vertical-scrollbar: entriesScroll
 
     VerticalScrollBar
       id: entriesScroll
       anchors.top: entries.top
       anchors.bottom: entries.bottom
-      anchors.right: entries.right
+      anchors.right: parent.right
+      margin-right: 2
       step: 20
       pixel-scroll: true
 
@@ -407,6 +414,7 @@ InactivePreyPanel < Panel
       anchors.right: parent.right
       anchors.bottom: parent.bottom
       height: 72
+      margin-top: 6
       padding: 4
       image-source: /images/ui/panel_flat
       image-border: 1
@@ -566,6 +574,8 @@ PreyCreatureBox < UICheckBox
     color: #aaaaaa88
 
 PreyCreatureListItem < UICheckBox
+  anchors.left: parent.left
+  anchors.right: parent.right
   height: 22
   margin-bottom: 2
   padding: 3

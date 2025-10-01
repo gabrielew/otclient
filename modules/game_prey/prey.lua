@@ -277,9 +277,7 @@ local function resetPreyWindowState()
             end
 
             if prey.inactive and prey.inactive.fullList then
-                if prey.inactive.fullList.entries then
-                    prey.inactive.fullList.entries:destroyChildren()
-                end
+                clearFullListEntries(prey.inactive.fullList)
                 if prey.inactive.fullList.preview and prey.inactive.fullList.preview.placeholder then
                     prey.inactive.fullList.preview.placeholder:setVisible(true)
                 end
@@ -599,6 +597,40 @@ local function isDescendantOf(widget, ancestor)
     return false
 end
 
+local function getFullListEntriesContainer(fullList)
+    if not fullList then
+        return nil
+    end
+
+    local entries = fullList.entries
+    if not entries then
+        return nil
+    end
+
+    if entries.getChildById then
+        local contents = entries:getChildById('contentsPanel')
+        if contents then
+            return contents
+        end
+    end
+
+    return entries
+end
+
+local function clearFullListEntries(fullList)
+    local container = getFullListEntriesContainer(fullList)
+    if container then
+        container:destroyChildren()
+    end
+
+    if fullList and fullList.entries and fullList.entries.verticalScrollBar then
+        local scrollbar = fullList.entries.verticalScrollBar
+        if scrollbar.getMinimum and scrollbar.setValue then
+            scrollbar:setValue(scrollbar:getMinimum())
+        end
+    end
+end
+
 local function uncheckChildrenExcept(parent, except)
     if not parent then
         return
@@ -629,9 +661,9 @@ function onItemBoxChecked(widget)
             end
             local fullList = slotWidget.inactive.fullList
             if fullList then
-                local entries = fullList.entries or fullList
-                if entries and isDescendantOf(widget, entries) then
-                    uncheckChildrenExcept(entries, widget)
+                local entriesContainer = getFullListEntriesContainer(fullList) or fullList
+                if entriesContainer and isDescendantOf(widget, entriesContainer) then
+                    uncheckChildrenExcept(entriesContainer, widget)
                     widget:setChecked(true)
                     return
                 end
@@ -777,12 +809,12 @@ refreshRaceList = function(slot)
     end
 
     local fullList = prey.inactive.fullList
-    local entriesPanel = fullList.entries
+    clearFullListEntries(fullList)
+
+    local entriesPanel = getFullListEntriesContainer(fullList)
     if not entriesPanel then
         return
     end
-
-    entriesPanel:destroyChildren()
 
     local currentSelectionId = selectedRaceEntryBySlot[slot] and selectedRaceEntryBySlot[slot].raceId or nil
     local selectionRestored = false
@@ -1125,9 +1157,7 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
 
     prey.title:setText(tr('Select monster'))
 
-    if fullList.entries then
-        fullList.entries:destroyChildren()
-    end
+    clearFullListEntries(fullList)
     if fullList.selectionTitle then
         fullList.selectionTitle:setText(tr('Select your prey creature'))
     end

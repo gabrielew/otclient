@@ -36,7 +36,6 @@ local refreshRaceList
 local setRaceSelection
 local updateRaceSelectionDisplay
 local restoreRaceListItemBackground
-local applyRaceListItemBackground
 
 function bonusDescription(bonusType, bonusValue, bonusGrade)
     if bonusType == PREY_BONUS_DAMAGE_BOOST then
@@ -719,58 +718,9 @@ local function buildRaceEntry(raceId)
     }
 end
 
-local function applyRaceListItemTextColor(widget, isChecked)
-    if not widget or widget:isDestroyed() or not widget.setColor then
-        return
-    end
-
-    local color = widget.baseTextColor
-    if isChecked then
-        color = widget.checkedTextColor or color
-    end
-
-    if color then
-        widget:setColor(color)
-    end
-end
-
-local function lightenHexColor(color, amount)
-    if type(color) ~= 'string' then
-        return nil
-    end
-
-    local hex = color:match('^#([0-9a-fA-F]+)$')
-    if not hex or (#hex ~= 6 and #hex ~= 8) then
-        return nil
-    end
-
-    local hasAlpha = #hex == 8
-    local r = tonumber(hex:sub(1, 2), 16)
-    local g = tonumber(hex:sub(3, 4), 16)
-    local b = tonumber(hex:sub(5, 6), 16)
-    if not (r and g and b) then
-        return nil
-    end
-
-    amount = amount or 0
-    r = math.min(255, math.max(0, r + amount))
-    g = math.min(255, math.max(0, g + amount))
-    b = math.min(255, math.max(0, b + amount))
-
-    if hasAlpha then
-        return string.format('#%02x%02x%02x%s', r, g, b, hex:sub(7, 8))
-    end
-
-    return string.format('#%02x%02x%02x', r, g, b)
-end
-
-applyRaceListItemBackground = function(widget, hovered)
+restoreRaceListItemBackground = function(widget)
     if not widget or widget:isDestroyed() then
         return
-    end
-
-    if hovered == nil then
-        hovered = widget.isHovered and widget:isHovered() or false
     end
 
     if widget:isChecked() then
@@ -780,20 +730,9 @@ applyRaceListItemBackground = function(widget, hovered)
         return
     end
 
-    local color = widget.baseBackground
-    if hovered and widget.hoverBackground then
-        color = widget.hoverBackground
+    if widget.baseBackground then
+        widget:setBackgroundColor(widget.baseBackground)
     end
-
-    if color then
-        widget:setBackgroundColor(color)
-    end
-
-    applyRaceListItemTextColor(widget, widget:isChecked())
-end
-
-restoreRaceListItemBackground = function(widget)
-    applyRaceListItemBackground(widget, false)
 end
 
 updateRaceSelectionDisplay = function(slot)
@@ -873,8 +812,7 @@ setRaceSelection = function(slot, widget, skipUncheck)
     selectedRaceEntryBySlot[slot] = widget and widget.raceData or nil
 
     if widget then
-        applyRaceListItemTextColor(widget, true)
-        applyRaceListItemBackground(widget, widget:isHovered())
+        restoreRaceListItemBackground(widget)
     end
 
     updateRaceSelectionDisplay(slot)
@@ -908,22 +846,12 @@ refreshRaceList = function(slot)
         item.raceData = entry
         item.preySlot = slot
         item.baseBackground = useAlternate and backgroundB or backgroundA
-        item.hoverBackground = lightenHexColor(item.baseBackground, 0x10) or item.baseBackground
         item.checkedBackground = '#1c4d75ff'
-        item.baseTextColor = '#c0c0c0'
-        item.checkedTextColor = '#ffffff'
-        if item.setColor then
-            item:setColor(item.baseTextColor)
+        item:setBackgroundColor(item.baseBackground)
+        item.onCheckChange = function(widget)
+            restoreRaceListItemBackground(widget)
         end
-        item.onCheckChange = function(widget, checked)
-            applyRaceListItemTextColor(widget, checked)
-            applyRaceListItemBackground(widget, widget:isHovered())
-        end
-        item.onHoverChange = function(widget, hovered)
-            applyRaceListItemBackground(widget, hovered)
-        end
-        applyRaceListItemTextColor(item, item:isChecked())
-        applyRaceListItemBackground(item, false)
+        restoreRaceListItemBackground(item)
 
         useAlternate = not useAlternate
 

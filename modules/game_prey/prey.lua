@@ -296,6 +296,11 @@ local function restoreListSelectionLayout(prey)
             end
             priceLabel.__listSelectionStoredText = nil
         end
+
+        if selectPanel.pickSpecificPrey and selectPanel.pickSpecificPrey.__listSelectionStoredVisibility ~= nil and selectPanel.pickSpecificPrey.setVisible then
+            selectPanel.pickSpecificPrey:setVisible(selectPanel.pickSpecificPrey.__listSelectionStoredVisibility)
+            selectPanel.pickSpecificPrey.__listSelectionStoredVisibility = nil
+        end
     end
 
     local fullList = inactive.fullList
@@ -383,6 +388,15 @@ local function applyListSelectionLayout(prey)
                 priceLabel:setText('')
             end
         end
+
+        if selectPanel.pickSpecificPrey then
+            if selectPanel.pickSpecificPrey.setVisible and selectPanel.pickSpecificPrey.__listSelectionStoredVisibility == nil then
+                selectPanel.pickSpecificPrey.__listSelectionStoredVisibility = selectPanel.pickSpecificPrey:isVisible()
+            end
+            if selectPanel.pickSpecificPrey.setVisible then
+                selectPanel.pickSpecificPrey:setVisible(false)
+            end
+        end
     end
 
     local fullList = inactive.fullList
@@ -401,16 +415,18 @@ local function applyListSelectionLayout(prey)
     preview:removeAnchor(AnchorBottom)
     preview:removeAnchor(AnchorTop)
 
-    local anchorTarget = reroll and reroll:getId()
+    local anchorWidget = selectPanel or reroll
+    local anchorTarget = anchorWidget and anchorWidget:getId()
     if anchorTarget and anchorTarget ~= '' then
         preview:addAnchor(AnchorLeft, anchorTarget, AnchorLeft)
         preview:addAnchor(AnchorRight, anchorTarget, AnchorRight)
+        preview:addAnchor(AnchorTop, anchorTarget, AnchorTop)
         preview:addAnchor(AnchorBottom, anchorTarget, AnchorBottom)
-        if reroll.getWidth then
-            preview:setWidth(reroll:getWidth())
+        if anchorWidget.getWidth then
+            preview:setWidth(anchorWidget:getWidth())
         end
-        if preview.__listSelectionDefaults and preview.__listSelectionDefaults.height then
-            preview:setHeight(preview.__listSelectionDefaults.height)
+        if anchorWidget.getHeight then
+            preview:setHeight(anchorWidget:getHeight())
         end
     else
         local parentWidget = preview:getParent()

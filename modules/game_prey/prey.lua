@@ -9,6 +9,8 @@ local bankGold = 0
 local inventoryGold = 0
 local rerollPrice = 0
 local bonusRerolls = 0
+local trackedPreyModalIds = {}
+local activePreyModal
 
 local PREY_BONUS_DAMAGE_BOOST = 0
 local PREY_BONUS_DAMAGE_REDUCTION = 1
@@ -23,7 +25,125 @@ local PREY_ACTION_REQUEST_ALL_MONSTERS = 3
 local PREY_ACTION_CHANGE_FROM_ALL = 4
 local PREY_ACTION_LOCK_PREY = 5
 
+local PREY_OPTION_TOGGLE_AUTOREROLL = 'prey_option_toggle_autoreroll'
+local PREY_OPTION_TOGGLE_LOCK_PREY = 'prey_option_toggle_lock_prey'
+
 local preyDescription = {}
+
+local function normalizeText(text)
+    if not text or text == '' then
+        return ''
+    end
+
+    local normalized = text:lower()
+    normalized = normalized:gsub('[áàãâä]', 'a')
+    normalized = normalized:gsub('[éèêë]', 'e')
+    normalized = normalized:gsub('[íìîï]', 'i')
+    normalized = normalized:gsub('[óòõôö]', 'o')
+    normalized = normalized:gsub('[úùûü]', 'u')
+    normalized = normalized:gsub('ç', 'c')
+    normalized = normalized:gsub('%s+', ' ')
+
+    return normalized
+end
+
+local function detectPreyModalOption(title, message)
+    local combined = normalizeText((title or '') .. ' ' .. (message or ''))
+    if combined == '' then
+        return nil
+    end
+
+    local containsPreyReference = combined:find('prey', 1, true) or combined:find('presa', 1, true)
+
+    if containsPreyReference then
+        local hasAuto = combined:find('autom', 1, true) or combined:find('auto ', 1, true)
+        local hasReroll = combined:find('reroll', 1, true) or combined:find('re%-rol', 1) or combined:find('re rol', 1, true) or
+                              combined:find('rerrol', 1, true) or combined:find('rolar novamente', 1, true) or
+                              combined:find('rolar de novo', 1, true) or combined:find('novo bonus', 1, true) or
+                              combined:find('novamente o bonus', 1, true)
+
+        if hasAuto and hasReroll then
+            return PREY_OPTION_TOGGLE_AUTOREROLL
+        end
+
+        local hasLock = combined:find('lock', 1, true) or combined:find('unlock', 1, true) or
+                             combined:find('bloque', 1, true) or combined:find('desbloque', 1, true) or
+                             combined:find('travar', 1, true) or combined:find('destravar', 1, true)
+
+        if hasLock then
+            return PREY_OPTION_TOGGLE_LOCK_PREY
+        end
+    end
+
+    return nil
+end
+
+local function restorePreyWindow(modalId)
+    if not activePreyModal or activePreyModal.id ~= modalId then
+        return
+    end
+
+    if activePreyModal.wasVisible and preyWindow and not preyWindow:isDestroyed() then
+        preyWindow:show()
+        preyWindow:raise()
+        preyWindow:focus()
+    end
+
+    activePreyModal = nil
+end
+
+local function attachModalCloseListener(modalId)
+    local attempts = 0
+
+    local function tryAttach()
+        if not activePreyModal or activePreyModal.id ~= modalId or activePreyModal.listenerAttached then
+            return
+        end
+
+        local dialog = rootWidget and rootWidget:recursiveGetChildById('modalDialog') or modalDialog
+        if dialog then
+            activePreyModal.listenerAttached = true
+            connect(dialog, {
+                onDestroy = function()
+                    restorePreyWindow(modalId)
+                end
+            })
+            return
+        end
+
+        attempts = attempts + 1
+        if attempts >= 3 and (not modalDialog or modalDialog:isDestroyed()) then
+            restorePreyWindow(modalId)
+            return
+        end
+
+        if attempts < 50 then
+            scheduleEvent(tryAttach, 50)
+        else
+            restorePreyWindow(modalId)
+        end
+    end
+
+    addEvent(tryAttach)
+end
+
+local function handlePreyModalOpened(modalId)
+    if activePreyModal and activePreyModal.id == modalId then
+        return
+    end
+
+    local wasVisible = preyWindow and not preyWindow:isDestroyed() and preyWindow:isVisible()
+    if wasVisible then
+        preyWindow:hide()
+    end
+
+    activePreyModal = {
+        id = modalId,
+        wasVisible = wasVisible
+    }
+
+    attachModalCloseListener(modalId)
+end
 
 function bonusDescription(bonusType, bonusValue, bonusGrade)
     if bonusType == PREY_BONUS_DAMAGE_BOOST then
@@ -66,8 +186,12 @@ function init()
         onPreySelection = onPreySelection,
         onPreySelectionChangeMonster = onPreySelectionChangeMonster,
         onPreyListSelection = onPreyListSelection,
-        onPreyWildcardSelection = onPreyWildcardSelection
+        onPreyWildcardSelection = onPreyWildcardSelection,
+        onModalDialog = Prey.onModalDialog
     })
+
+    trackedPreyModalIds = {}
+    activePreyModal = nil
 
     preyWindow = g_ui.displayUI('prey')
     preyWindow:hide()
@@ -170,7 +294,8 @@ function terminate()
         onPreySelection = onPreySelection,
         onPreySelectionChangeMonster = onPreySelectionChangeMonster,
         onPreyListSelection = onPreyListSelection,
-        onPreyWildcardSelection = onPreyWildcardSelection
+        onPreyWildcardSelection = onPreyWildcardSelection,
+        onModalDialog = Prey.onModalDialog
     })
 
     if preyButton then
@@ -185,6 +310,8 @@ function terminate()
         msgWindow:destroy()
         msgWindow = nil
     end
+    trackedPreyModalIds = {}
+    activePreyModal = nil
 end
 
 local n = 0
@@ -241,6 +368,7 @@ function hide()
         msgWindow:destroy()
         msgWindow = nil
     end
+    activePreyModal = nil
 end
 
 function show()
@@ -654,6 +782,24 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
 end
 
 function onPreyWildcardSelection(slot, races, nextFreeReroll, wildcards)
+end
+
+function Prey.onModalDialog(id, title, message, buttons, enterButton, escapeButton, choices, priority)
+    if not preyWindow or preyWindow:isDestroyed() then
+        return
+    end
+
+    local option = trackedPreyModalIds[id]
+    if not option then
+        option = detectPreyModalOption(title, message)
+        if option then
+            trackedPreyModalIds[id] = option
+        end
+    end
+
+    if option then
+        handlePreyModalOpened(id)
+    end
 end
 
 function Prey.onResourcesBalanceChange(balance, oldBalance, type)

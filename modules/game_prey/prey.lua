@@ -548,10 +548,27 @@ local function handleToggleOptions(checkbox, slot, currentOption, checked)
 
     if checked then
         local confirmWindow
+        local wasPreyWindowVisible = preyWindow and preyWindow:isVisible()
+        local preyVisibilityRestored = false
+
+        local function restorePreyWindowVisibility()
+            if not preyVisibilityRestored and wasPreyWindowVisible and preyWindow then
+                preyVisibilityRestored = true
+                preyWindow:show()
+                preyWindow:raise()
+                preyWindow:focus()
+            end
+        end
+
+        if wasPreyWindowVisible then
+            preyWindow:hide()
+        end
+
         local function closeWindow()
             if confirmWindow then
                 confirmWindow:destroy()
                 confirmWindow = nil
+                restorePreyWindowVisibility()
             end
         end
 
@@ -584,6 +601,10 @@ local function handleToggleOptions(checkbox, slot, currentOption, checked)
                 callback = confirm
             },
         }, confirm, cancel)
+
+        if confirmWindow then
+            confirmWindow.onDestroy = restorePreyWindowVisibility
+        end
 
         return
     end

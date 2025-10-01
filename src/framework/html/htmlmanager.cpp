@@ -261,7 +261,17 @@ UIWidgetPtr createWidgetFromNode(const HtmlNodePtr& node, const UIWidgetPtr& par
     if (node->getType() == NodeType::Comment || node->getType() == NodeType::Doctype)
         return nullptr;
 
-    const auto& styleName = g_ui.getStyleName(translateStyleName(node->getTag(), node));
+    std::string widgetAttr = node->getAttr("data-widget");
+    std::string styleName;
+
+    if (!widgetAttr.empty()) {
+        styleName = g_ui.getStyleName(widgetAttr);
+        if (styleName.empty()) {
+            styleName = widgetAttr;
+        }
+    } else {
+        styleName = g_ui.getStyleName(translateStyleName(node->getTag(), node));
+    }
 
     auto widget = g_ui.createWidget(styleName.empty() ? "UIHTML" : styleName, parent);
     widgets.emplace_back(widget);
@@ -349,6 +359,10 @@ void applyAttributesAndStyles(UIWidget* widget, HtmlNode* node, std::unordered_m
         auto attr = key;
         auto value = v;
         translateAttribute(widget->getStyleName(), node->getTag(), attr, value);
+
+        if (attr == "data-widget") {
+            continue;
+        }
 
         if (attr.starts_with("on")) {
             // lua call

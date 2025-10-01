@@ -1,306 +1,306 @@
-<link href="prey.css" />
+<link rel="stylesheet" href="prey.css" />
 <html>
   <window id="preyWindow" class="prey-window" title="Preys" onescape="modules.game_prey.hide()">
     <div class="prey-content">
       <div class="prey-slot-row">
         <!-- Slot 1 -->
-        <Panel id="slot1" class="slot-panel">
-          <Label id="title" class="slot-title" />
-          <Panel id="locked" class="locked-panel">
-            <Panel id="noCreature" class="no-creature-panel">
-              <FlatPanel class="creature-frame">
-                <UIWidget class="creature-placeholder" image-source="/images/game/prey/prey_biginactive" />
-              </FlatPanel>
-              <FlatPanel id="bonus" class="bonus-panel">
-                <UIWidget id="noBonusIcon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" onhoverchange="modules.game_prey.onHover(self)" />
-                <HorizontalSeparator />
-                <Panel id="grade" class="bonus-grade">
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                </Panel>
-              </FlatPanel>
-              <UIWidget class="locked-info" onhoverchange="modules.game_prey.onHover(self)" />
-            </Panel>
-            <UIButton id="perm" class="store-button" onclick="modules.game_mainpanel.toggleStore()">
-              <UIWidget id="shopPermButton" class="store-button-image" image-source="/images/game/prey/prey_perm_test" image-clip="0 0 204 67" onclick="modules.game_mainpanel.toggleStore()" onhoverchange="modules.game_prey.onHover(self)" />
-            </UIButton>
-            <UIButton id="temp" class="store-button" onclick="modules.game_mainpanel.toggleStore()">
-              <UIWidget id="shopTempButton" class="store-button-image" image-source="/images/game/prey/prey_temp_test" image-clip="0 0 204 67" onclick="modules.game_mainpanel.toggleStore()" onhoverchange="modules.game_prey.onHover(self)" />
-            </UIButton>
-          </Panel>
-          <Panel id="inactive" class="inactive-panel">
-            <FlatPanel id="list" class="creature-list" />
-            <FlatPanel id="fullList" class="full-list" visible="false">
-              <Label id="selectionTitle" class="selection-title" text="Select your prey creature" />
-              <TextEdit id="searchEdit" class="search-edit" placeholder="Type to search" ontextchange="modules.game_prey.onRaceSearchTextChanged(self)" />
-              <UIWidget id="searchClearButton" class="search-clear" image-source="/images/ui/button-clear-18x18-up" visible="false" onclick="modules.game_prey.onRaceSearchClearClicked(self)" />
-              <UIScrollArea id="entries" class="entries" vertical-scrollbar="entriesScroll"></UIScrollArea>
-              <VerticalScrollBar id="entriesScroll" class="entries-scroll" step="20" pixel-scroll="true" />
-              <FlatPanel id="preview" class="preview">
-                <Label id="placeholder" class="preview-placeholder" text="No creature selected" />
-                <UICreature id="creature" class="preview-creature" visible="false" />
-              </FlatPanel>
-            </FlatPanel>
-            <Panel id="reroll" class="reroll-panel">
-              <FlatPanel id="button" class="reroll-button">
-                <ProgressBar id="time" class="reroll-time" />
-                <UIButton id="rerollButton" class="reroll-action" image-source="/images/game/prey/prey_reroll" image-clip="2 0 63 62" />
-              </FlatPanel>
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <Panel id="select" class="select-prey">
-              <UIButton id="pickSpecificPrey" class="pick-prey" image-source="/images/game/prey/prey_select_blocked" onhoverchange="modules.game_prey.onHover(self)" />
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <Panel id="choose" class="choose-prey">
-              <UIButton id="choosePreyButton" class="choose-button" image-source="/images/game/prey/prey_choose" image-clip="1 0 44 35" onhoverchange="modules.game_prey.onHover(self)" />
-            </Panel>
-          </Panel>
-          <Panel id="active" class="active-panel" visible="false">
-            <Panel id="creatureAndBonus" class="creature-bonus">
-              <UICreature id="creature" class="creature-display" />
-              <FlatPanel id="bonus" class="bonus-details">
-                <UIWidget id="icon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" />
-                <HorizontalSeparator />
-                <Panel id="grade" class="bonus-grade"></Panel>
-              </FlatPanel>
-              <ProgressBar id="timeLeft" class="time-left" />
-            </Panel>
-            <Panel id="choose" class="bonus-reroll">
-              <UIButton id="selectPrey" class="bonus-reroll-button" image-source="/images/game/prey/prey_bonus_reroll" image-clip="1 0 35 52" onhoverchange="modules.game_prey.onHover(self)" />
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <Panel id="select" class="select-prey">
-              <UIButton id="pickSpecificPrey" class="pick-prey" image-source="/images/game/prey/prey_select_blocked" onhoverchange="modules.game_prey.onHover(self)" />
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <Panel id="reroll" class="reroll-panel">
-              <FlatPanel id="button" class="reroll-button">
-                <ProgressBar id="time" class="reroll-time" />
-                <UIButton id="rerollButton" class="reroll-action" image-source="/images/game/prey/prey_reroll" image-clip="2 0 63 62" />
-              </FlatPanel>
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <FlatPanel id="autoReroll" class="auto-reroll">
-              <CheckBox id="autoRerollCheck" class="auto-reroll-check" text="Automatic Bonus Rer..." />
-            </FlatPanel>
-            <CardLabel id="autoRerollPrice" class="price-label" />
-            <FlatPanel id="lockPrey" class="lock-prey">
-              <CheckBox id="lockPreyCheck" class="lock-prey-check" text="Lock Prey" />
-            </FlatPanel>
-            <CardLabel id="lockPreyPrice" class="price-label" />
-          </Panel>
-        </Panel>
+        <div data-widget="Panel" id="slot1" class="slot-panel">
+          <label data-widget="Label" id="title" class="slot-title" ></label>
+          <div data-widget="Panel" id="locked" class="locked-panel">
+            <div data-widget="Panel" id="noCreature" class="no-creature-panel">
+              <div data-widget="FlatPanel" class="creature-frame">
+                <div data-widget="UIWidget" class="creature-placeholder" image-source="/images/game/prey/prey_biginactive" ></div>
+              </div>
+              <div data-widget="FlatPanel" id="bonus" class="bonus-panel">
+                <div data-widget="UIWidget" id="noBonusIcon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                <hr data-widget="HorizontalSeparator" />
+                <div data-widget="Panel" id="grade" class="bonus-grade">
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                </div>
+              </div>
+              <div data-widget="UIWidget" class="locked-info" onhoverchange="modules.game_prey.onHover(self)" ></div>
+            </div>
+            <button data-widget="UIButton" id="perm" class="store-button" onclick="modules.game_mainpanel.toggleStore()">
+              <div data-widget="UIWidget" id="shopPermButton" class="store-button-image" image-source="/images/game/prey/prey_perm_test" image-clip="0 0 204 67" onclick="modules.game_mainpanel.toggleStore()" onhoverchange="modules.game_prey.onHover(self)" ></div>
+            </button>
+            <button data-widget="UIButton" id="temp" class="store-button" onclick="modules.game_mainpanel.toggleStore()">
+              <div data-widget="UIWidget" id="shopTempButton" class="store-button-image" image-source="/images/game/prey/prey_temp_test" image-clip="0 0 204 67" onclick="modules.game_mainpanel.toggleStore()" onhoverchange="modules.game_prey.onHover(self)" ></div>
+            </button>
+          </div>
+          <div data-widget="Panel" id="inactive" class="inactive-panel">
+            <div data-widget="FlatPanel" id="list" class="creature-list" ></div>
+            <div data-widget="FlatPanel" id="fullList" class="full-list" visible="false">
+              <label data-widget="Label" id="selectionTitle" class="selection-title" text="Select your prey creature" ></label>
+              <input type="text" data-widget="TextEdit" id="searchEdit" class="search-edit" placeholder="Type to search" ontextchange="modules.game_prey.onRaceSearchTextChanged(self)" />
+              <div data-widget="UIWidget" id="searchClearButton" class="search-clear" image-source="/images/ui/button-clear-18x18-up" visible="false" onclick="modules.game_prey.onRaceSearchClearClicked(self)" ></div>
+              <div data-widget="UIScrollArea" id="entries" class="entries" vertical-scrollbar="entriesScroll"></div>
+              <div data-widget="VerticalScrollBar" id="entriesScroll" class="entries-scroll" step="20" pixel-scroll="true" ></div>
+              <div data-widget="FlatPanel" id="preview" class="preview">
+                <label data-widget="Label" id="placeholder" class="preview-placeholder" text="No creature selected" ></label>
+                <div data-widget="UICreature" id="creature" class="preview-creature" visible="false" ></div>
+              </div>
+            </div>
+            <div data-widget="Panel" id="reroll" class="reroll-panel">
+              <div data-widget="FlatPanel" id="button" class="reroll-button">
+                <div data-widget="ProgressBar" id="time" class="reroll-time" ></div>
+                <button data-widget="UIButton" id="rerollButton" class="reroll-action" image-source="/images/game/prey/prey_reroll" image-clip="2 0 63 62" ></button>
+              </div>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="Panel" id="select" class="select-prey">
+              <button data-widget="UIButton" id="pickSpecificPrey" class="pick-prey" image-source="/images/game/prey/prey_select_blocked" onhoverchange="modules.game_prey.onHover(self)" ></button>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="Panel" id="choose" class="choose-prey">
+              <button data-widget="UIButton" id="choosePreyButton" class="choose-button" image-source="/images/game/prey/prey_choose" image-clip="1 0 44 35" onhoverchange="modules.game_prey.onHover(self)" ></button>
+            </div>
+          </div>
+          <div data-widget="Panel" id="active" class="active-panel" visible="false">
+            <div data-widget="Panel" id="creatureAndBonus" class="creature-bonus">
+              <div data-widget="UICreature" id="creature" class="creature-display" ></div>
+              <div data-widget="FlatPanel" id="bonus" class="bonus-details">
+                <div data-widget="UIWidget" id="icon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" ></div>
+                <hr data-widget="HorizontalSeparator" />
+                <div data-widget="Panel" id="grade" class="bonus-grade"></div>
+              </div>
+              <div data-widget="ProgressBar" id="timeLeft" class="time-left" ></div>
+            </div>
+            <div data-widget="Panel" id="choose" class="bonus-reroll">
+              <button data-widget="UIButton" id="selectPrey" class="bonus-reroll-button" image-source="/images/game/prey/prey_bonus_reroll" image-clip="1 0 35 52" onhoverchange="modules.game_prey.onHover(self)" ></button>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="Panel" id="select" class="select-prey">
+              <button data-widget="UIButton" id="pickSpecificPrey" class="pick-prey" image-source="/images/game/prey/prey_select_blocked" onhoverchange="modules.game_prey.onHover(self)" ></button>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="Panel" id="reroll" class="reroll-panel">
+              <div data-widget="FlatPanel" id="button" class="reroll-button">
+                <div data-widget="ProgressBar" id="time" class="reroll-time" ></div>
+                <button data-widget="UIButton" id="rerollButton" class="reroll-action" image-source="/images/game/prey/prey_reroll" image-clip="2 0 63 62" ></button>
+              </div>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="FlatPanel" id="autoReroll" class="auto-reroll">
+              <input type="checkbox" data-widget="QtCheckBox" id="autoRerollCheck" class="auto-reroll-check" text="Automatic Bonus Rer..." />
+            </div>
+            <label data-widget="Label" id="autoRerollPrice" class="price-label"></label>
+            <div data-widget="FlatPanel" id="lockPrey" class="lock-prey">
+              <input type="checkbox" data-widget="QtCheckBox" id="lockPreyCheck" class="lock-prey-check" text="Lock Prey" />
+            </div>
+            <label data-widget="Label" id="lockPreyPrice" class="price-label"></label>
+          </div>
+        </div>
 
         <!-- Slot 2 -->
-        <Panel id="slot2" class="slot-panel">
-          <Label id="title" class="slot-title" />
-          <Panel id="locked" class="locked-panel">
-            <Panel id="noCreature" class="no-creature-panel">
-              <FlatPanel class="creature-frame">
-                <UIWidget class="creature-placeholder" image-source="/images/game/prey/prey_biginactive" />
-              </FlatPanel>
-              <FlatPanel id="bonus" class="bonus-panel">
-                <UIWidget id="noBonusIcon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" onhoverchange="modules.game_prey.onHover(self)" />
-                <HorizontalSeparator />
-                <Panel id="grade" class="bonus-grade">
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                </Panel>
-              </FlatPanel>
-              <UIWidget class="locked-info" onhoverchange="modules.game_prey.onHover(self)" />
-            </Panel>
-            <UIButton id="perm" class="store-button" onclick="modules.game_mainpanel.toggleStore()">
-              <UIWidget id="shopPermButton" class="store-button-image" image-source="/images/game/prey/prey_perm_test" image-clip="0 0 204 67" onclick="modules.game_mainpanel.toggleStore()" onhoverchange="modules.game_prey.onHover(self)" />
-            </UIButton>
-            <UIButton id="temp" class="store-button" onclick="modules.game_mainpanel.toggleStore()">
-              <UIWidget id="shopTempButton" class="store-button-image" image-source="/images/game/prey/prey_temp_test" image-clip="0 0 204 67" onclick="modules.game_mainpanel.toggleStore()" onhoverchange="modules.game_prey.onHover(self)" />
-            </UIButton>
-          </Panel>
-          <Panel id="inactive" class="inactive-panel">
-            <FlatPanel id="list" class="creature-list" />
-            <FlatPanel id="fullList" class="full-list" visible="false">
-              <Label id="selectionTitle" class="selection-title" text="Select your prey creature" />
-              <TextEdit id="searchEdit" class="search-edit" placeholder="Type to search" ontextchange="modules.game_prey.onRaceSearchTextChanged(self)" />
-              <UIWidget id="searchClearButton" class="search-clear" image-source="/images/ui/button-clear-18x18-up" visible="false" onclick="modules.game_prey.onRaceSearchClearClicked(self)" />
-              <UIScrollArea id="entries" class="entries" vertical-scrollbar="entriesScroll"></UIScrollArea>
-              <VerticalScrollBar id="entriesScroll" class="entries-scroll" step="20" pixel-scroll="true" />
-              <FlatPanel id="preview" class="preview">
-                <Label id="placeholder" class="preview-placeholder" text="No creature selected" />
-                <UICreature id="creature" class="preview-creature" visible="false" />
-              </FlatPanel>
-            </FlatPanel>
-            <Panel id="reroll" class="reroll-panel">
-              <FlatPanel id="button" class="reroll-button">
-                <ProgressBar id="time" class="reroll-time" />
-                <UIButton id="rerollButton" class="reroll-action" image-source="/images/game/prey/prey_reroll" image-clip="2 0 63 62" />
-              </FlatPanel>
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <Panel id="select" class="select-prey">
-              <UIButton id="pickSpecificPrey" class="pick-prey" image-source="/images/game/prey/prey_select_blocked" onhoverchange="modules.game_prey.onHover(self)" />
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <Panel id="choose" class="choose-prey">
-              <UIButton id="choosePreyButton" class="choose-button" image-source="/images/game/prey/prey_choose" image-clip="1 0 44 35" onhoverchange="modules.game_prey.onHover(self)" />
-            </Panel>
-          </Panel>
-          <Panel id="active" class="active-panel" visible="false">
-            <Panel id="creatureAndBonus" class="creature-bonus">
-              <UICreature id="creature" class="creature-display" />
-              <FlatPanel id="bonus" class="bonus-details">
-                <UIWidget id="icon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" />
-                <HorizontalSeparator />
-                <Panel id="grade" class="bonus-grade"></Panel>
-              </FlatPanel>
-              <ProgressBar id="timeLeft" class="time-left" />
-            </Panel>
-            <Panel id="choose" class="bonus-reroll">
-              <UIButton id="selectPrey" class="bonus-reroll-button" image-source="/images/game/prey/prey_bonus_reroll" image-clip="1 0 35 52" onhoverchange="modules.game_prey.onHover(self)" />
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <Panel id="select" class="select-prey">
-              <UIButton id="pickSpecificPrey" class="pick-prey" image-source="/images/game/prey/prey_select_blocked" onhoverchange="modules.game_prey.onHover(self)" />
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <Panel id="reroll" class="reroll-panel">
-              <FlatPanel id="button" class="reroll-button">
-                <ProgressBar id="time" class="reroll-time" />
-                <UIButton id="rerollButton" class="reroll-action" image-source="/images/game/prey/prey_reroll" image-clip="2 0 63 62" />
-              </FlatPanel>
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <FlatPanel id="autoReroll" class="auto-reroll">
-              <CheckBox id="autoRerollCheck" class="auto-reroll-check" text="Automatic Bonus Rer..." />
-            </FlatPanel>
-            <CardLabel id="autoRerollPrice" class="price-label" />
-            <FlatPanel id="lockPrey" class="lock-prey">
-              <CheckBox id="lockPreyCheck" class="lock-prey-check" text="Lock Prey" />
-            </FlatPanel>
-            <CardLabel id="lockPreyPrice" class="price-label" />
-          </Panel>
-        </Panel>
+        <div data-widget="Panel" id="slot2" class="slot-panel">
+          <label data-widget="Label" id="title" class="slot-title" ></label>
+          <div data-widget="Panel" id="locked" class="locked-panel">
+            <div data-widget="Panel" id="noCreature" class="no-creature-panel">
+              <div data-widget="FlatPanel" class="creature-frame">
+                <div data-widget="UIWidget" class="creature-placeholder" image-source="/images/game/prey/prey_biginactive" ></div>
+              </div>
+              <div data-widget="FlatPanel" id="bonus" class="bonus-panel">
+                <div data-widget="UIWidget" id="noBonusIcon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                <hr data-widget="HorizontalSeparator" />
+                <div data-widget="Panel" id="grade" class="bonus-grade">
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                </div>
+              </div>
+              <div data-widget="UIWidget" class="locked-info" onhoverchange="modules.game_prey.onHover(self)" ></div>
+            </div>
+            <button data-widget="UIButton" id="perm" class="store-button" onclick="modules.game_mainpanel.toggleStore()">
+              <div data-widget="UIWidget" id="shopPermButton" class="store-button-image" image-source="/images/game/prey/prey_perm_test" image-clip="0 0 204 67" onclick="modules.game_mainpanel.toggleStore()" onhoverchange="modules.game_prey.onHover(self)" ></div>
+            </button>
+            <button data-widget="UIButton" id="temp" class="store-button" onclick="modules.game_mainpanel.toggleStore()">
+              <div data-widget="UIWidget" id="shopTempButton" class="store-button-image" image-source="/images/game/prey/prey_temp_test" image-clip="0 0 204 67" onclick="modules.game_mainpanel.toggleStore()" onhoverchange="modules.game_prey.onHover(self)" ></div>
+            </button>
+          </div>
+          <div data-widget="Panel" id="inactive" class="inactive-panel">
+            <div data-widget="FlatPanel" id="list" class="creature-list" ></div>
+            <div data-widget="FlatPanel" id="fullList" class="full-list" visible="false">
+              <label data-widget="Label" id="selectionTitle" class="selection-title" text="Select your prey creature" ></label>
+              <input type="text" data-widget="TextEdit" id="searchEdit" class="search-edit" placeholder="Type to search" ontextchange="modules.game_prey.onRaceSearchTextChanged(self)" />
+              <div data-widget="UIWidget" id="searchClearButton" class="search-clear" image-source="/images/ui/button-clear-18x18-up" visible="false" onclick="modules.game_prey.onRaceSearchClearClicked(self)" ></div>
+              <div data-widget="UIScrollArea" id="entries" class="entries" vertical-scrollbar="entriesScroll"></div>
+              <div data-widget="VerticalScrollBar" id="entriesScroll" class="entries-scroll" step="20" pixel-scroll="true" ></div>
+              <div data-widget="FlatPanel" id="preview" class="preview">
+                <label data-widget="Label" id="placeholder" class="preview-placeholder" text="No creature selected" ></label>
+                <div data-widget="UICreature" id="creature" class="preview-creature" visible="false" ></div>
+              </div>
+            </div>
+            <div data-widget="Panel" id="reroll" class="reroll-panel">
+              <div data-widget="FlatPanel" id="button" class="reroll-button">
+                <div data-widget="ProgressBar" id="time" class="reroll-time" ></div>
+                <button data-widget="UIButton" id="rerollButton" class="reroll-action" image-source="/images/game/prey/prey_reroll" image-clip="2 0 63 62" ></button>
+              </div>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="Panel" id="select" class="select-prey">
+              <button data-widget="UIButton" id="pickSpecificPrey" class="pick-prey" image-source="/images/game/prey/prey_select_blocked" onhoverchange="modules.game_prey.onHover(self)" ></button>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="Panel" id="choose" class="choose-prey">
+              <button data-widget="UIButton" id="choosePreyButton" class="choose-button" image-source="/images/game/prey/prey_choose" image-clip="1 0 44 35" onhoverchange="modules.game_prey.onHover(self)" ></button>
+            </div>
+          </div>
+          <div data-widget="Panel" id="active" class="active-panel" visible="false">
+            <div data-widget="Panel" id="creatureAndBonus" class="creature-bonus">
+              <div data-widget="UICreature" id="creature" class="creature-display" ></div>
+              <div data-widget="FlatPanel" id="bonus" class="bonus-details">
+                <div data-widget="UIWidget" id="icon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" ></div>
+                <hr data-widget="HorizontalSeparator" />
+                <div data-widget="Panel" id="grade" class="bonus-grade"></div>
+              </div>
+              <div data-widget="ProgressBar" id="timeLeft" class="time-left" ></div>
+            </div>
+            <div data-widget="Panel" id="choose" class="bonus-reroll">
+              <button data-widget="UIButton" id="selectPrey" class="bonus-reroll-button" image-source="/images/game/prey/prey_bonus_reroll" image-clip="1 0 35 52" onhoverchange="modules.game_prey.onHover(self)" ></button>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="Panel" id="select" class="select-prey">
+              <button data-widget="UIButton" id="pickSpecificPrey" class="pick-prey" image-source="/images/game/prey/prey_select_blocked" onhoverchange="modules.game_prey.onHover(self)" ></button>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="Panel" id="reroll" class="reroll-panel">
+              <div data-widget="FlatPanel" id="button" class="reroll-button">
+                <div data-widget="ProgressBar" id="time" class="reroll-time" ></div>
+                <button data-widget="UIButton" id="rerollButton" class="reroll-action" image-source="/images/game/prey/prey_reroll" image-clip="2 0 63 62" ></button>
+              </div>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="FlatPanel" id="autoReroll" class="auto-reroll">
+              <input type="checkbox" data-widget="QtCheckBox" id="autoRerollCheck" class="auto-reroll-check" text="Automatic Bonus Rer..." />
+            </div>
+            <label data-widget="Label" id="autoRerollPrice" class="price-label"></label>
+            <div data-widget="FlatPanel" id="lockPrey" class="lock-prey">
+              <input type="checkbox" data-widget="QtCheckBox" id="lockPreyCheck" class="lock-prey-check" text="Lock Prey" />
+            </div>
+            <label data-widget="Label" id="lockPreyPrice" class="price-label"></label>
+          </div>
+        </div>
 
         <!-- Slot 3 -->
-        <Panel id="slot3" class="slot-panel">
-          <Label id="title" class="slot-title" />
-          <Panel id="locked" class="locked-panel">
-            <Panel id="noCreature" class="no-creature-panel">
-              <FlatPanel class="creature-frame">
-                <UIWidget class="creature-placeholder" image-source="/images/game/prey/prey_biginactive" />
-              </FlatPanel>
-              <FlatPanel id="bonus" class="bonus-panel">
-                <UIWidget id="noBonusIcon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" onhoverchange="modules.game_prey.onHover(self)" />
-                <HorizontalSeparator />
-                <Panel id="grade" class="bonus-grade">
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                  <UIWidget class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" />
-                </Panel>
-              </FlatPanel>
-              <UIWidget class="locked-info" onhoverchange="modules.game_prey.onHover(self)" />
-            </Panel>
-            <UIButton id="perm" class="store-button" onclick="modules.game_mainpanel.toggleStore()">
-              <UIWidget id="shopPermButton" class="store-button-image" image-source="/images/game/prey/prey_perm_test" image-clip="0 0 204 67" onclick="modules.game_mainpanel.toggleStore()" onhoverchange="modules.game_prey.onHover(self)" />
-            </UIButton>
-            <UIButton id="temp" class="store-button" onclick="modules.game_mainpanel.toggleStore()">
-              <UIWidget id="shopTempButton" class="store-button-image" image-source="/images/game/prey/prey_temp_test" image-clip="0 0 204 67" onclick="modules.game_mainpanel.toggleStore()" onhoverchange="modules.game_prey.onHover(self)" />
-            </UIButton>
-          </Panel>
-          <Panel id="inactive" class="inactive-panel">
-            <FlatPanel id="list" class="creature-list" />
-            <FlatPanel id="fullList" class="full-list" visible="false">
-              <Label id="selectionTitle" class="selection-title" text="Select your prey creature" />
-              <TextEdit id="searchEdit" class="search-edit" placeholder="Type to search" ontextchange="modules.game_prey.onRaceSearchTextChanged(self)" />
-              <UIWidget id="searchClearButton" class="search-clear" image-source="/images/ui/button-clear-18x18-up" visible="false" onclick="modules.game_prey.onRaceSearchClearClicked(self)" />
-              <UIScrollArea id="entries" class="entries" vertical-scrollbar="entriesScroll"></UIScrollArea>
-              <VerticalScrollBar id="entriesScroll" class="entries-scroll" step="20" pixel-scroll="true" />
-              <FlatPanel id="preview" class="preview">
-                <Label id="placeholder" class="preview-placeholder" text="No creature selected" />
-                <UICreature id="creature" class="preview-creature" visible="false" />
-              </FlatPanel>
-            </FlatPanel>
-            <Panel id="reroll" class="reroll-panel">
-              <FlatPanel id="button" class="reroll-button">
-                <ProgressBar id="time" class="reroll-time" />
-                <UIButton id="rerollButton" class="reroll-action" image-source="/images/game/prey/prey_reroll" image-clip="2 0 63 62" />
-              </FlatPanel>
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <Panel id="select" class="select-prey">
-              <UIButton id="pickSpecificPrey" class="pick-prey" image-source="/images/game/prey/prey_select_blocked" onhoverchange="modules.game_prey.onHover(self)" />
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <Panel id="choose" class="choose-prey">
-              <UIButton id="choosePreyButton" class="choose-button" image-source="/images/game/prey/prey_choose" image-clip="1 0 44 35" onhoverchange="modules.game_prey.onHover(self)" />
-            </Panel>
-          </Panel>
-          <Panel id="active" class="active-panel" visible="false">
-            <Panel id="creatureAndBonus" class="creature-bonus">
-              <UICreature id="creature" class="creature-display" />
-              <FlatPanel id="bonus" class="bonus-details">
-                <UIWidget id="icon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" />
-                <HorizontalSeparator />
-                <Panel id="grade" class="bonus-grade"></Panel>
-              </FlatPanel>
-              <ProgressBar id="timeLeft" class="time-left" />
-            </Panel>
-            <Panel id="choose" class="bonus-reroll">
-              <UIButton id="selectPrey" class="bonus-reroll-button" image-source="/images/game/prey/prey_bonus_reroll" image-clip="1 0 35 52" onhoverchange="modules.game_prey.onHover(self)" />
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <Panel id="select" class="select-prey">
-              <UIButton id="pickSpecificPrey" class="pick-prey" image-source="/images/game/prey/prey_select_blocked" onhoverchange="modules.game_prey.onHover(self)" />
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <Panel id="reroll" class="reroll-panel">
-              <FlatPanel id="button" class="reroll-button">
-                <ProgressBar id="time" class="reroll-time" />
-                <UIButton id="rerollButton" class="reroll-action" image-source="/images/game/prey/prey_reroll" image-clip="2 0 63 62" />
-              </FlatPanel>
-              <CardLabel id="price" class="price-label" />
-            </Panel>
-            <FlatPanel id="autoReroll" class="auto-reroll">
-              <CheckBox id="autoRerollCheck" class="auto-reroll-check" text="Automatic Bonus Rer..." />
-            </FlatPanel>
-            <CardLabel id="autoRerollPrice" class="price-label" />
-            <FlatPanel id="lockPrey" class="lock-prey">
-              <CheckBox id="lockPreyCheck" class="lock-prey-check" text="Lock Prey" />
-            </FlatPanel>
-            <CardLabel id="lockPreyPrice" class="price-label" />
-          </Panel>
-        </Panel>
+        <div data-widget="Panel" id="slot3" class="slot-panel">
+          <label data-widget="Label" id="title" class="slot-title" ></label>
+          <div data-widget="Panel" id="locked" class="locked-panel">
+            <div data-widget="Panel" id="noCreature" class="no-creature-panel">
+              <div data-widget="FlatPanel" class="creature-frame">
+                <div data-widget="UIWidget" class="creature-placeholder" image-source="/images/game/prey/prey_biginactive" ></div>
+              </div>
+              <div data-widget="FlatPanel" id="bonus" class="bonus-panel">
+                <div data-widget="UIWidget" id="noBonusIcon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                <hr data-widget="HorizontalSeparator" />
+                <div data-widget="Panel" id="grade" class="bonus-grade">
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                  <div data-widget="UIWidget" class="star" image-source="/images/game/prey/prey_nostar" onhoverchange="modules.game_prey.onHover(self)" ></div>
+                </div>
+              </div>
+              <div data-widget="UIWidget" class="locked-info" onhoverchange="modules.game_prey.onHover(self)" ></div>
+            </div>
+            <button data-widget="UIButton" id="perm" class="store-button" onclick="modules.game_mainpanel.toggleStore()">
+              <div data-widget="UIWidget" id="shopPermButton" class="store-button-image" image-source="/images/game/prey/prey_perm_test" image-clip="0 0 204 67" onclick="modules.game_mainpanel.toggleStore()" onhoverchange="modules.game_prey.onHover(self)" ></div>
+            </button>
+            <button data-widget="UIButton" id="temp" class="store-button" onclick="modules.game_mainpanel.toggleStore()">
+              <div data-widget="UIWidget" id="shopTempButton" class="store-button-image" image-source="/images/game/prey/prey_temp_test" image-clip="0 0 204 67" onclick="modules.game_mainpanel.toggleStore()" onhoverchange="modules.game_prey.onHover(self)" ></div>
+            </button>
+          </div>
+          <div data-widget="Panel" id="inactive" class="inactive-panel">
+            <div data-widget="FlatPanel" id="list" class="creature-list" ></div>
+            <div data-widget="FlatPanel" id="fullList" class="full-list" visible="false">
+              <label data-widget="Label" id="selectionTitle" class="selection-title" text="Select your prey creature" ></label>
+              <input type="text" data-widget="TextEdit" id="searchEdit" class="search-edit" placeholder="Type to search" ontextchange="modules.game_prey.onRaceSearchTextChanged(self)" />
+              <div data-widget="UIWidget" id="searchClearButton" class="search-clear" image-source="/images/ui/button-clear-18x18-up" visible="false" onclick="modules.game_prey.onRaceSearchClearClicked(self)" ></div>
+              <div data-widget="UIScrollArea" id="entries" class="entries" vertical-scrollbar="entriesScroll"></div>
+              <div data-widget="VerticalScrollBar" id="entriesScroll" class="entries-scroll" step="20" pixel-scroll="true" ></div>
+              <div data-widget="FlatPanel" id="preview" class="preview">
+                <label data-widget="Label" id="placeholder" class="preview-placeholder" text="No creature selected" ></label>
+                <div data-widget="UICreature" id="creature" class="preview-creature" visible="false" ></div>
+              </div>
+            </div>
+            <div data-widget="Panel" id="reroll" class="reroll-panel">
+              <div data-widget="FlatPanel" id="button" class="reroll-button">
+                <div data-widget="ProgressBar" id="time" class="reroll-time" ></div>
+                <button data-widget="UIButton" id="rerollButton" class="reroll-action" image-source="/images/game/prey/prey_reroll" image-clip="2 0 63 62" ></button>
+              </div>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="Panel" id="select" class="select-prey">
+              <button data-widget="UIButton" id="pickSpecificPrey" class="pick-prey" image-source="/images/game/prey/prey_select_blocked" onhoverchange="modules.game_prey.onHover(self)" ></button>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="Panel" id="choose" class="choose-prey">
+              <button data-widget="UIButton" id="choosePreyButton" class="choose-button" image-source="/images/game/prey/prey_choose" image-clip="1 0 44 35" onhoverchange="modules.game_prey.onHover(self)" ></button>
+            </div>
+          </div>
+          <div data-widget="Panel" id="active" class="active-panel" visible="false">
+            <div data-widget="Panel" id="creatureAndBonus" class="creature-bonus">
+              <div data-widget="UICreature" id="creature" class="creature-display" ></div>
+              <div data-widget="FlatPanel" id="bonus" class="bonus-details">
+                <div data-widget="UIWidget" id="icon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" ></div>
+                <hr data-widget="HorizontalSeparator" />
+                <div data-widget="Panel" id="grade" class="bonus-grade"></div>
+              </div>
+              <div data-widget="ProgressBar" id="timeLeft" class="time-left" ></div>
+            </div>
+            <div data-widget="Panel" id="choose" class="bonus-reroll">
+              <button data-widget="UIButton" id="selectPrey" class="bonus-reroll-button" image-source="/images/game/prey/prey_bonus_reroll" image-clip="1 0 35 52" onhoverchange="modules.game_prey.onHover(self)" ></button>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="Panel" id="select" class="select-prey">
+              <button data-widget="UIButton" id="pickSpecificPrey" class="pick-prey" image-source="/images/game/prey/prey_select_blocked" onhoverchange="modules.game_prey.onHover(self)" ></button>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="Panel" id="reroll" class="reroll-panel">
+              <div data-widget="FlatPanel" id="button" class="reroll-button">
+                <div data-widget="ProgressBar" id="time" class="reroll-time" ></div>
+                <button data-widget="UIButton" id="rerollButton" class="reroll-action" image-source="/images/game/prey/prey_reroll" image-clip="2 0 63 62" ></button>
+              </div>
+              <label data-widget="Label" id="price" class="price-label"></label>
+            </div>
+            <div data-widget="FlatPanel" id="autoReroll" class="auto-reroll">
+              <input type="checkbox" data-widget="QtCheckBox" id="autoRerollCheck" class="auto-reroll-check" text="Automatic Bonus Rer..." />
+            </div>
+            <label data-widget="Label" id="autoRerollPrice" class="price-label"></label>
+            <div data-widget="FlatPanel" id="lockPrey" class="lock-prey">
+              <input type="checkbox" data-widget="QtCheckBox" id="lockPreyCheck" class="lock-prey-check" text="Lock Prey" />
+            </div>
+            <label data-widget="Label" id="lockPreyPrice" class="price-label"></label>
+          </div>
+        </div>
       </div>
-      <Label id="description" class="prey-description" />
-      <HorizontalSeparator id="bottomSep" />
+      <label data-widget="Label" id="description" class="prey-description" ></label>
+      <hr data-widget="HorizontalSeparator" id="bottomSep" />
       <div class="prey-footer">
-        <Label id="gold" class="GoldLabel" />
-        <CardLabel id="wildCards" class="CardLabel" />
-        <UIButton id="openStore" class="store-link" tooltip="Go to the Store to get more Prey Wildcards!" onclick="modules.game_mainpanel.toggleStore()" image-source="/images/game/prey/prey_smallstore" image-clip="0 0 26 20" />
-        <Button id="closeButton" class="close-button" text="Close" onclick="modules.game_prey.hide()" />
+        <label data-widget="Label" id="gold" class="GoldLabel" ></label>
+        <label data-widget="Label" id="wildCards" class="CardLabel"></label>
+        <button data-widget="UIButton" id="openStore" class="store-link" tooltip="Go to the Store to get more Prey Wildcards!" onclick="modules.game_mainpanel.toggleStore()" image-source="/images/game/prey/prey_smallstore" image-clip="0 0 26 20" ></button>
+        <button data-widget="UIButton" id="closeButton" class="close-button" text="Close" onclick="modules.game_prey.hide()" ></button>
       </div>
     </div>
   </window>

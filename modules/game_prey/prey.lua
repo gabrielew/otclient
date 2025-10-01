@@ -232,11 +232,11 @@ function setUnsupportedSettings()
     for i, slot in pairs(t) do
         local panel = preyWindow[slot]
         for j, state in pairs({panel.active, panel.inactive}) do
-            state.select.price.text:setText('-------')
+            state.select.price:setText('-------')
         end
-        panel.active.autoRerollPrice.text:setText('1')
-        panel.active.lockPreyPrice.text:setText('5')
-        panel.active.choose.price.text:setText(1)
+        panel.active.autoRerollPrice:setText('1')
+        panel.active.lockPreyPrice:setText('5')
+        panel.active.choose.price:setText('1')
     end
 end
 
@@ -377,7 +377,7 @@ function onPreyFreeRerolls(slot, timeleft)
     end
     for i, panel in pairs({prey.active, prey.inactive}) do
         local progressBar = panel.reroll.button.time
-        local price = panel.reroll.price.text
+        local price = panel.reroll.price
         progressBar:setPercent(percent)
         progressBar:setText(desc)
         if timeleft == 0 then
@@ -422,7 +422,7 @@ function onPreyRerollPrice(price)
     for i, slot in pairs(t) do
         local panel = preyWindow[slot]
         for j, state in pairs({panel.active, panel.inactive}) do
-            local price = state.reroll.price.text
+            local price = state.reroll.price
             local progressBar = state.reroll.button.time
             if progressBar:getText() ~= 'Free' then
                 price:setText(comma_value(rerollPrice))
@@ -446,7 +446,7 @@ function setTimeUntilFreeReroll(slot, timeUntilFreeReroll) -- minutes
         local reroll = panel.reroll.button.time
         reroll:setPercent(percent)
         reroll:setText(desc)
-        local price = panel.reroll.price.text
+        local price = panel.reroll.price
         if timeUntilFreeReroll > 0 then
             price:setText(comma_value(rerollPrice))
         else

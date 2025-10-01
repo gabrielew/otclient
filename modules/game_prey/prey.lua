@@ -215,11 +215,19 @@ function setUnsupportedSettings()
     for i, slot in pairs(t) do
         local panel = preyWindow[slot]
         for j, state in pairs({panel.active, panel.inactive}) do
-            state.select.price.text:setText('-------')
+            if state.select and state.select.price then
+                state.select.price.text:setText('-------')
+            end
         end
-        panel.active.autoRerollPrice.text:setText('1')
-        panel.active.lockPreyPrice.text:setText('5')
-        panel.active.choose.price.text:setText(1)
+        if panel.active.autoRerollPrice then
+            panel.active.autoRerollPrice.text:setText('1')
+        end
+        if panel.active.lockPreyPrice then
+            panel.active.lockPreyPrice.text:setText('5')
+        end
+        if panel.active.choose and panel.active.choose.price then
+            panel.active.choose.price:setText(1)
+        end
     end
 end
 
@@ -1051,6 +1059,9 @@ end
 local suppressOptionCheckHandler = false
 
 local function setOptionCheckedSilently(checkbox, checked)
+    if not checkbox then
+        return
+    end
     if checkbox:isChecked() == checked then
         return
     end
@@ -1076,6 +1087,9 @@ local function sendOption(slot, option)
 end
 
 local function handleToggleOptions(checkbox, slot, currentOption, checked)
+    if not checkbox then
+        return
+    end
     if suppressOptionCheckHandler then
         return
     end
@@ -1192,23 +1206,33 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
     setBonusGradeStars(slot, bonusGrade)
     creatureAndBonus.timeLeft:setPercent(percent)
     creatureAndBonus.timeLeft:setText(timeleftTranslation(timeLeft))
-    -- bonus reroll
-    prey.active.choose.selectPrey.onClick = function()
-        g_game.preyAction(slot, PREY_ACTION_BONUSREROLL, 0)
-    end
-    -- creature reroll
-    prey.active.reroll.button.rerollButton.onClick = function()
-        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+
+    if prey.active.choose and prey.active.choose.selectPrey then
+        prey.active.choose.selectPrey.onClick = function()
+            g_game.preyAction(slot, PREY_ACTION_BONUSREROLL, 0)
+        end
     end
 
-    setOptionCheckedSilently(prey.active.autoReroll.autoRerollCheck, option == PREY_ACTION_BONUSREROLL)
-    prey.active.autoReroll.autoRerollCheck.onCheckChange = function(widget, checked)
-        handleToggleOptions(widget, slot, PREY_OPTION_TOGGLE_AUTOREROLL, checked)
+    if prey.active.reroll and prey.active.reroll.button and prey.active.reroll.button.rerollButton then
+        prey.active.reroll.button.rerollButton.onClick = function()
+            g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+        end
     end
 
-    setOptionCheckedSilently(prey.active.lockPrey.lockPreyCheck, option == PREY_OPTION_TOGGLE_LOCK_PREY)
-    prey.active.lockPrey.lockPreyCheck.onCheckChange = function(widget, checked)
-        handleToggleOptions(widget, slot, PREY_OPTION_TOGGLE_LOCK_PREY, checked)
+    local autoRerollCheck = prey.active.autoReroll and prey.active.autoReroll.autoRerollCheck
+    if autoRerollCheck then
+        setOptionCheckedSilently(autoRerollCheck, option == PREY_ACTION_BONUSREROLL)
+        autoRerollCheck.onCheckChange = function(widget, checked)
+            handleToggleOptions(widget, slot, PREY_OPTION_TOGGLE_AUTOREROLL, checked)
+        end
+    end
+
+    local lockPreyCheck = prey.active.lockPrey and prey.active.lockPrey.lockPreyCheck
+    if lockPreyCheck then
+        setOptionCheckedSilently(lockPreyCheck, option == PREY_OPTION_TOGGLE_LOCK_PREY)
+        lockPreyCheck.onCheckChange = function(widget, checked)
+            handleToggleOptions(widget, slot, PREY_OPTION_TOGGLE_LOCK_PREY, checked)
+        end
     end
 end
 

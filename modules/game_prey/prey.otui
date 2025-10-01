@@ -171,100 +171,21 @@ ActivePreyPanel < Panel
   CreatureAndBonus
     id: creatureAndBonus
     anchors.left: parent.left
+    anchors.right: parent.right
     anchors.top: parent.top
+    anchors.bottom: parent.bottom
     margin-top: 20
-
-  BonusReroll
-    id: choose
-    anchors.right: parent.right
-    anchors.top: prev.bottom
-
-  SelectPreyCreature
-    id: select
-    anchors.verticalCenter: prev.verticalCenter
-    anchors.right: prev.left
-    margin-right: 2
-
-  RerollButton
-    id: reroll
-    anchors.verticalCenter: prev.verticalCenter
-    anchors.right: prev.left
-    margin-right: 2
-
-  FlatPanel
-    id: autoReroll
-    size: 160 20
-    anchors.top: prev.bottom
-    margin-top: 5
-    anchors.left: parent.left
-
-    CheckBox
-      id: autoRerollCheck
-      margin-top: 2
-      anchors.verticalCenter: parent.verticalCenter
-      anchors.left: parent.left
-      anchors.right: parent.right
-      size: 155 15
-      font: verdana-11px-rounded
-      text: Automatic Bonus Rer...
-      margin-left: 5
-      text-offset: 20 1
-
-  CardLabel
-    id: autoRerollPrice
-    anchors.top: prev.top
-    anchors.left: prev.right
-    margin-left: 2
-    anchors.bottom: prev.bottom
-    anchors.right: parent.right
-
-  FlatPanel
-    id: lockPrey
-    size: 160 20
-    anchors.top: prev.bottom
-    margin-top: 5
-    anchors.left: parent.left
-
-    CheckBox
-      id: lockPreyCheck
-      margin-top: 2
-      anchors.verticalCenter: parent.verticalCenter
-      anchors.left: parent.left
-      anchors.right: parent.right
-      size: 155 15
-      font: verdana-11px-rounded
-      text: Lock Prey
-      margin-left: 5
-      text-offset: 20 1
-
-  CardLabel
-    id: lockPreyPrice
-    anchors.top: prev.top
-    anchors.left: prev.right
-    margin-left: 2
-    anchors.bottom: prev.bottom
-    anchors.right: parent.right
+    margin-bottom: 10
 
 CreatureAndBonus < Panel
   size: 195 152
 
-  UICreature
-    id: creature
-    phantom: true
-    anchors.top: parent.top
-    anchors.left: parent.left
-    size: 124 124
-    image-source: /images/ui/panel_flat
-    image-border: 1
-    padding: 5
-
   FlatPanel
     id: bonus
     anchors.top: parent.top
-    anchors.left: prev.right
-    margin-left: 10
-    anchors.bottom: prev.bottom
+    anchors.left: parent.left
     anchors.right: parent.right
+    height: 120
 
     UIWidget
       id: icon
@@ -303,6 +224,18 @@ CreatureAndBonus < Panel
     anchors.right: parent.right
     height: 20
     background-color: #C28400
+
+  UICreature
+    id: creature
+    phantom: true
+    anchors.top: prev.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.bottom: parent.bottom
+    margin-top: 10
+    size: 124 124
+    image-source: /images/ui/panel_flat
+    image-border: 1
+    padding: 5
 
 BonusReroll < FlatPanel
   padding: 2

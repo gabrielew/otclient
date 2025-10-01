@@ -584,6 +584,7 @@ PreyCreatureListItem < UICheckBox
   color: #cfcfcfff
   border-width: 1
   border-color: alpha
+  background-color: alpha
   text-offset: 4 0
   @onClick: modules.game_prey.onPreyRaceListItemClicked(self)
 
@@ -596,7 +597,6 @@ PreyCreatureListItem < UICheckBox
     color: #ffffffff
 
   $!checked:
-    background-color: alpha
     border-color: alpha
 
 SlotPanel < Panel

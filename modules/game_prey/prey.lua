@@ -610,6 +610,9 @@ local function uncheckChildrenExcept(parent, except)
         if child ~= except and child.setChecked then
             if not child:isDestroyed() then
                 child:setChecked(false)
+                if child.baseBackground then
+                    child:setBackgroundColor(child.baseBackground)
+                end
             end
         end
         uncheckChildrenExcept(child, except)
@@ -641,25 +644,54 @@ function onItemBoxChecked(widget)
     widget:setChecked(true)
 end
 
+local function formatCreatureListText(name)
+    if not name then
+        return ''
+    end
+
+    if #name > 19 then
+        return name:sub(1, 16) .. '...'
+    end
+
+    return name
+end
+
 local function buildRaceEntry(raceId)
-    local creatureType = g_things.getThingType(raceId, ThingCategoryCreature)
-    local name = creatureType and creatureType:getName()
+    local raceData = g_things.getRaceData(raceId)
+    local name = raceData and raceData.name or nil
+
     if name and name ~= '' then
         name = capitalFormatStr(name)
     else
         name = string.format(tr('Unknown Creature (%d)'), raceId)
     end
 
-    local outfit = { type = raceId }
+    local outfit = raceData and raceData.outfit or nil
+    local realSize
 
-    local realSize = creatureType and creatureType:getRealSize() or nil
+    if outfit and outfit.type then
+        local creatureType = g_things.getThingType(outfit.type, ThingCategoryCreature)
+        realSize = creatureType and creatureType:getRealSize() or nil
+    end
+
     return {
         raceId = raceId,
         name = name,
+        displayName = formatCreatureListText(name),
         searchName = name:lower(),
         outfit = outfit,
         realSize = realSize
     }
+end
+
+local function restoreRaceListItemBackground(widget)
+    if not widget or widget:isDestroyed() then
+        return
+    end
+
+    if widget.baseBackground then
+        widget:setBackgroundColor(widget.baseBackground)
+    end
 end
 
 updateRaceSelectionDisplay = function(slot)
@@ -682,7 +714,7 @@ updateRaceSelectionDisplay = function(slot)
     if fullList.preview then
         local creatureWidget = fullList.preview.creature
         local placeholder = fullList.preview.placeholder
-        if entry and creatureWidget then
+        if entry and entry.outfit and creatureWidget then
             local size = math.max((entry.realSize or 0) + 48, 64)
             creatureWidget:setCreatureSize(size)
             creatureWidget:setOutfit(entry.outfit)
@@ -720,13 +752,19 @@ setRaceSelection = function(slot, widget, skipUncheck)
         onItemBoxChecked(widget)
     elseif not widget and previousWidget and not previousWidget:isDestroyed() and previousWidget.setChecked then
         previousWidget:setChecked(false)
+        restoreRaceListItemBackground(previousWidget)
     elseif widget and skipUncheck then
         if previousWidget and previousWidget ~= widget and not previousWidget:isDestroyed() and previousWidget.setChecked then
             previousWidget:setChecked(false)
+            restoreRaceListItemBackground(previousWidget)
         end
         if not widget:isChecked() then
             widget:setChecked(true)
         end
+    end
+
+    if previousWidget and previousWidget ~= widget then
+        restoreRaceListItemBackground(previousWidget)
     end
 
     selectedRaceWidgetBySlot[slot] = widget
@@ -758,13 +796,21 @@ refreshRaceList = function(slot)
     local currentSelectionId = selectedRaceEntryBySlot[slot] and selectedRaceEntryBySlot[slot].raceId or nil
     local selectionRestored = false
 
+    local backgroundA = '#1e2d3cff'
+    local backgroundB = '#172331ff'
+    local useAlternate = false
+
     for _, entry in ipairs(raceEntriesBySlot[slot] or {}) do
         if filter == '' or entry.searchName:find(filter, 1, true) then
             local item = g_ui.createWidget('PreyCreatureListItem', entriesPanel)
-            item:setText(entry.name)
+            item:setText(entry.displayName or entry.name)
             item:setTooltip(entry.name)
             item.raceData = entry
             item.preySlot = slot
+            item.baseBackground = useAlternate and backgroundB or backgroundA
+            item:setBackgroundColor(item.baseBackground)
+
+            useAlternate = not useAlternate
 
             if currentSelectionId and entry.raceId == currentSelectionId then
                 setRaceSelection(slot, item, true)

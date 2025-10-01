@@ -718,31 +718,21 @@ local function buildRaceEntry(raceId)
     }
 end
 
-local function applyRaceListItemTextColor(widget, isChecked)
-    if not widget or widget:isDestroyed() or not widget.setColor then
+restoreRaceListItemBackground = function(widget)
+    if not widget or widget:isDestroyed() then
         return
     end
 
-    local color = widget.baseTextColor
-    if isChecked then
-        color = widget.checkedTextColor or color
-    end
-
-    if color then
-        widget:setColor(color)
-    end
-end
-
-restoreRaceListItemBackground = function(widget)
-    if not widget or widget:isDestroyed() then
+    if widget:isChecked() then
+        if widget.checkedBackground then
+            widget:setBackgroundColor(widget.checkedBackground)
+        end
         return
     end
 
     if widget.baseBackground then
         widget:setBackgroundColor(widget.baseBackground)
     end
-
-    applyRaceListItemTextColor(widget, widget:isChecked())
 end
 
 updateRaceSelectionDisplay = function(slot)
@@ -822,7 +812,7 @@ setRaceSelection = function(slot, widget, skipUncheck)
     selectedRaceEntryBySlot[slot] = widget and widget.raceData or nil
 
     if widget then
-        applyRaceListItemTextColor(widget, true)
+        restoreRaceListItemBackground(widget)
     end
 
     updateRaceSelectionDisplay(slot)
@@ -845,8 +835,8 @@ refreshRaceList = function(slot)
     local currentSelectionId = selectedRaceEntryBySlot[slot] and selectedRaceEntryBySlot[slot].raceId or nil
     local selectionRestored = false
 
-    local backgroundA = '#1e2d3cff'
-    local backgroundB = '#172331ff'
+    local backgroundA = '#484848'
+    local backgroundB = '#414141'
     local useAlternate = false
 
     for _, entry in ipairs(raceEntriesBySlot[slot] or {}) do
@@ -856,16 +846,12 @@ refreshRaceList = function(slot)
         item.raceData = entry
         item.preySlot = slot
         item.baseBackground = useAlternate and backgroundB or backgroundA
+        item.checkedBackground = '#585858'
         item:setBackgroundColor(item.baseBackground)
-        item.baseTextColor = '#c0c0c0'
-        item.checkedTextColor = '#ffffff'
-        if item.setColor then
-            item:setColor(item.baseTextColor)
+        item.onCheckChange = function(widget)
+            restoreRaceListItemBackground(widget)
         end
-        item.onCheckChange = function(widget, checked)
-            applyRaceListItemTextColor(widget, checked)
-        end
-        applyRaceListItemTextColor(item, item:isChecked())
+        restoreRaceListItemBackground(item)
 
         useAlternate = not useAlternate
 
@@ -1099,6 +1085,8 @@ function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards)
         name = capitalFormatStr(name)
         box:setTooltip(name)
         box.creature:setOutfit(outfits[i])
+        local backgroundColor = (i % 2 == 1) and '#484848' or '#414141'
+        box:setBackgroundColor(backgroundColor)
     end
     prey.inactive.choose.choosePreyButton.onClick = function()
         for i, child in pairs(list:getChildren()) do
@@ -1157,6 +1145,8 @@ function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValu
         name = capitalFormatStr(name)
         box:setTooltip(name)
         box.creature:setOutfit(outfits[i])
+        local backgroundColor = (i % 2 == 1) and '#484848' or '#414141'
+        box:setBackgroundColor(backgroundColor)
     end
     prey.inactive.choose.choosePreyButton.onClick = function()
         for i, child in pairs(list:getChildren()) do

@@ -589,9 +589,6 @@ PreyCreatureListItem < UICheckBox
   size-policy-horizontal: expanding
   @onClick: modules.game_prey.onPreyRaceListItemClicked(self)
 
-  $hover:
-    background-color: #ffffff12
-
   $checked on:
     background-color: #1c4d75ff
     border-color: #6fb1e9ff

@@ -845,8 +845,8 @@ refreshRaceList = function(slot)
     local currentSelectionId = selectedRaceEntryBySlot[slot] and selectedRaceEntryBySlot[slot].raceId or nil
     local selectionRestored = false
 
-    local backgroundA = '#1e2d3cff'
-    local backgroundB = '#172331ff'
+    local backgroundA = '#484848'
+    local backgroundB = '#414141'
     local useAlternate = false
 
     for _, entry in ipairs(raceEntriesBySlot[slot] or {}) do
@@ -1099,6 +1099,8 @@ function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards)
         name = capitalFormatStr(name)
         box:setTooltip(name)
         box.creature:setOutfit(outfits[i])
+        local backgroundColor = (i % 2 == 1) and '#484848' or '#414141'
+        box:setBackgroundColor(backgroundColor)
     end
     prey.inactive.choose.choosePreyButton.onClick = function()
         for i, child in pairs(list:getChildren()) do
@@ -1157,6 +1159,8 @@ function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValu
         name = capitalFormatStr(name)
         box:setTooltip(name)
         box.creature:setOutfit(outfits[i])
+        local backgroundColor = (i % 2 == 1) and '#484848' or '#414141'
+        box:setBackgroundColor(backgroundColor)
     end
     prey.inactive.choose.choosePreyButton.onClick = function()
         for i, child in pairs(list:getChildren()) do

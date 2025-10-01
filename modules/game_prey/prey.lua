@@ -418,13 +418,12 @@ local function applyListSelectionLayout(prey)
     local anchorWidget = selectPanel or reroll
     local anchorTarget = anchorWidget and anchorWidget:getId()
     if anchorTarget and anchorTarget ~= '' then
-        preview:addAnchor(AnchorLeft, anchorTarget, AnchorLeft)
-        preview:addAnchor(AnchorRight, anchorTarget, AnchorRight)
+        local parentWidget = preview:getParent()
+        local parentId = parentWidget and parentWidget:getId() or 'parent'
+        preview:addAnchor(AnchorLeft, parentId, AnchorLeft)
+        preview:addAnchor(AnchorRight, parentId, AnchorRight)
         preview:addAnchor(AnchorTop, anchorTarget, AnchorTop)
         preview:addAnchor(AnchorBottom, anchorTarget, AnchorBottom)
-        if anchorWidget.getWidth then
-            preview:setWidth(anchorWidget:getWidth())
-        end
         if anchorWidget.getHeight then
             preview:setHeight(anchorWidget:getHeight())
         end
@@ -443,6 +442,7 @@ local function applyListSelectionLayout(prey)
     preview:setMarginBottom(0)
     preview:setMarginLeft(0)
     preview:setMarginRight(0)
+    preview:raise()
 
     if fullList.searchClearButton then
         if fullList.searchClearButton.__listSelectionStoredVisibility == nil then

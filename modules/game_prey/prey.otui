@@ -376,14 +376,28 @@ InactivePreyPanel < Panel
     image-source: /images/ui/panel_flat
     image-border: 1
 
-    Label
-      id: selectionTitle
+    FlatPanel
+      id: selectionHeader
       anchors.left: parent.left
       anchors.right: parent.right
       anchors.top: parent.top
-      text-align: center
-      font: verdana-11px-rounded
-      text: tr('Select your prey creature')
+      height: 28
+      padding-left: 6
+      padding-right: 6
+      padding-top: 4
+      padding-bottom: 4
+      margin-bottom: 4
+      background-color: #1f1f1f
+      border-color: #2f2f2f
+      border-width: 1
+
+      Label
+        id: selectionTitle
+        anchors.fill: parent
+        text-align: center
+        font: verdana-11px-rounded
+        text: tr('Select your prey creature')
+        color: #cfcfcf
 
     UIScrollArea
       id: entries

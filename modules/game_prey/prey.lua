@@ -791,8 +791,20 @@ updateRaceSelectionDisplay = function(slot)
             setWidgetTextToFit(fullList.selectionTitle, entry.name, function(value)
                 return tr('Selected: %s', value)
             end)
+            fullList.selectionTitle:setColor('#f0f0f0')
         else
             fullList.selectionTitle:setText(tr('Select your prey creature'))
+            fullList.selectionTitle:setColor('#cfcfcf')
+        end
+    end
+
+    if fullList.selectionHeader then
+        if entry then
+            fullList.selectionHeader:setBackgroundColor('#2b2b2b')
+            fullList.selectionHeader:setBorderColor('#3d3d3d')
+        else
+            fullList.selectionHeader:setBackgroundColor('#1f1f1f')
+            fullList.selectionHeader:setBorderColor('#2f2f2f')
         end
     end
 

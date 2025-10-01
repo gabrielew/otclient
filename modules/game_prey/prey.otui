@@ -579,8 +579,6 @@ PreyCreatureBox < UICheckBox
     color: #aaaaaa88
 
 PreyCreatureListItem < UICheckBox
-  anchors.left: parent.left
-  anchors.right: parent.right
   height: 22
   margin-bottom: 2
   padding: 3
@@ -592,6 +590,7 @@ PreyCreatureListItem < UICheckBox
   border-color: alpha
   background-color: alpha
   text-offset: 4 0
+  size-policy-horizontal: expanding
   @onClick: modules.game_prey.onPreyRaceListItemClicked(self)
 
   $hover:

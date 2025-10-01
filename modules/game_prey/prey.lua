@@ -35,6 +35,7 @@ local selectedRaceWidgetBySlot = {}
 local refreshRaceList
 local setRaceSelection
 local updateRaceSelectionDisplay
+local restoreRaceListItemBackground
 
 function bonusDescription(bonusType, bonusValue, bonusGrade)
     if bonusType == PREY_BONUS_DAMAGE_BOOST then
@@ -730,7 +731,7 @@ local function applyRaceListItemTextColor(widget, isChecked)
     end
 end
 
-local function restoreRaceListItemBackground(widget)
+restoreRaceListItemBackground = function(widget)
     if not widget or widget:isDestroyed() then
         return
     end

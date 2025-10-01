@@ -46,6 +46,65 @@ local preyListSelection = {
     ignoreFocusChange = false
 }
 
+local function forEachPreyListChild(callback)
+    if not callback or not preyListSelection.list then
+        return
+    end
+
+    local child = preyListSelection.list:getFirstChild()
+    while child do
+        callback(child)
+        child = child:getNextSibling()
+    end
+end
+
+local function computePreyListItemWidth()
+    if not preyListSelection.list then
+        return nil
+    end
+
+    local width = preyListSelection.list:getWidth() or 0
+
+    if preyListSelection.list.getPaddingLeft then
+        width = width - (preyListSelection.list:getPaddingLeft() + preyListSelection.list:getPaddingRight())
+    end
+
+    local scrollbar = nil
+    if preyListSelection.panel and preyListSelection.panel.listScrollBar then
+        scrollbar = preyListSelection.panel.listScrollBar
+    end
+
+    if scrollbar and scrollbar:isVisible() then
+        local scrollWidth = scrollbar.getWidth and scrollbar:getWidth() or 0
+        width = width - scrollWidth
+    end
+
+    if width < 0 then
+        width = 0
+    end
+
+    return width
+end
+
+local function applyPreyListItemWidth(widget)
+    if not widget then
+        return
+    end
+
+    if widget.isDestroyed and widget:isDestroyed() then
+        return
+    end
+
+    local width = computePreyListItemWidth()
+    if width and width > 0 then
+        widget:setWidth(width)
+    end
+end
+
+local function refreshPreyListItemWidths()
+    forEachPreyListChild(applyPreyListItemWidth)
+end
+
 local function hidePreyListSelectionPanel()
     if not preyListSelection.panel then
         preyListSelection.entries = {}
@@ -223,6 +282,8 @@ local function refreshPreyListSelection(filterText)
             item.raceId = entry.raceId
             item.outfit = entry.outfit
 
+            applyPreyListItemWidth(item)
+
             item.onClick = function()
                 selectPreyListItem(item)
             end
@@ -243,6 +304,7 @@ local function refreshPreyListSelection(filterText)
         emptyLabel:setColor('#9d9d9d')
         emptyLabel:setMarginTop(4)
         emptyLabel:setFocusable(false)
+        applyPreyListItemWidth(emptyLabel)
     else
         local firstChild = preyListSelection.list:getFirstChild()
         if firstChild then
@@ -255,6 +317,7 @@ local function refreshPreyListSelection(filterText)
     end
 
     preyListSelection.ignoreFocusChange = false
+    refreshPreyListItemWidths()
 end
 
 local function setupPreyListSelectionPanel(panel)
@@ -275,6 +338,14 @@ local function setupPreyListSelectionPanel(panel)
             if child and child.raceId then
                 selectPreyListItem(child, true)
             end
+        end
+
+        panel.listPanel.onGeometryChange = function(listWidget)
+            if preyListSelection.list ~= listWidget then
+                return
+            end
+
+            refreshPreyListItemWidths()
         end
     end
 
@@ -325,6 +396,24 @@ local function setupPreyListSelectionPanel(panel)
     end
 
     panel:hide()
+
+    if panel.listScrollBar then
+        local function updateWidthsFromScrollbar()
+            if preyListSelection.panel ~= panel then
+                return
+            end
+
+            refreshPreyListItemWidths()
+        end
+
+        panel.listScrollBar.onVisibilityChange = function()
+            updateWidthsFromScrollbar()
+        end
+
+        panel.listScrollBar.onGeometryChange = function()
+            updateWidthsFromScrollbar()
+        end
+    end
 end
 
 local function assignPickSpecificPreyHandler(panel, slot)

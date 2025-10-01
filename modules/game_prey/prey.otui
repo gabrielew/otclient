@@ -1,7 +1,5 @@
 PreyListItem < UIButton
   height: 20
-  anchors.left: parent.left
-  anchors.right: parent.right
   margin-top: 2
   focusable: true
   text-align: left
@@ -424,6 +422,7 @@ InactivePreyPanel < Panel
       layout:
         type: verticalBox
         spacing: 0
+        fit-children: true
 
     VerticalScrollBar
       id: listScrollBar

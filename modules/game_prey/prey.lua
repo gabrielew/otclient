@@ -280,9 +280,6 @@ local function resetPreyWindowState()
                 if prey.inactive.fullList.entries then
                     prey.inactive.fullList.entries:destroyChildren()
                 end
-                if prey.inactive.fullList.search then
-                    prey.inactive.fullList.search:setText('')
-                end
                 if prey.inactive.fullList.preview and prey.inactive.fullList.preview.placeholder then
                     prey.inactive.fullList.preview.placeholder:setVisible(true)
                 end
@@ -785,12 +782,6 @@ refreshRaceList = function(slot)
         return
     end
 
-    local filter = ''
-    if fullList.search then
-        local text = fullList.search:getText() or ''
-        filter = text:lower()
-    end
-
     entriesPanel:destroyChildren()
 
     local currentSelectionId = selectedRaceEntryBySlot[slot] and selectedRaceEntryBySlot[slot].raceId or nil
@@ -801,21 +792,19 @@ refreshRaceList = function(slot)
     local useAlternate = false
 
     for _, entry in ipairs(raceEntriesBySlot[slot] or {}) do
-        if filter == '' or entry.searchName:find(filter, 1, true) then
-            local item = g_ui.createWidget('PreyCreatureListItem', entriesPanel)
-            item:setText(entry.displayName or entry.name)
-            item:setTooltip(entry.name)
-            item.raceData = entry
-            item.preySlot = slot
-            item.baseBackground = useAlternate and backgroundB or backgroundA
-            item:setBackgroundColor(item.baseBackground)
+        local item = g_ui.createWidget('PreyCreatureListItem', entriesPanel)
+        item:setText(entry.displayName or entry.name)
+        item:setTooltip(entry.name)
+        item.raceData = entry
+        item.preySlot = slot
+        item.baseBackground = useAlternate and backgroundB or backgroundA
+        item:setBackgroundColor(item.baseBackground)
 
-            useAlternate = not useAlternate
+        useAlternate = not useAlternate
 
-            if currentSelectionId and entry.raceId == currentSelectionId then
-                setRaceSelection(slot, item, true)
-                selectionRestored = true
-            end
+        if currentSelectionId and entry.raceId == currentSelectionId then
+            setRaceSelection(slot, item, true)
+            selectionRestored = true
         end
     end
 
@@ -1138,12 +1127,6 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
 
     if fullList.entries then
         fullList.entries:destroyChildren()
-    end
-    if fullList.search then
-        fullList.search:setText('')
-        fullList.search.onTextChange = function(widget, text)
-            refreshRaceList(slot)
-        end
     end
     if fullList.selectionTitle then
         fullList.selectionTitle:setText(tr('Select your prey creature'))

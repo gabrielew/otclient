@@ -401,15 +401,6 @@ InactivePreyPanel < Panel
       step: 20
       pixel-scroll: true
 
-    TextEdit
-      id: search
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.bottom: preview.top
-      margin-top: 4
-      margin-bottom: 4
-      placeholder: tr('Type to search')
-
     FlatPanel
       id: preview
       anchors.left: parent.left

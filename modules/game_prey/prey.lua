@@ -340,6 +340,16 @@ local function restoreListSelectionLayout(prey)
     end
 
     preview.__listSelectionLayout = nil
+
+    if fullList.searchClearButton then
+        if fullList.searchClearButton.__listSelectionStoredVisibility ~= nil then
+            fullList.searchClearButton:setVisible(fullList.searchClearButton.__listSelectionStoredVisibility)
+            fullList.searchClearButton.__listSelectionStoredVisibility = nil
+        else
+            fullList.searchClearButton:setVisible(true)
+        end
+        fullList.searchClearButton.__listSelectionForceHidden = nil
+    end
 end
 
 local function applyListSelectionLayout(prey)
@@ -395,13 +405,12 @@ local function applyListSelectionLayout(prey)
     if anchorTarget and anchorTarget ~= '' then
         preview:addAnchor(AnchorLeft, anchorTarget, AnchorLeft)
         preview:addAnchor(AnchorRight, anchorTarget, AnchorRight)
-        preview:addAnchor(AnchorTop, anchorTarget, AnchorTop)
         preview:addAnchor(AnchorBottom, anchorTarget, AnchorBottom)
         if reroll.getWidth then
             preview:setWidth(reroll:getWidth())
         end
-        if reroll.getHeight then
-            preview:setHeight(reroll:getHeight())
+        if preview.__listSelectionDefaults and preview.__listSelectionDefaults.height then
+            preview:setHeight(preview.__listSelectionDefaults.height)
         end
     else
         local parentWidget = preview:getParent()
@@ -409,12 +418,23 @@ local function applyListSelectionLayout(prey)
         preview:addAnchor(AnchorLeft, parentId, AnchorLeft)
         preview:addAnchor(AnchorRight, parentId, AnchorRight)
         preview:addAnchor(AnchorBottom, parentId, AnchorBottom)
+        if preview.__listSelectionDefaults and preview.__listSelectionDefaults.height then
+            preview:setHeight(preview.__listSelectionDefaults.height)
+        end
     end
 
     preview:setMarginTop(0)
     preview:setMarginBottom(0)
     preview:setMarginLeft(0)
     preview:setMarginRight(0)
+
+    if fullList.searchClearButton then
+        if fullList.searchClearButton.__listSelectionStoredVisibility == nil then
+            fullList.searchClearButton.__listSelectionStoredVisibility = fullList.searchClearButton:isVisible()
+        end
+        fullList.searchClearButton:setVisible(false)
+        fullList.searchClearButton.__listSelectionForceHidden = true
+    end
 
     preview.__listSelectionLayout = true
 end
@@ -826,6 +846,11 @@ local function updateRaceSearchClearButton(slot)
     local fullList = prey.inactive.fullList
     local clearButton = fullList.searchClearButton
     if not clearButton then
+        return
+    end
+
+    if clearButton.__listSelectionForceHidden then
+        clearButton:setVisible(false)
         return
     end
 

@@ -1,6 +1,6 @@
 -- sponsored by kivera-global.com
 -- remade by Vithrax#5814
-Prey = {}
+Prey = Controller:new()
 preyWindow = nil
 preyButton = nil
 local preyTrackerButton
@@ -65,7 +65,10 @@ function timeleftTranslation(timeleft, forPreyTimeleft) -- in seconds
     return hours .. ':' .. mins
 end
 
-function init()
+function Prey:onInit()
+    g_ui.importStyle('otui/style.otui')
+    self:loadHtml('prey.html')
+
     connect(g_game, {
         onGameStart = check,
         onGameEnd = onGameEnd,
@@ -82,9 +85,16 @@ function init()
         onPreyWildcardSelection = onPreyWildcardSelection
     })
 
-    preyWindow = g_ui.displayUI('prey')
+    preyWindow = self.ui.preyWindow or self.ui
+    if not preyWindow then
+        g_logger.error('Failed to initialize Prey window from HTML layout.')
+        return
+    end
+
     preyWindow:hide()
-    preyTracker = g_ui.createWidget('PreyTracker', modules.game_interface.getRightPanel())
+
+    local trackerHtml = io.content('modules/game_prey/prey_tracker.html')
+    preyTracker = self:createWidgetFromHTML(trackerHtml, modules.game_interface.getRightPanel())
     preyTracker:setup()
     preyTracker:setContentMaximumHeight(110)
     preyTracker:setContentMinimumHeight(70)
@@ -178,7 +188,7 @@ function onHover(widget)
     end
 end
 
-function terminate()
+function Prey:onTerminate()
     disconnect(g_game, {
         onGameStart = check,
         onGameEnd = onGameEnd,
@@ -197,12 +207,19 @@ function terminate()
 
     if preyButton then
         preyButton:destroy()
+        preyButton = nil
     end
     if preyTrackerButton then
         preyTrackerButton:destroy()
+        preyTrackerButton = nil
     end
-    preyWindow:destroy()
-    preyTracker:destroy()
+    if preyWindow then
+        preyWindow = nil
+    end
+    if preyTracker then
+        preyTracker:destroy()
+        preyTracker = nil
+    end
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil

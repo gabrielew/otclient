@@ -1,0 +1,31 @@
+<link href="prey.css" />
+<MiniWindow id="preyTracker" class="prey-tracker" text="Prey" onopen="modules.game_prey.onMiniWindowOpen()" onclose="modules.game_prey.onMiniWindowClose()" save="true">
+  <UIWidget id="miniwindowIcon" class="tracker-icon" image-source="/images/game/prey/icon-prey-widget" />
+  <Label id="miniwindowTitle" class="tracker-title" text="Prey" />
+  <MiniWindowContents id="contentsPanel" class="tracker-contents" vertical-scrollbar="miniwindowScrollBar">
+    <Label text="Prey Creatures" />
+    <HorizontalSeparator />
+    <Panel id="slot1" class="tracker-slot">
+      <UICreature id="creature" class="tracker-creature" />
+      <UIWidget id="noCreature" class="tracker-nocreature" image-source="/images/game/prey/prey_inactive" />
+      <UIWidget id="preyType" class="tracker-preytype" />
+      <UIWidget id="creatureName" class="tracker-name" text="Inactive" />
+      <ProgressBar id="time" class="tracker-time" text="" />
+    </Panel>
+    <Panel id="slot2" class="tracker-slot">
+      <UICreature id="creature" class="tracker-creature" />
+      <UIWidget id="noCreature" class="tracker-nocreature" image-source="/images/game/prey/prey_inactive" />
+      <UIWidget id="preyType" class="tracker-preytype" />
+      <UIWidget id="creatureName" class="tracker-name" text="Inactive" />
+      <ProgressBar id="time" class="tracker-time" text="" />
+    </Panel>
+    <Panel id="slot3" class="tracker-slot">
+      <UICreature id="creature" class="tracker-creature" />
+      <UIWidget id="noCreature" class="tracker-nocreature" image-source="/images/game/prey/prey_inactive" />
+      <UIWidget id="preyType" class="tracker-preytype" />
+      <UIWidget id="creatureName" class="tracker-name" text="Inactive" />
+      <ProgressBar id="time" class="tracker-time" text="" />
+    </Panel>
+  </MiniWindowContents>
+  <VerticalScrollBar id="miniwindowScrollBar" class="tracker-scroll" />
+</MiniWindow>

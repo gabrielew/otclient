@@ -383,15 +383,42 @@ InactivePreyPanel < Panel
       anchors.top: parent.top
       text-align: center
       font: verdana-11px-rounded
-      text: tr('Select your prey creature')
+      !text: tr('Select your prey creature')
 
-    UIScrollArea
-      id: entries
+    TextEdit
+      id: searchEdit
       anchors.top: selectionTitle.bottom
       anchors.left: parent.left
       anchors.right: parent.right
-      anchors.bottom: preview.top
       margin-top: 6
+      height: 20
+      padding-left: 4
+      padding-right: 18
+      placeholder: Type to search
+      placeholder-color: #6e706f
+      @onTextChange: modules.game_prey.onRaceSearchTextChanged(self)
+
+    UIWidget
+      id: searchClearButton
+      anchors.top: searchEdit.top
+      anchors.right: searchEdit.right
+      margin-top: 2
+      margin-right: 2
+      size: 16 16
+      image-source: /images/ui/button-clear-18x18-up
+      visible: false
+      @onClick: modules.game_prey.onRaceSearchClearClicked(self)
+
+      $pressed:
+        image-source: /images/ui/button-clear-18x18-down
+
+    UIScrollArea
+      id: entries
+      anchors.top: searchEdit.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: preview.top
+      margin-top: 4
       margin-bottom: 6
       padding-left: 2
       padding-right: 14
@@ -425,7 +452,7 @@ InactivePreyPanel < Panel
         anchors.centerIn: parent
         font: verdana-11px-rounded
         text-align: center
-        text: tr('No creature selected')
+        !text: tr('No creature selected')
         color: #cfcfcf
 
       UICreature

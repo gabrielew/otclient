@@ -607,8 +607,12 @@ local function getFullListEntriesContainer(fullList)
         return nil
     end
 
+    if entries.entriesContainer then
+        return entries.entriesContainer
+    end
+
     if entries.getChildById then
-        local contents = entries:getChildById('contentsPanel')
+        local contents = entries:getChildById('entriesContainer') or entries:getChildById('contentsPanel')
         if contents then
             return contents
         end

@@ -384,7 +384,7 @@ InactivePreyPanel < Panel
       font: verdana-11px-rounded
       text: tr('Select your prey creature')
 
-    ScrollablePanel
+    UIScrollArea
       id: entries
       anchors.top: selectionTitle.bottom
       anchors.left: parent.left
@@ -395,9 +395,14 @@ InactivePreyPanel < Panel
       padding-left: 2
       padding-right: 14
       padding-bottom: 2
-      layout:
-        type: verticalBox
       vertical-scrollbar: entriesScroll
+      Panel
+        id: entriesContainer
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        layout:
+          type: verticalBox
 
     VerticalScrollBar
       id: entriesScroll

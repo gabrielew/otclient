@@ -207,8 +207,8 @@ function setUnsupportedSettings()
         for j, state in pairs({panel.active, panel.inactive}) do
             state.select.price.text:setText('-------')
         end
-        panel.active.autoRerollPrice.text:setText('-')
-        panel.active.lockPreyPrice.text:setText('-')
+        panel.active.autoRerollPrice.text:setText('1')
+        panel.active.lockPreyPrice.text:setText('5')
         panel.active.choose.price.text:setText(1)
     end
 end

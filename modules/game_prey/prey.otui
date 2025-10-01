@@ -380,6 +380,7 @@ InactivePreyPanel < Panel
       id: selectionTitle
       anchors.left: parent.left
       anchors.right: parent.right
+      anchors.top: parent.top
       text-align: center
       font: verdana-11px-rounded
       text: tr('Select your prey creature')
@@ -401,6 +402,7 @@ InactivePreyPanel < Panel
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
+        anchors.bottom: parent.bottom
         layout:
           type: verticalBox
 
@@ -430,7 +432,7 @@ InactivePreyPanel < Panel
         font: verdana-11px-rounded
         text-align: center
         text: tr('No creature selected')
-        color: #cfcfcfff
+        color: #cfcfcf
 
       UICreature
         id: creature
@@ -585,7 +587,7 @@ PreyCreatureListItem < UICheckBox
   focusable: false
   text-align: left
   font: verdana-11px-rounded
-  color: #cfcfcfff
+  color: #c0c0c0
   border-width: 1
   border-color: alpha
   background-color: alpha
@@ -599,7 +601,7 @@ PreyCreatureListItem < UICheckBox
   $checked on:
     background-color: #1c4d75ff
     border-color: #6fb1e9ff
-    color: #ffffffff
+    color: #ffffff
 
   $!checked:
     border-color: alpha

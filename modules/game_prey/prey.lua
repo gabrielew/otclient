@@ -643,9 +643,7 @@ local function uncheckChildrenExcept(parent, except)
         if child ~= except and child.setChecked then
             if not child:isDestroyed() then
                 child:setChecked(false)
-                if child.baseBackground then
-                    child:setBackgroundColor(child.baseBackground)
-                end
+                restoreRaceListItemBackground(child)
             end
         end
         uncheckChildrenExcept(child, except)
@@ -717,6 +715,21 @@ local function buildRaceEntry(raceId)
     }
 end
 
+local function applyRaceListItemTextColor(widget, isChecked)
+    if not widget or widget:isDestroyed() or not widget.setColor then
+        return
+    end
+
+    local color = widget.baseTextColor
+    if isChecked then
+        color = widget.checkedTextColor or color
+    end
+
+    if color then
+        widget:setColor(color)
+    end
+end
+
 local function restoreRaceListItemBackground(widget)
     if not widget or widget:isDestroyed() then
         return
@@ -725,6 +738,8 @@ local function restoreRaceListItemBackground(widget)
     if widget.baseBackground then
         widget:setBackgroundColor(widget.baseBackground)
     end
+
+    applyRaceListItemTextColor(widget, widget:isChecked())
 end
 
 updateRaceSelectionDisplay = function(slot)
@@ -803,6 +818,10 @@ setRaceSelection = function(slot, widget, skipUncheck)
     selectedRaceWidgetBySlot[slot] = widget
     selectedRaceEntryBySlot[slot] = widget and widget.raceData or nil
 
+    if widget then
+        applyRaceListItemTextColor(widget, true)
+    end
+
     updateRaceSelectionDisplay(slot)
 end
 
@@ -835,6 +854,15 @@ refreshRaceList = function(slot)
         item.preySlot = slot
         item.baseBackground = useAlternate and backgroundB or backgroundA
         item:setBackgroundColor(item.baseBackground)
+        item.baseTextColor = '#c0c0c0'
+        item.checkedTextColor = '#ffffff'
+        if item.setColor then
+            item:setColor(item.baseTextColor)
+        end
+        item.onCheckChange = function(widget, checked)
+            applyRaceListItemTextColor(widget, checked)
+        end
+        applyRaceListItemTextColor(item, item:isChecked())
 
         useAlternate = not useAlternate
 

@@ -683,8 +683,10 @@ local function formatCreatureListText(name)
         return ''
     end
 
-    if #name > 19 then
-        return name:sub(1, 16) .. '...'
+    local maxLength = 16
+
+    if #name > maxLength then
+        return name:sub(1, maxLength) .. '...'
     end
 
     return name

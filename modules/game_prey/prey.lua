@@ -255,6 +255,170 @@ function toggleTracker()
     end
 end
 
+local function ensurePreviewDefaults(preview)
+    if not preview or preview.__listSelectionDefaults then
+        return
+    end
+
+    preview.__listSelectionDefaults = {
+        marginTop = preview:getMarginTop(),
+        marginBottom = preview:getMarginBottom(),
+        marginLeft = preview:getMarginLeft(),
+        marginRight = preview:getMarginRight(),
+        width = preview:getWidth(),
+        height = preview:getHeight()
+    }
+end
+
+local function restoreListSelectionLayout(prey)
+    if not prey or not prey.inactive then
+        return
+    end
+
+    local inactive = prey.inactive
+
+    local reroll = inactive.reroll
+    if reroll then
+        reroll:setVisible(true)
+    end
+
+    local selectPanel = inactive.select
+    if selectPanel then
+        if selectPanel.price and selectPanel.price.__listSelectionStoredVisibility ~= nil and selectPanel.price.setVisible then
+            selectPanel.price:setVisible(selectPanel.price.__listSelectionStoredVisibility)
+            selectPanel.price.__listSelectionStoredVisibility = nil
+        end
+
+        if selectPanel.price and selectPanel.price.text and selectPanel.price.text.__listSelectionStoredText then
+            local priceLabel = selectPanel.price.text
+            if priceLabel.setText then
+                priceLabel:setText(priceLabel.__listSelectionStoredText or '')
+            end
+            priceLabel.__listSelectionStoredText = nil
+        end
+    end
+
+    local fullList = inactive.fullList
+    if not fullList or not fullList.preview then
+        return
+    end
+
+    local preview = fullList.preview
+    if not preview.__listSelectionLayout then
+        return
+    end
+
+    preview:removeAnchor(AnchorLeft)
+    preview:removeAnchor(AnchorRight)
+    preview:removeAnchor(AnchorBottom)
+    preview:removeAnchor(AnchorTop)
+
+    local parentWidget = preview:getParent()
+    local parentId = parentWidget and parentWidget:getId() or 'parent'
+    preview:addAnchor(AnchorLeft, parentId, AnchorLeft)
+    preview:addAnchor(AnchorRight, parentId, AnchorRight)
+    preview:addAnchor(AnchorBottom, parentId, AnchorBottom)
+
+    local defaults = preview.__listSelectionDefaults
+    if defaults then
+        preview:setMarginTop(defaults.marginTop or 0)
+        preview:setMarginBottom(defaults.marginBottom or 0)
+        preview:setMarginLeft(defaults.marginLeft or 0)
+        preview:setMarginRight(defaults.marginRight or 0)
+        if defaults.width then
+            preview:setWidth(defaults.width)
+        end
+        if defaults.height then
+            preview:setHeight(defaults.height)
+        end
+    else
+        preview:setMarginTop(6)
+        preview:setMarginBottom(0)
+        preview:setMarginLeft(0)
+        preview:setMarginRight(0)
+        preview:setHeight(72)
+    end
+
+    preview.__listSelectionLayout = nil
+end
+
+local function applyListSelectionLayout(prey)
+    if not prey or not prey.inactive then
+        return
+    end
+
+    local inactive = prey.inactive
+    local reroll = inactive.reroll
+    if reroll then
+        reroll:setVisible(false)
+    end
+
+    local selectPanel = inactive.select
+    if selectPanel then
+        if selectPanel.price then
+            if selectPanel.price.setVisible and selectPanel.price.__listSelectionStoredVisibility == nil then
+                selectPanel.price.__listSelectionStoredVisibility = selectPanel.price:isVisible()
+            end
+            if selectPanel.price.setVisible then
+                selectPanel.price:setVisible(false)
+            end
+        end
+
+        if selectPanel.price and selectPanel.price.text then
+            local priceLabel = selectPanel.price.text
+            if priceLabel.getText and priceLabel.setText and not priceLabel.__listSelectionStoredText then
+                priceLabel.__listSelectionStoredText = priceLabel:getText()
+            end
+            if priceLabel.setText then
+                priceLabel:setText('')
+            end
+        end
+    end
+
+    local fullList = inactive.fullList
+    if not fullList or not fullList.preview then
+        return
+    end
+
+    local preview = fullList.preview
+    ensurePreviewDefaults(preview)
+    if preview.__listSelectionLayout then
+        return
+    end
+
+    preview:removeAnchor(AnchorLeft)
+    preview:removeAnchor(AnchorRight)
+    preview:removeAnchor(AnchorBottom)
+    preview:removeAnchor(AnchorTop)
+
+    local anchorTarget = reroll and reroll:getId()
+    if anchorTarget and anchorTarget ~= '' then
+        preview:addAnchor(AnchorLeft, anchorTarget, AnchorLeft)
+        preview:addAnchor(AnchorRight, anchorTarget, AnchorRight)
+        preview:addAnchor(AnchorTop, anchorTarget, AnchorTop)
+        preview:addAnchor(AnchorBottom, anchorTarget, AnchorBottom)
+        if reroll.getWidth then
+            preview:setWidth(reroll:getWidth())
+        end
+        if reroll.getHeight then
+            preview:setHeight(reroll:getHeight())
+        end
+    else
+        local parentWidget = preview:getParent()
+        local parentId = parentWidget and parentWidget:getId() or 'parent'
+        preview:addAnchor(AnchorLeft, parentId, AnchorLeft)
+        preview:addAnchor(AnchorRight, parentId, AnchorRight)
+        preview:addAnchor(AnchorBottom, parentId, AnchorBottom)
+    end
+
+    preview:setMarginTop(0)
+    preview:setMarginBottom(0)
+    preview:setMarginLeft(0)
+    preview:setMarginRight(0)
+
+    preview.__listSelectionLayout = true
+end
+
 local function resetPreyWindowState()
     if not preyWindow then
         return
@@ -269,6 +433,7 @@ local function resetPreyWindowState()
 
         local prey = preyWindow['slot' .. (slot + 1)]
         if prey then
+            restoreListSelectionLayout(prey)
             if prey.title then
                 prey.title:setText('')
             end
@@ -479,6 +644,7 @@ function onPreyInactive(slot, timeUntilFreeReroll, wildcards)
     if not prey then
         return
     end
+    restoreListSelectionLayout(prey)
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
@@ -1178,6 +1344,7 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
     if not prey then
         return
     end
+    restoreListSelectionLayout(prey)
     prey.inactive:hide()
     prey.locked:hide()
     prey.active:show()
@@ -1234,6 +1401,7 @@ function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards)
     if not prey then
         return
     end
+    restoreListSelectionLayout(prey)
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
@@ -1294,6 +1462,7 @@ function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValu
     if not prey then
         return
     end
+    restoreListSelectionLayout(prey)
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
@@ -1342,6 +1511,7 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
+    applyListSelectionLayout(prey)
     if prey.inactive.list then
         prey.inactive.list:setVisible(false)
     end

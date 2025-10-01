@@ -452,6 +452,7 @@ InactivePreyPanel < Panel
         anchors.centerIn: parent
         font: verdana-11px-rounded
         text-align: center
+        text-wrap: true
         !text: tr('No creature selected')
         color: #cfcfcf
 

@@ -660,7 +660,7 @@ local function buildRaceEntry(raceId)
     if name and name ~= '' then
         name = capitalFormatStr(name)
     else
-        name = string.format(tr('Unknown Creature (%d)'), raceId)
+        name = tr('Unknown Creature (%d)', raceId)
     end
 
     local outfit = raceData and raceData.outfit or nil

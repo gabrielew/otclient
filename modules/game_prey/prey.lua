@@ -746,7 +746,8 @@ updateRaceSelectionDisplay = function(slot)
 
     if fullList.selectionTitle then
         if entry then
-            fullList.selectionTitle:setText(tr('Selected: %s', entry.name))
+            local formattedName = formatCreatureListText(entry.name)
+            fullList.selectionTitle:setText(tr('Selected: %s', formattedName))
         else
             fullList.selectionTitle:setText(tr('Select your prey creature'))
         end

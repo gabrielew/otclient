@@ -588,6 +588,52 @@ local function getPreySlotWidget(slot)
     return preyWindow['slot' .. (slot + 1)]
 end
 
+local function setChoosePreyButtonEnabled(button, enabled)
+    if not button then
+        return
+    end
+
+    local imagePath
+    if enabled then
+        button:enable()
+        imagePath = 'data/images/game/prey/prey_choose.png'
+    else
+        button:disable()
+        imagePath = 'data/images/game/prey/prey_choose_blocked.png'
+    end
+
+    button:setImageSource(imagePath)
+end
+
+local function updateChoosePreyButtonState(slot)
+    local prey = getPreySlotWidget(slot)
+    if not prey or not prey.inactive or not prey.inactive.choose then
+        return
+    end
+
+    local button = prey.inactive.choose.choosePreyButton
+    if not button then
+        return
+    end
+
+    local hasSelection = false
+    local list = prey.inactive.list
+    if list then
+        for _, child in pairs(list:getChildren()) do
+            if child.isChecked and child:isChecked() then
+                hasSelection = true
+                break
+            end
+        end
+    end
+
+    if not hasSelection and selectedRaceEntryBySlot[slot] then
+        hasSelection = true
+    end
+
+    setChoosePreyButtonEnabled(button, hasSelection)
+end
+
 local function getWildcardCountOrDefault(wildcards)
     local playerBalance
     local player = g_game.getLocalPlayer()
@@ -769,6 +815,10 @@ function onItemBoxChecked(widget)
             if list and isDescendantOf(widget, list) then
                 uncheckChildrenExcept(list, widget)
                 widget:setChecked(true)
+                local slotIndex = tonumber(slotId:match('slot(\d+)'))
+                if slotIndex then
+                    updateChoosePreyButtonState(slotIndex - 1)
+                end
                 return
             end
             local fullList = slotWidget.inactive.fullList
@@ -777,6 +827,10 @@ function onItemBoxChecked(widget)
                 if entriesContainer and isDescendantOf(widget, entriesContainer) then
                     uncheckChildrenExcept(entriesContainer, widget)
                     widget:setChecked(true)
+                    local slotIndex = tonumber(slotId:match('slot(\d+)'))
+                    if slotIndex then
+                        updateChoosePreyButtonState(slotIndex - 1)
+                    end
                     return
                 end
             end
@@ -936,11 +990,7 @@ updateRaceSelectionDisplay = function(slot)
 
     local chooseButton = prey.inactive.choose and prey.inactive.choose.choosePreyButton
     if chooseButton then
-        if entry then
-            chooseButton:enable()
-        else
-            chooseButton:disable()
-        end
+        setChoosePreyButtonEnabled(chooseButton, entry ~= nil)
     end
 end
 
@@ -977,6 +1027,7 @@ setRaceSelection = function(slot, widget, skipUncheck)
     end
 
     updateRaceSelectionDisplay(slot)
+    updateChoosePreyButtonState(slot)
 end
 
 refreshRaceList = function(slot)
@@ -1009,18 +1060,18 @@ refreshRaceList = function(slot)
 
     for _, entry in ipairs(raceEntriesBySlot[slot] or {}) do
         if not searchFilter or (entry.searchName and entry.searchName:find(searchFilter, 1, true)) then
-        local item = g_ui.createWidget('PreyCreatureListItem', entriesPanel)
-        setWidgetTextToFit(item, entry.name)
-        item:setTooltip(entry.name)
-        item.raceData = entry
-        item.preySlot = slot
-        item.baseBackground = useAlternate and backgroundB or backgroundA
-        item.checkedBackground = '#585858'
-        item:setBackgroundColor(item.baseBackground)
-        item.onCheckChange = function(widget)
-            restoreRaceListItemBackground(widget)
-        end
-        restoreRaceListItemBackground(item)
+            local item = g_ui.createWidget('PreyCreatureListItem', entriesPanel)
+            setWidgetTextToFit(item, entry.name)
+            item:setTooltip(entry.name)
+            item.raceData = entry
+            item.preySlot = slot
+            item.baseBackground = useAlternate and backgroundB or backgroundA
+            item.checkedBackground = '#585858'
+            item:setBackgroundColor(item.baseBackground)
+            item.onCheckChange = function(widget)
+                restoreRaceListItemBackground(widget)
+            end
+            restoreRaceListItemBackground(item)
 
             useAlternate = not useAlternate
 
@@ -1036,6 +1087,8 @@ refreshRaceList = function(slot)
     elseif not currentSelectionId then
         updateRaceSelectionDisplay(slot)
     end
+
+    updateChoosePreyButtonState(slot)
 end
 
 function onRaceSearchTextChanged(widget)
@@ -1325,6 +1378,7 @@ function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards)
         return showMessage(tr('Error'), tr('Select monster to proceed.'))
     end
 
+    updateChoosePreyButtonState(slot)
     updatePickSpecificPreyButton(slot, wildcards)
 end
 
@@ -1387,6 +1441,7 @@ function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValu
         return showMessage(tr('Error'), tr('Select monster to proceed.'))
     end
 
+    updateChoosePreyButtonState(slot)
     updatePickSpecificPreyButton(slot, wildcards)
 end
 
@@ -1441,7 +1496,7 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
 
     local chooseButton = prey.inactive.choose and prey.inactive.choose.choosePreyButton
     if chooseButton then
-        chooseButton:disable()
+        setChoosePreyButtonEnabled(chooseButton, false)
         chooseButton.onClick = function()
             local selected = selectedRaceEntryBySlot[slot]
             if not selected then
@@ -1453,6 +1508,8 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
 
     refreshRaceList(slot)
 
+    updateChoosePreyButtonState(slot)
+
     local rerollButton = prey.inactive.reroll and prey.inactive.reroll.button and prey.inactive.reroll.button.rerollButton
     if rerollButton then
         rerollButton.onClick = function()
@@ -1460,6 +1517,7 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
         end
     end
 
+    updateChoosePreyButtonState(slot)
     updatePickSpecificPreyButton(slot, wildcards)
 end
 

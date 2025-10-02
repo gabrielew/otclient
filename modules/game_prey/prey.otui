@@ -350,6 +350,33 @@ InactivePreyPanel < Panel
     margin-right: 2
 
   FlatPanel
+    id: preview
+    anchors.left: parent.left
+    anchors.right: choose.left
+    anchors.bottom: parent.bottom
+    margin-right: 6
+    height: 92
+    padding: 4
+    image-source: /images/ui/panel_flat
+    image-border: 1
+    visible: false
+
+    Label
+      id: placeholder
+      anchors.centerIn: parent
+      font: verdana-9px-rounded
+      text-align: center
+      !text: tr('No creature selected')
+      color: #cfcfcf
+
+    UICreature
+      id: creature
+      anchors.centerIn: parent
+      size: 64 64
+      phantom: true
+      visible: false
+
+  FlatPanel
     id: list
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
@@ -368,7 +395,7 @@ InactivePreyPanel < Panel
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: parent.top
-    anchors.bottom: choose.top
+    anchors.bottom: preview.top
     margin-top: 20
     margin-bottom: 8
     padding: 6
@@ -417,7 +444,7 @@ InactivePreyPanel < Panel
       anchors.top: searchEdit.bottom
       anchors.left: parent.left
       anchors.right: parent.right
-      anchors.bottom: preview.top
+      anchors.bottom: parent.bottom
       margin-top: 4
       margin-bottom: 6
       padding-left: 2
@@ -435,32 +462,6 @@ InactivePreyPanel < Panel
       margin-right: 2
       step: 20
       pixel-scroll: true
-
-    FlatPanel
-      id: preview
-      anchors.left: parent.left
-      anchors.right: parent.right
-      anchors.bottom: parent.bottom
-      height: 72
-      margin-top: 6
-      padding: 4
-      image-source: /images/ui/panel_flat
-      image-border: 1
-
-      Label
-        id: placeholder
-        anchors.centerIn: parent
-        font: verdana-11px-rounded
-        text-align: center
-        !text: tr('No creature selected')
-        color: #cfcfcf
-
-      UICreature
-        id: creature
-        anchors.centerIn: parent
-        size: 64 64
-        phantom: true
-        visible: false
 
 ChoosePrey < FlatPanel
   size: 55 92

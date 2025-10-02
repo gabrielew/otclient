@@ -37,6 +37,7 @@ local refreshRaceList
 local setRaceSelection
 local updateRaceSelectionDisplay
 local restoreRaceListItemBackground
+local updatePickSpecificPreyButton
 
 function bonusDescription(bonusType, bonusValue, bonusGrade)
     if bonusType == PREY_BONUS_DAMAGE_BOOST then
@@ -497,6 +498,8 @@ function onPreyInactive(slot, timeUntilFreeReroll, wildcards)
     rerollButton.onClick = function()
         g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
     end
+
+    updatePickSpecificPreyButton(slot, wildcards)
 end
 
 function setBonusGradeStars(slot, grade)
@@ -583,6 +586,52 @@ local function getPreySlotWidget(slot)
         return nil
     end
     return preyWindow['slot' .. (slot + 1)]
+end
+
+local function getWildcardCountOrDefault(wildcards)
+    if type(wildcards) == 'number' then
+        return wildcards
+    end
+
+    local player = g_game.getLocalPlayer()
+    if player and ResourceTypes and ResourceTypes.PREY_WILDCARDS then
+        return player:getResourceBalance(ResourceTypes.PREY_WILDCARDS)
+    end
+
+    return 0
+end
+
+function updatePickSpecificPreyButton(slot, wildcards)
+    local prey = getPreySlotWidget(slot)
+    if not prey then
+        return
+    end
+
+    local wildcardCount = getWildcardCountOrDefault(wildcards)
+    local hasWildcardsAvailable = wildcardCount > 5
+
+    local function refreshButton(panel)
+        if not panel or not panel.select or not panel.select.pickSpecificPrey then
+            return
+        end
+
+        local button = panel.select.pickSpecificPrey
+
+        if hasWildcardsAvailable then
+            button:setImageSource('/images/game/prey/prey_select')
+            button:enable()
+            button.onClick = function()
+                g_game.preyAction(slot, PREY_ACTION_REQUEST_ALL_MONSTERS, 0)
+            end
+        else
+            button:setImageSource('/images/game/prey/prey_select_blocked')
+            button:disable()
+            button.onClick = nil
+        end
+    end
+
+    refreshButton(prey.active)
+    refreshButton(prey.inactive)
 end
 
 local function isDescendantOf(widget, ancestor)
@@ -1210,6 +1259,8 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
     prey.active.lockPrey.lockPreyCheck.onCheckChange = function(widget, checked)
         handleToggleOptions(widget, slot, PREY_OPTION_TOGGLE_LOCK_PREY, checked)
     end
+
+    updatePickSpecificPreyButton(slot, wildcards)
 end
 
 function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards)
@@ -1269,6 +1320,8 @@ function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards)
         end
         return showMessage(tr('Error'), tr('Select monster to proceed.'))
     end
+
+    updatePickSpecificPreyButton(slot, wildcards)
 end
 
 function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValue, bonusGrade, timeUntilFreeReroll,
@@ -1329,6 +1382,8 @@ function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValu
         end
         return showMessage(tr('Error'), tr('Select monster to proceed.'))
     end
+
+    updatePickSpecificPreyButton(slot, wildcards)
 end
 
 function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
@@ -1400,9 +1455,12 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
             g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
         end
     end
+
+    updatePickSpecificPreyButton(slot, wildcards)
 end
 
 function onPreyWildcardSelection(slot, races, nextFreeReroll, wildcards)
+    updatePickSpecificPreyButton(slot, wildcards)
 end
 
 function Prey.onResourcesBalanceChange(balance, oldBalance, type)
@@ -1412,6 +1470,9 @@ function Prey.onResourcesBalanceChange(balance, oldBalance, type)
         inventoryGold = balance
     elseif type == ResourceTypes.PREY_WILDCARDS then -- bonus rerolls
         bonusRerolls = balance
+        for slot = 0, 2 do
+            updatePickSpecificPreyButton(slot, balance)
+        end
     end
     local player = g_game.getLocalPlayer()
     g_logger.debug('' .. tostring(type) .. ', ' .. tostring(balance))

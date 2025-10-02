@@ -90,23 +90,23 @@ function init()
     preyTracker:setContentMaximumHeight(110)
     preyTracker:setContentMinimumHeight(70)
     preyTracker:hide()
-    
+
     -- Hide buttons similar to unjustifiedpoints implementation
     local toggleFilterButton = preyTracker:recursiveGetChildById('toggleFilterButton')
     if toggleFilterButton then
         toggleFilterButton:setVisible(false)
     end
-    
+
     local contextMenuButton = preyTracker:recursiveGetChildById('contextMenuButton')
     if contextMenuButton then
         contextMenuButton:setVisible(false)
     end
-    
+
     local newWindowButton = preyTracker:recursiveGetChildById('newWindowButton')
     if newWindowButton then
         newWindowButton:setVisible(false)
     end
-    
+
     -- Set up the miniwindow title and icon
     local titleWidget = preyTracker:getChildById('miniwindowTitle')
     if titleWidget then
@@ -115,24 +115,24 @@ function init()
         -- Fallback to old method if miniwindowTitle doesn't exist
         preyTracker:setText('Prey')
     end
-    
+
     local iconWidget = preyTracker:getChildById('miniwindowIcon')
     if iconWidget then
         iconWidget:setImageSource('/images/game/prey/icon-prey-widget')
     end
-    
+
     -- Position lockButton where toggleFilterButton was (to the left of minimize button)
     local lockButton = preyTracker:recursiveGetChildById('lockButton')
     local minimizeButton = preyTracker:recursiveGetChildById('minimizeButton')
-    
+
     if lockButton and minimizeButton then
         lockButton:breakAnchors()
         lockButton:addAnchor(AnchorTop, minimizeButton:getId(), AnchorTop)
         lockButton:addAnchor(AnchorRight, minimizeButton:getId(), AnchorLeft)
-        lockButton:setMarginRight(7)  -- Same margin as toggleFilterButton had
+        lockButton:setMarginRight(7) -- Same margin as toggleFilterButton had
         lockButton:setMarginTop(0)
     end
-    
+
     if g_game.isOnline() then
         check()
     end
@@ -212,11 +212,11 @@ end
 
 local n = 0
 function setUnsupportedSettings()
-    local t = {'slot1', 'slot2', 'slot3'}
+    local t = { 'slot1', 'slot2', 'slot3' }
     for i, slot in pairs(t) do
         local panel = preyWindow[slot]
-        for j, state in pairs({panel.active, panel.inactive}) do
-            state.select.price.text:setText('-------')
+        for j, state in pairs({ panel.active, panel.inactive }) do
+            state.select.price.text:setText('5')
         end
         panel.active.autoRerollPrice.text:setText('1')
         panel.active.lockPreyPrice.text:setText('5')
@@ -228,11 +228,11 @@ function check()
     if g_game.getFeature(GamePrey) then
         if not preyButton then
             preyButton = modules.game_mainpanel.addToggleButton('preyButton', tr('Prey Dialog'),
-                                                                         '/images/options/button_preydialog', toggle)
+                '/images/options/button_preydialog', toggle)
         end
         if not preyTrackerButton then
             preyTrackerButton = modules.game_mainpanel.addToggleButton('preyTrackerButton', tr('Prey Tracker'),
-                                                                                '/images/options/button_prey', toggleTracker)
+                '/images/options/button_prey', toggleTracker)
         end
     elseif preyButton then
         preyButton:destroy()
@@ -368,7 +368,7 @@ function onPreyFreeRerolls(slot, timeleft)
     if not prey then
         return
     end
-    for i, panel in pairs({prey.active, prey.inactive}) do
+    for i, panel in pairs({ prey.active, prey.inactive }) do
         local progressBar = panel.reroll.button.time
         local price = panel.reroll.price.text
         progressBar:setPercent(percent)
@@ -392,7 +392,7 @@ function onPreyTimeLeft(slot, timeLeft)
     local tracker = preyTracker.contentsPanel[slot]
     tracker.time:setPercent(percent)
     tracker.time:setTooltip(text)
-    for i, element in pairs({tracker.creatureName, tracker.creature, tracker.preyType, tracker.time}) do
+    for i, element in pairs({ tracker.creatureName, tracker.creature, tracker.preyType, tracker.time }) do
         element:setTooltip(text)
         element.onClick = function()
             show()
@@ -411,10 +411,10 @@ end
 
 function onPreyRerollPrice(price)
     rerollPrice = price
-    local t = {'slot1', 'slot2', 'slot3'}
+    local t = { 'slot1', 'slot2', 'slot3' }
     for i, slot in pairs(t) do
         local panel = preyWindow[slot]
-        for j, state in pairs({panel.active, panel.inactive}) do
+        for j, state in pairs({ panel.active, panel.inactive }) do
             local price = state.reroll.price.text
             local progressBar = state.reroll.button.time
             if progressBar:getText() ~= 'Free' then
@@ -476,7 +476,7 @@ function onPreyInactive(slot, timeUntilFreeReroll, wildcards)
         tracker.creatureName:setText('Inactive')
         tracker.time:setPercent(0)
         tracker.preyType:setImageSource('/images/game/prey/prey_no_bonus')
-        for i, element in pairs({tracker.creatureName, tracker.creature, tracker.preyType, tracker.time}) do
+        for i, element in pairs({ tracker.creatureName, tracker.creature, tracker.preyType, tracker.time }) do
             element:setTooltip('Inactive Prey. \n\nClick in this window to open the prey dialog.')
             element.onClick = function()
                 show()
@@ -600,10 +600,10 @@ local function setChoosePreyButtonEnabled(button, enabled)
     local imagePath
     if enabled then
         button:enable()
-        imagePath = 'data/images/game/prey/prey_choose.png'
+        imagePath = '/images/game/prey/prey_choose.png'
     else
         button:disable()
-        imagePath = 'data/images/game/prey/prey_choose_blocked.png'
+        imagePath = '/images/game/prey/prey_choose_blocked.png'
     end
 
     button:setImageSource(imagePath)
@@ -913,8 +913,7 @@ local function uncheckChildrenExcept(parent, except)
 end
 
 function onItemBoxChecked(widget)
-
-    for _, slotId in ipairs({'slot1', 'slot2', 'slot3'}) do
+    for _, slotId in ipairs({ 'slot1', 'slot2', 'slot3' }) do
         local slotWidget = preyWindow[slotId]
         if slotWidget and slotWidget.inactive then
             local list = slotWidget.inactive.list
@@ -1378,10 +1377,10 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
         preyDescription[slot].one = 'Creature: ' .. currentHolderName .. '\nDuration: '
         preyDescription[slot].two =
             '\nValue: ' .. bonusGrade .. '/10' .. '\nType: ' .. getBonusDescription(bonusType) .. '\n' ..
-                getTooltipBonusDescription(bonusType, bonusValue) .. '\n\nClick in this window to open the prey dialog.'
-        for i, element in pairs({tracker.creatureName, tracker.creature, tracker.preyType, tracker.time}) do
+            getTooltipBonusDescription(bonusType, bonusValue) .. '\n\nClick in this window to open the prey dialog.'
+        for i, element in pairs({ tracker.creatureName, tracker.creature, tracker.preyType, tracker.time }) do
             element:setTooltip(preyDescription[slot].one .. timeleftTranslation(timeLeft, true) ..
-                                   preyDescription[slot].two)
+                preyDescription[slot].two)
             element.onClick = function()
                 show()
             end
@@ -1436,7 +1435,7 @@ function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards)
         tracker.creatureName:setText('Inactive')
         tracker.time:setPercent(0)
         tracker.preyType:setImageSource('/images/game/prey/prey_no_bonus')
-        for i, element in pairs({tracker.creatureName, tracker.creature, tracker.preyType, tracker.time}) do
+        for i, element in pairs({ tracker.creatureName, tracker.creature, tracker.preyType, tracker.time }) do
             element:setTooltip('Inactive Prey. \n\nClick in this window to open the prey dialog.')
             element.onClick = function()
                 show()
@@ -1494,7 +1493,7 @@ function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValu
         tracker.creatureName:setText('Inactive')
         tracker.time:setPercent(0)
         tracker.preyType:setImageSource('/images/game/prey/prey_no_bonus')
-        for i, element in pairs({tracker.creatureName, tracker.creature, tracker.preyType, tracker.time}) do
+        for i, element in pairs({ tracker.creatureName, tracker.creature, tracker.preyType, tracker.time }) do
             element:setTooltip('Inactive Prey. \n\nClick in this window to open the prey dialog.')
             element.onClick = function()
                 show()
@@ -1602,7 +1601,8 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
 
     updateChoosePreyButtonState(slot)
 
-    local rerollButton = prey.inactive.reroll and prey.inactive.reroll.button and prey.inactive.reroll.button.rerollButton
+    local rerollButton = prey.inactive.reroll and prey.inactive.reroll.button and
+        prey.inactive.reroll.button.rerollButton
     if rerollButton then
         rerollButton.onClick = function()
             g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
@@ -1618,9 +1618,9 @@ function onPreyWildcardSelection(slot, races, nextFreeReroll, wildcards)
 end
 
 function Prey.onResourcesBalanceChange(balance, oldBalance, type)
-    if type == ResourceTypes.BANK_BALANCE then -- bank gold
+    if type == ResourceTypes.BANK_BALANCE then       -- bank gold
         bankGold = balance
-    elseif type == ResourceTypes.GOLD_EQUIPPED then -- inventory gold
+    elseif type == ResourceTypes.GOLD_EQUIPPED then  -- inventory gold
         inventoryGold = balance
     elseif type == ResourceTypes.PREY_WILDCARDS then -- bonus rerolls
         bonusRerolls = balance

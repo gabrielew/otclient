@@ -677,8 +677,20 @@ void UIWidget::ensureUniqueId() {
     if (id.empty())
         return;
 
+    const auto htmlNode = m_htmlNode;
     const auto parentNode = m_parent ? m_parent->getHtmlNode() : nullptr;
-    if (parentNode && parentNode->getById(id) != m_htmlNode) {
+    bool hasDuplicate = false;
+
+    if (parentNode && htmlNode) {
+        for (const auto& child : parentNode->getChildren()) {
+            if (child.get() != htmlNode.get() && child->getAttr("id") == id) {
+                hasDuplicate = true;
+                break;
+            }
+        }
+    }
+
+    if (hasDuplicate) {
         const std::string newId = "html" + std::to_string(++LAST_UNIQUE_ID);
         setId(newId);
 

@@ -1,6 +1,6 @@
 -- sponsored by kivera-global.com
 -- remade by Vithrax#5814
-Prey = {}
+Prey = Controller:new()
 preyWindow = nil
 preyButton = nil
 local preyTrackerButton
@@ -65,7 +65,10 @@ function timeleftTranslation(timeleft, forPreyTimeleft) -- in seconds
     return hours .. ':' .. mins
 end
 
-function init()
+function Prey:onInit()
+    g_ui.importStyle('otui/style.otui')
+    self:loadHtml('prey.html')
+
     connect(g_game, {
         onGameStart = check,
         onGameEnd = onGameEnd,
@@ -82,9 +85,16 @@ function init()
         onPreyWildcardSelection = onPreyWildcardSelection
     })
 
-    preyWindow = g_ui.displayUI('prey')
+    preyWindow = self.ui.preyWindow or self.ui
+    if not preyWindow then
+        g_logger.error('Failed to initialize Prey window from HTML layout.')
+        return
+    end
+
     preyWindow:hide()
-    preyTracker = g_ui.createWidget('PreyTracker', modules.game_interface.getRightPanel())
+
+    local trackerHtml = io.content('modules/game_prey/prey_tracker.html')
+    preyTracker = self:createWidgetFromHTML(trackerHtml, modules.game_interface.getRightPanel())
     preyTracker:setup()
     preyTracker:setContentMaximumHeight(110)
     preyTracker:setContentMinimumHeight(70)
@@ -178,7 +188,7 @@ function onHover(widget)
     end
 end
 
-function terminate()
+function Prey:onTerminate()
     disconnect(g_game, {
         onGameStart = check,
         onGameEnd = onGameEnd,
@@ -197,12 +207,19 @@ function terminate()
 
     if preyButton then
         preyButton:destroy()
+        preyButton = nil
     end
     if preyTrackerButton then
         preyTrackerButton:destroy()
+        preyTrackerButton = nil
     end
-    preyWindow:destroy()
-    preyTracker:destroy()
+    if preyWindow then
+        preyWindow = nil
+    end
+    if preyTracker then
+        preyTracker:destroy()
+        preyTracker = nil
+    end
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil
@@ -215,11 +232,11 @@ function setUnsupportedSettings()
     for i, slot in pairs(t) do
         local panel = preyWindow[slot]
         for j, state in pairs({panel.active, panel.inactive}) do
-            state.select.price.text:setText('-------')
+            state.select.price:setText('-------')
         end
-        panel.active.autoRerollPrice.text:setText('1')
-        panel.active.lockPreyPrice.text:setText('5')
-        panel.active.choose.price.text:setText(1)
+        panel.active.autoRerollPrice:setText('1')
+        panel.active.lockPreyPrice:setText('5')
+        panel.active.choose.price:setText('1')
     end
 end
 
@@ -360,7 +377,7 @@ function onPreyFreeRerolls(slot, timeleft)
     end
     for i, panel in pairs({prey.active, prey.inactive}) do
         local progressBar = panel.reroll.button.time
-        local price = panel.reroll.price.text
+        local price = panel.reroll.price
         progressBar:setPercent(percent)
         progressBar:setText(desc)
         if timeleft == 0 then
@@ -405,7 +422,7 @@ function onPreyRerollPrice(price)
     for i, slot in pairs(t) do
         local panel = preyWindow[slot]
         for j, state in pairs({panel.active, panel.inactive}) do
-            local price = state.reroll.price.text
+            local price = state.reroll.price
             local progressBar = state.reroll.button.time
             if progressBar:getText() ~= 'Free' then
                 price:setText(comma_value(rerollPrice))
@@ -429,7 +446,7 @@ function setTimeUntilFreeReroll(slot, timeUntilFreeReroll) -- minutes
         local reroll = panel.reroll.button.time
         reroll:setPercent(percent)
         reroll:setText(desc)
-        local price = panel.reroll.price.text
+        local price = panel.reroll.price
         if timeUntilFreeReroll > 0 then
             price:setText(comma_value(rerollPrice))
         else

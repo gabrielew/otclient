@@ -1,0 +1,31 @@
+<link rel="stylesheet" href="prey.css" />
+<div data-widget="MiniWindow" id="preyTracker" class="prey-tracker" text="Prey" onopen="modules.game_prey.onMiniWindowOpen()" onclose="modules.game_prey.onMiniWindowClose()" save="true">
+  <div data-widget="UIWidget" id="miniwindowIcon" class="tracker-icon" image-source="/images/game/prey/icon-prey-widget" ></div>
+  <label data-widget="Label" id="miniwindowTitle" class="tracker-title" text="Prey" ></label>
+  <div data-widget="MiniWindowContents" id="contentsPanel" class="tracker-contents" vertical-scrollbar="miniwindowScrollBar">
+    <label data-widget="Label" text="Prey Creatures" ></label>
+    <hr data-widget="HorizontalSeparator" />
+    <div data-widget="Panel" id="slot1" class="tracker-slot">
+      <div data-widget="UICreature" id="creature" class="tracker-creature" ></div>
+      <div data-widget="UIWidget" id="noCreature" class="tracker-nocreature" image-source="/images/game/prey/prey_inactive" ></div>
+      <div data-widget="UIWidget" id="preyType" class="tracker-preytype" ></div>
+      <div data-widget="UIWidget" id="creatureName" class="tracker-name" text="Inactive" ></div>
+      <div data-widget="ProgressBar" id="time" class="tracker-time" text="" ></div>
+    </div>
+    <div data-widget="Panel" id="slot2" class="tracker-slot">
+      <div data-widget="UICreature" id="creature" class="tracker-creature" ></div>
+      <div data-widget="UIWidget" id="noCreature" class="tracker-nocreature" image-source="/images/game/prey/prey_inactive" ></div>
+      <div data-widget="UIWidget" id="preyType" class="tracker-preytype" ></div>
+      <div data-widget="UIWidget" id="creatureName" class="tracker-name" text="Inactive" ></div>
+      <div data-widget="ProgressBar" id="time" class="tracker-time" text="" ></div>
+    </div>
+    <div data-widget="Panel" id="slot3" class="tracker-slot">
+      <div data-widget="UICreature" id="creature" class="tracker-creature" ></div>
+      <div data-widget="UIWidget" id="noCreature" class="tracker-nocreature" image-source="/images/game/prey/prey_inactive" ></div>
+      <div data-widget="UIWidget" id="preyType" class="tracker-preytype" ></div>
+      <div data-widget="UIWidget" id="creatureName" class="tracker-name" text="Inactive" ></div>
+      <div data-widget="ProgressBar" id="time" class="tracker-time" text="" ></div>
+    </div>
+  </div>
+  <div data-widget="VerticalScrollBar" id="miniwindowScrollBar" class="tracker-scroll" ></div>
+</div>

@@ -1,0 +1,170 @@
+.prey-window {
+  width: 688px;
+  height: 520px;
+  padding: 20px;
+}
+
+.prey-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.prey-slot-row {
+  display: flex;
+  gap: 10px;
+}
+
+.slot-panel {
+  flex: 1;
+  min-width: 210px;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.slot-title {
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.locked-panel,
+.inactive-panel,
+.active-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.no-creature-panel,
+.creature-bonus {
+  display: flex;
+  gap: 10px;
+}
+
+.creature-frame {
+  width: 124px;
+  height: 124px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bonus-panel,
+.bonus-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.bonus-grade {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
+  width: 100%;
+  justify-items: center;
+}
+
+.creature-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  min-height: 195px;
+}
+
+.full-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+}
+
+.entries {
+  flex: 1;
+  padding-right: 14px;
+}
+
+.preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 72px;
+}
+
+.preview-placeholder {
+  text-align: center;
+}
+
+.reroll-panel,
+.choose-prey,
+.select-prey,
+.bonus-reroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.auto-reroll,
+.lock-prey {
+  display: flex;
+  align-items: center;
+  min-height: 20px;
+}
+
+.prey-description {
+  margin: 10px 0;
+  flex: 1;
+}
+
+.prey-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.prey-footer .GoldLabel {
+  margin-right: auto;
+}
+
+.HorizontalSeparator {
+  margin: 10px 0;
+}
+
+.store-button,
+.store-link {
+  display: flex;
+  justify-content: center;
+}
+
+.prey-tracker {
+  width: 210px;
+  min-height: 110px;
+}
+
+.tracker-contents {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 5px;
+}
+
+.tracker-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tracker-name {
+  text-align: left;
+}
+
+.tracker-time {
+  height: 6px;
+}

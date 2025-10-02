@@ -589,16 +589,20 @@ local function getPreySlotWidget(slot)
 end
 
 local function getWildcardCountOrDefault(wildcards)
+    local playerBalance
+    local player = g_game.getLocalPlayer()
+    if player and ResourceTypes and ResourceTypes.PREY_WILDCARDS then
+        playerBalance = player:getResourceBalance(ResourceTypes.PREY_WILDCARDS)
+    end
+
     if type(wildcards) == 'number' then
+        if playerBalance then
+            return math.max(wildcards, playerBalance)
+        end
         return wildcards
     end
 
-    local player = g_game.getLocalPlayer()
-    if player and ResourceTypes and ResourceTypes.PREY_WILDCARDS then
-        return player:getResourceBalance(ResourceTypes.PREY_WILDCARDS)
-    end
-
-    return 0
+    return playerBalance or 0
 end
 
 function updatePickSpecificPreyButton(slot, wildcards)

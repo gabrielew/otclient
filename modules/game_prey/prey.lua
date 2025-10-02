@@ -139,6 +139,11 @@ function init()
     setUnsupportedSettings()
 end
 
+local pickSpecificPreyBonusBySlot = {}
+
+local pickSpecificPreyDescriptionDefault = 'If you like to select another prey creature, click here to choose from all available creatures.\nThe newly selected prey will be active for 2 hours hunting time again.\nYour current bonus will not be affected.'
+local pickSpecificPreyDescriptionTemplate = 'If you like to select another prey creature, click here to choose from all available creatures.\nThe newly selected prey will be active for 2 hours hunting time again.\nYour current bonus +%s%% %s will not be affected.'
+
 local descriptionTable = {
     ['shopPermButton'] =
     'Go to the Store to purchase the Permanent Prey Slot. Once you have completed the purchase, you can activate a prey here, no matter if your character is on a free or a Premium account.',
@@ -148,7 +153,7 @@ local descriptionTable = {
     'This prey is not available for your character yet.\nCheck the large blue button(s) to learn how to unlock this prey slot',
     ['selectPrey'] =
     'Click here to get a bonus with a higher value. The bonus for your prey will be selected randomly from one of the following: damage boost, damage reduction, bonus XP, improved loot. Your prey will be active for 2 hours hunting time again. Your prey creature will stay the same.',
-    ['pickSpecificPrey'] = 'If you like to select another prey creature, click here to choose from all available creatures.\nThe newly selected prey will be active for 2 hours hunting time again.\nYour current bonus <+percent%> <bonus type> will not be affected.',
+    ['pickSpecificPrey'] = pickSpecificPreyDescriptionDefault,
     ['rerollButton'] =
     'If you like to select another prey crature, click here to get a new list with 9 creatures to choose from.\nThe newly selected prey will be active for 2 hours hunting time again.',
     ['preyCandidate'] = 'Select a new prey creature for the next 2 hours hunting time.',
@@ -160,6 +165,50 @@ local descriptionTable = {
     'Do you want to enable the Lock Prey?\nEach time the Lock Prey is triggered, 5 of your Prey Wildcards will be consumed.'
 }
 
+local function getSlotIndexFromWidget(widget)
+    while widget do
+        local id = widget:getId()
+        if id then
+            local slotNumber = id:match('^slot(%d+)$')
+            if slotNumber then
+                return tonumber(slotNumber) - 1
+            end
+        end
+        widget = widget:getParent()
+    end
+
+    return nil
+end
+
+local function getPickSpecificPreyDescription(slot)
+    local bonusInfo = pickSpecificPreyBonusBySlot[slot]
+
+    if bonusInfo then
+        local bonusName = getBonusDescription(bonusInfo.type)
+
+        if bonusName then
+            return string.format(pickSpecificPreyDescriptionTemplate, bonusInfo.value, bonusName)
+        end
+    end
+
+    return pickSpecificPreyDescriptionDefault
+end
+
+local function setPickSpecificPreyBonus(slot, bonusType, bonusValue)
+    if slot == nil then
+        return
+    end
+
+    if bonusType and bonusType ~= PREY_BONUS_NONE and bonusValue ~= nil then
+        pickSpecificPreyBonusBySlot[slot] = {
+            type = bonusType,
+            value = bonusValue
+        }
+    else
+        pickSpecificPreyBonusBySlot[slot] = nil
+    end
+end
+
 function onHover(widget)
     if type(widget) == 'string' then
         return preyWindow.description:setText(descriptionTable[widget])
@@ -170,8 +219,16 @@ function onHover(widget)
         desc = desc:sub(1, desc:len() - 46)
         return preyWindow.description:setText(desc)
     end
-    if widget:isVisible() then
+    if widget and widget:isVisible() then
         local id = widget:getId()
+        if id == 'pickSpecificPrey' then
+            local slot = getSlotIndexFromWidget(widget)
+            if slot then
+                preyWindow.description:setText(getPickSpecificPreyDescription(slot))
+                return
+            end
+        end
+
         local desc = descriptionTable[id]
         if desc then
             preyWindow.description:setText(desc)
@@ -449,6 +506,8 @@ function setTimeUntilFreeReroll(slot, timeUntilFreeReroll) -- minutes
 end
 
 function onPreyLocked(slot, unlockState, timeUntilFreeReroll, wildcards)
+    setPickSpecificPreyBonus(slot)
+
     -- tracker
     slot = 'slot' .. (slot + 1)
     local tracker = preyTracker.contentsPanel[slot]
@@ -503,6 +562,7 @@ function onPreyInactive(slot, timeUntilFreeReroll, wildcards)
         showListRerollConfirmation(slot)
     end
 
+    setPickSpecificPreyBonus(slot)
     updatePickSpecificPreyButton(slot, wildcards)
 end
 
@@ -812,6 +872,8 @@ function updatePickSpecificPreyButton(slot, wildcards)
         end
 
         local button = panel.select.pickSpecificPrey
+
+        button:setTooltip(getPickSpecificPreyDescription(slot))
 
         if hasWildcardsAvailable then
             button:setImageSource('/images/game/prey/prey_select')
@@ -1494,6 +1556,7 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
     creatureAndBonus.timeLeft:setText(timeleftTranslation(timeLeft))
     -- bonus reroll
     local wildcardCount = getWildcardCountOrDefault(wildcards)
+    setPickSpecificPreyBonus(slot, bonusType, bonusValue)
     prey.active.choose.selectPrey.onClick = function()
         showBonusRerollConfirmation(slot, wildcardCount)
     end
@@ -1544,6 +1607,7 @@ function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards)
     raceEntriesBySlot[slot] = nil
     selectedRaceEntryBySlot[slot] = nil
     selectedRaceWidgetBySlot[slot] = nil
+    setPickSpecificPreyBonus(slot)
     prey.title:setText(tr('Select monster'))
     local rerollButton = prey.inactive.reroll.button.rerollButton
     rerollButton.onClick = function()
@@ -1602,6 +1666,7 @@ function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValu
     raceEntriesBySlot[slot] = nil
     selectedRaceEntryBySlot[slot] = nil
     selectedRaceWidgetBySlot[slot] = nil
+    setPickSpecificPreyBonus(slot)
     prey.title:setText(tr('Select monster'))
     local rerollButton = prey.inactive.reroll.button.rerollButton
     rerollButton.onClick = function()
@@ -1641,6 +1706,7 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
+    setPickSpecificPreyBonus(slot)
     selectedRaceEntryBySlot[slot] = nil
     selectedRaceWidgetBySlot[slot] = nil
 

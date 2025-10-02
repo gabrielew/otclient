@@ -908,7 +908,7 @@ local function resetPreyPreviewWidget(preview)
     end
 end
 
-local function setInactiveMode(slot, showFullList, prey)
+function setInactiveMode(slot, showFullList, prey)
     prey = prey or getPreySlotWidget(slot)
     if not prey or not prey.inactive then
         return prey
@@ -1201,18 +1201,7 @@ updateRaceSelectionDisplay = function(slot)
         return
     end
 
-    local fullList = prey.inactive.fullList
     local entry = selectedRaceEntryBySlot[slot]
-
-    if fullList.selectionTitle then
-        if entry then
-            setWidgetTextToFit(fullList.selectionTitle, entry.name, function(value)
-                return tr('Selected: %s', value)
-            end)
-        else
-            fullList.selectionTitle:setText(tr('Select your prey creature'))
-        end
-    end
 
     if prey.title then
         if entry then
@@ -1229,7 +1218,20 @@ updateRaceSelectionDisplay = function(slot)
         local creatureWidget = preview.creature
         local placeholder = preview.placeholder
         if entry and entry.outfit and creatureWidget then
-            local size = math.max((entry.realSize or 0) + 48, 64)
+            local spriteSize = g_gameConfig.getSpriteSize()
+            if spriteSize <= 0 then
+                spriteSize = 32
+            end
+            local widgetSize = math.min(creatureWidget:getWidth(), creatureWidget:getHeight())
+            local referenceSize = math.max(entry.realSize or spriteSize * 2, spriteSize * 2)
+            local targetSize = widgetSize > 0 and widgetSize or spriteSize * 2
+            local scale = math.floor((targetSize / referenceSize) * 100)
+
+            if scale < 1 then
+                scale = 1
+            elseif scale > 100 then
+                scale = 100
+            end
             creatureWidget:setCreatureSize(size)
             creatureWidget:setOutfit(entry.outfit)
             creatureWidget:setVisible(true)
@@ -1722,9 +1724,6 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
     prey.title:setText(tr('Select your prey creature'))
 
     clearFullListEntries(fullList)
-    if fullList.selectionTitle then
-        fullList.selectionTitle:setText(tr('Select your prey creature'))
-    end
 
     local preview = prey.inactive.preview
     if preview then

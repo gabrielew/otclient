@@ -1476,11 +1476,11 @@ local function handleToggleOptions(checkbox, slot, currentOption, checked)
         local function confirm()
             if otherCheckbox and otherCheckbox:isChecked() then
                 setOptionCheckedSilently(otherCheckbox, false)
-                sendOption(PREY_OPTION_UNTOGGLE)
+                sendOption(slot, PREY_OPTION_UNTOGGLE)
             end
 
             setOptionCheckedSilently(checkbox, true)
-            sendOption(currentOption)
+            sendOption(slot, currentOption)
             closeWindow()
         end
 
@@ -1510,7 +1510,7 @@ local function handleToggleOptions(checkbox, slot, currentOption, checked)
         return
     end
 
-    sendOption(PREY_OPTION_UNTOGGLE)
+    sendOption(slot, PREY_OPTION_UNTOGGLE)
 end
 
 function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, bonusValue, bonusGrade, timeLeft,

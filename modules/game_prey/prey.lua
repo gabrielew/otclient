@@ -500,7 +500,7 @@ function onPreyInactive(slot, timeUntilFreeReroll, wildcards)
     rerollButton:setImageSource('/images/game/prey/prey_reroll_blocked')
     rerollButton:disable()
     rerollButton.onClick = function()
-        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+        showListRerollConfirmation(slot)
     end
 
     updatePickSpecificPreyButton(slot, wildcards)
@@ -655,7 +655,7 @@ local function getWildcardCountOrDefault(wildcards)
     return playerBalance or 0
 end
 
-local function showPreyWildcardConfirmation(description, confirmAction)
+local function showPreyConfirmationWindow(title, description, confirmAction)
     local confirmWindow
     local wasPreyWindowVisible = preyWindow and preyWindow:isVisible()
     local preyVisibilityRestored = false
@@ -688,7 +688,7 @@ local function showPreyWildcardConfirmation(description, confirmAction)
         closeWindow()
     end
 
-    confirmWindow = displayGeneralBox(tr('Confirmation of Using Prey Wildcards'), description, {
+    confirmWindow = displayGeneralBox(tr(title), description, {
         {
             text = tr('No'),
             callback = closeWindow
@@ -704,6 +704,10 @@ local function showPreyWildcardConfirmation(description, confirmAction)
     else
         restorePreyWindowVisibility()
     end
+end
+
+local function showPreyWildcardConfirmation(description, confirmAction)
+    showPreyConfirmationWindow('Confirmation of Using Prey Wildcards', description, confirmAction)
 end
 
 local function showPickSpecificPreyConfirmation(slot, wildcardCount)
@@ -725,6 +729,71 @@ local function showBonusRerollConfirmation(slot, wildcardCount)
 
     showPreyWildcardConfirmation(description, function()
         g_game.preyAction(slot, PREY_ACTION_BONUSREROLL, 0)
+    end)
+end
+
+local function getPlayerTotalGold()
+    local player = g_game.getLocalPlayer()
+    if player and player.getTotalMoney then
+        return player:getTotalMoney()
+    end
+
+    return (bankGold or 0) + (inventoryGold or 0)
+end
+
+local function getDisplayedRerollPrice(slot)
+    local prey = getPreySlotWidget(slot)
+    if not prey then
+        return rerollPrice
+    end
+
+    local function parsePanel(panel)
+        if not panel or not panel:isVisible() or not panel.reroll or not panel.reroll.price then
+            return nil
+        end
+
+        local priceWidget = panel.reroll.price.text
+        if not priceWidget then
+            return nil
+        end
+
+        local text = priceWidget:getText()
+        if not text or text == '' then
+            return nil
+        end
+
+        if text:lower() == 'free' then
+            return 0
+        end
+
+        local digits = text:gsub('[^%d]', '')
+        if digits == '' then
+            return nil
+        end
+
+        return tonumber(digits)
+    end
+
+    return parsePanel(prey.active) or parsePanel(prey.inactive) or rerollPrice
+end
+
+local function showListRerollConfirmation(slot)
+    local price = getDisplayedRerollPrice(slot) or 0
+
+    if price <= 0 then
+        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+        return
+    end
+
+    local totalGold = getPlayerTotalGold()
+    local description = tr(string.format(
+        'Do you want to spend %s gold for a List Reroll?\nYou current have %s gold available for the purchase.',
+        comma_value(price),
+        comma_value(totalGold)
+    ))
+
+    showPreyConfirmationWindow('Confirmation of Using List Reroll', description, function()
+        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
     end)
 end
 
@@ -1430,7 +1499,7 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
     end
     -- creature reroll
     prey.active.reroll.button.rerollButton.onClick = function()
-        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+        showListRerollConfirmation(slot)
     end
 
     setOptionCheckedSilently(prey.active.autoReroll.autoRerollCheck, option == PREY_ACTION_BONUSREROLL)
@@ -1478,7 +1547,7 @@ function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards)
     prey.title:setText(tr('Select monster'))
     local rerollButton = prey.inactive.reroll.button.rerollButton
     rerollButton.onClick = function()
-        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+        showListRerollConfirmation(slot)
     end
     local list = prey.inactive.list
     list:destroyChildren()
@@ -1536,7 +1605,7 @@ function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValu
     prey.title:setText(tr('Select monster'))
     local rerollButton = prey.inactive.reroll.button.rerollButton
     rerollButton.onClick = function()
-        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+        showListRerollConfirmation(slot)
     end
     local list = prey.inactive.list
     list:destroyChildren()
@@ -1625,7 +1694,7 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
         prey.inactive.reroll.button.rerollButton
     if rerollButton then
         rerollButton.onClick = function()
-            g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+            showListRerollConfirmation(slot)
         end
     end
 

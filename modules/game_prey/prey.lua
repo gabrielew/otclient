@@ -655,7 +655,7 @@ local function getWildcardCountOrDefault(wildcards)
     return playerBalance or 0
 end
 
-local function showPickSpecificPreyConfirmation(slot, wildcardCount)
+local function showPreyWildcardConfirmation(description, confirmAction)
     local confirmWindow
     local wasPreyWindowVisible = preyWindow and preyWindow:isVisible()
     local preyVisibilityRestored = false
@@ -682,14 +682,11 @@ local function showPickSpecificPreyConfirmation(slot, wildcardCount)
     end
 
     local function confirm()
-        g_game.preyAction(slot, PREY_ACTION_REQUEST_ALL_MONSTERS, 0)
+        if confirmAction then
+            confirmAction()
+        end
         closeWindow()
     end
-
-    local description = tr(string.format(
-        'Are you sure you want to use 5 of your remaining %s Prey Wildcards?',
-        tostring(wildcardCount)
-    ))
 
     confirmWindow = displayGeneralBox(tr('Confirmation of Using Prey Wildcards'), description, {
         {
@@ -707,6 +704,28 @@ local function showPickSpecificPreyConfirmation(slot, wildcardCount)
     else
         restorePreyWindowVisibility()
     end
+end
+
+local function showPickSpecificPreyConfirmation(slot, wildcardCount)
+    local description = tr(string.format(
+        'Are you sure you want to use 5 of your remaining %s Prey Wildcards?',
+        tostring(wildcardCount)
+    ))
+
+    showPreyWildcardConfirmation(description, function()
+        g_game.preyAction(slot, PREY_ACTION_REQUEST_ALL_MONSTERS, 0)
+    end)
+end
+
+local function showBonusRerollConfirmation(slot, wildcardCount)
+    local description = tr(string.format(
+        'Are you sure you want to use 1 of your remaining %s Prey Wildcards?',
+        tostring(wildcardCount)
+    ))
+
+    showPreyWildcardConfirmation(description, function()
+        g_game.preyAction(slot, PREY_ACTION_BONUSREROLL, 0)
+    end)
 end
 
 function updatePickSpecificPreyButton(slot, wildcards)
@@ -1405,8 +1424,9 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
     creatureAndBonus.timeLeft:setPercent(percent)
     creatureAndBonus.timeLeft:setText(timeleftTranslation(timeLeft))
     -- bonus reroll
+    local wildcardCount = getWildcardCountOrDefault(wildcards)
     prey.active.choose.selectPrey.onClick = function()
-        g_game.preyAction(slot, PREY_ACTION_BONUSREROLL, 0)
+        showBonusRerollConfirmation(slot, wildcardCount)
     end
     -- creature reroll
     prey.active.reroll.button.rerollButton.onClick = function()

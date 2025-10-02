@@ -815,7 +815,7 @@ function onItemBoxChecked(widget)
             if list and isDescendantOf(widget, list) then
                 uncheckChildrenExcept(list, widget)
                 widget:setChecked(true)
-                local slotIndex = tonumber(slotId:match('slot(\d+)'))
+                local slotIndex = tonumber(slotId:match('slot(%d+)'))
                 if slotIndex then
                     updateChoosePreyButtonState(slotIndex - 1)
                 end
@@ -827,7 +827,7 @@ function onItemBoxChecked(widget)
                 if entriesContainer and isDescendantOf(widget, entriesContainer) then
                     uncheckChildrenExcept(entriesContainer, widget)
                     widget:setChecked(true)
-                    local slotIndex = tonumber(slotId:match('slot(\d+)'))
+                    local slotIndex = tonumber(slotId:match('slot(%d+)'))
                     if slotIndex then
                         updateChoosePreyButtonState(slotIndex - 1)
                     end

@@ -141,8 +141,10 @@ end
 
 local pickSpecificPreyBonusBySlot = {}
 
-local pickSpecificPreyDescriptionDefault = 'If you like to select another prey creature, click here to choose from all available creatures.\nThe newly selected prey will be active for 2 hours hunting time again.\nYour current bonus will not be affected.'
-local pickSpecificPreyDescriptionTemplate = 'If you like to select another prey creature, click here to choose from all available creatures.\nThe newly selected prey will be active for 2 hours hunting time again.\nYour current bonus +%s%% %s will not be affected.'
+local pickSpecificPreyDescriptionDefault =
+'If you like to select another prey creature, click here to choose from all available creatures.\nThe newly selected prey will be active for 2 hours hunting time again.\nYour current bonus will not be affected.'
+local pickSpecificPreyDescriptionTemplate =
+'If you like to select another prey creature, click here to choose from all available creatures.\nThe newly selected prey will be active for 2 hours hunting time again.\nYour current bonus +%s%% %s will not be affected.'
 
 local descriptionTable = {
     ['shopPermButton'] =
@@ -1512,7 +1514,7 @@ local function handleToggleOptions(checkbox, slot, currentOption, checked)
 end
 
 function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, bonusValue, bonusGrade, timeLeft,
-                      timeUntilFreeReroll, wildcards) -- locktype always 0 for protocols <12
+                      timeUntilFreeReroll, wildcards, option) -- locktype always 0 for protocols <12
     local tracker = preyTracker.contentsPanel['slot' .. (slot + 1)]
     currentHolderName = capitalFormatStr(currentHolderName)
     local percent = (timeLeft / (2 * 60 * 60)) * 100

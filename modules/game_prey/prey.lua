@@ -279,15 +279,24 @@ local function resetPreyWindowState()
                 prey.inactive.list:destroyChildren()
             end
 
-            if prey.inactive and prey.inactive.fullList then
-                clearFullListEntries(prey.inactive.fullList)
-                if prey.inactive.fullList.preview and prey.inactive.fullList.preview.placeholder then
-                    prey.inactive.fullList.preview.placeholder:setVisible(true)
+            if prey.inactive then
+                if prey.inactive.fullList then
+                    clearFullListEntries(prey.inactive.fullList)
+                    prey.inactive.fullList:setVisible(false)
                 end
-                if prey.inactive.fullList.preview and prey.inactive.fullList.preview.creature then
-                    prey.inactive.fullList.preview.creature:setVisible(false)
+
+                if prey.inactive.preview then
+                    resetPreyPreviewWidget(prey.inactive.preview)
+                    prey.inactive.preview:setVisible(false)
                 end
-                prey.inactive.fullList:setVisible(false)
+
+                if prey.inactive.select then
+                    prey.inactive.select:setVisible(true)
+                end
+
+                if prey.inactive.reroll then
+                    prey.inactive.reroll:setVisible(true)
+                end
             end
 
             if prey.active and prey.active.creatureAndBonus then
@@ -483,12 +492,7 @@ function onPreyInactive(slot, timeUntilFreeReroll, wildcards)
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
-    if prey.inactive.list then
-        prey.inactive.list:setVisible(true)
-    end
-    if prey.inactive.fullList then
-        prey.inactive.fullList:setVisible(false)
-    end
+    setInactiveMode(slot, false, prey)
     raceEntriesBySlot[slot] = nil
     selectedRaceEntryBySlot[slot] = nil
     selectedRaceWidgetBySlot[slot] = nil
@@ -682,6 +686,54 @@ function updatePickSpecificPreyButton(slot, wildcards)
 
     refreshButton(prey.active)
     refreshButton(prey.inactive)
+end
+
+local function resetPreyPreviewWidget(preview)
+    if not preview then
+        return
+    end
+
+    if preview.placeholder then
+        preview.placeholder:setVisible(true)
+    end
+
+    if preview.creature then
+        preview.creature:setVisible(false)
+    end
+end
+
+local function setInactiveMode(slot, showFullList, prey)
+    prey = prey or getPreySlotWidget(slot)
+    if not prey or not prey.inactive then
+        return prey
+    end
+
+    local inactive = prey.inactive
+
+    if inactive.list then
+        inactive.list:setVisible(not showFullList)
+    end
+
+    if inactive.fullList then
+        inactive.fullList:setVisible(showFullList)
+    end
+
+    if inactive.preview then
+        inactive.preview:setVisible(showFullList)
+        if not showFullList or not selectedRaceEntryBySlot[slot] then
+            resetPreyPreviewWidget(inactive.preview)
+        end
+    end
+
+    if inactive.select then
+        inactive.select:setVisible(not showFullList)
+    end
+
+    if inactive.reroll then
+        inactive.reroll:setVisible(not showFullList)
+    end
+
+    return prey
 end
 
 local function isDescendantOf(widget, ancestor)
@@ -967,9 +1019,10 @@ updateRaceSelectionDisplay = function(slot)
         end
     end
 
-    if fullList.preview then
-        local creatureWidget = fullList.preview.creature
-        local placeholder = fullList.preview.placeholder
+    local preview = prey.inactive and prey.inactive.preview
+    if preview then
+        local creatureWidget = preview.creature
+        local placeholder = preview.placeholder
         if entry and entry.outfit and creatureWidget then
             local size = math.max((entry.realSize or 0) + 48, 64)
             creatureWidget:setCreatureSize(size)
@@ -1345,12 +1398,7 @@ function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards)
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
-    if prey.inactive.list then
-        prey.inactive.list:setVisible(true)
-    end
-    if prey.inactive.fullList then
-        prey.inactive.fullList:setVisible(false)
-    end
+    setInactiveMode(slot, false, prey)
     raceEntriesBySlot[slot] = nil
     selectedRaceEntryBySlot[slot] = nil
     selectedRaceWidgetBySlot[slot] = nil
@@ -1408,12 +1456,7 @@ function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValu
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
-    if prey.inactive.list then
-        prey.inactive.list:setVisible(true)
-    end
-    if prey.inactive.fullList then
-        prey.inactive.fullList:setVisible(false)
-    end
+    setInactiveMode(slot, false, prey)
     raceEntriesBySlot[slot] = nil
     selectedRaceEntryBySlot[slot] = nil
     selectedRaceWidgetBySlot[slot] = nil
@@ -1456,16 +1499,15 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
-    if prey.inactive.list then
-        prey.inactive.list:setVisible(false)
-    end
+    selectedRaceEntryBySlot[slot] = nil
+    selectedRaceWidgetBySlot[slot] = nil
+
+    setInactiveMode(slot, true, prey)
 
     local fullList = prey.inactive.fullList
     if not fullList then
         return
     end
-
-    fullList:setVisible(true)
 
     prey.title:setText(tr('Select your prey creature'))
 
@@ -1473,11 +1515,10 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
     if fullList.selectionTitle then
         fullList.selectionTitle:setText(tr('Select your prey creature'))
     end
-    if fullList.preview and fullList.preview.placeholder then
-        fullList.preview.placeholder:setVisible(true)
-    end
-    if fullList.preview and fullList.preview.creature then
-        fullList.preview.creature:setVisible(false)
+
+    local preview = prey.inactive.preview
+    if preview then
+        resetPreyPreviewWidget(preview)
     end
 
     raceEntriesBySlot[slot] = {}
@@ -1487,9 +1528,6 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
     table.sort(raceEntriesBySlot[slot], function(a, b)
         return a.name < b.name
     end)
-
-    selectedRaceEntryBySlot[slot] = nil
-    selectedRaceWidgetBySlot[slot] = nil
 
     raceSearchTextsBySlot[slot] = nil
     updateRaceSearchUI(slot)

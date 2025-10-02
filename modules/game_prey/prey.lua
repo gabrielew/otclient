@@ -148,7 +148,7 @@ local descriptionTable = {
     'This prey is not available for your character yet.\nCheck the large blue button(s) to learn how to unlock this prey slot',
     ['selectPrey'] =
     'Click here to get a bonus with a higher value. The bonus for your prey will be selected randomly from one of the following: damage boost, damage reduction, bonus XP, improved loot. Your prey will be active for 2 hours hunting time again. Your prey creature will stay the same.',
-    ['pickSpecificPrey'] = 'Available only for protocols 12+',
+    ['pickSpecificPrey'] = 'If you like to select another prey creature, click here to choose from all available creatures.\nThe newly selected prey will be active for 2 hours hunting time again.\nYour current bonus <+percent%> <bonus type> will not be affected.',
     ['rerollButton'] =
     'If you like to select another prey crature, click here to get a new list with 9 creatures to choose from.\nThe newly selected prey will be active for 2 hours hunting time again.',
     ['preyCandidate'] = 'Select a new prey creature for the next 2 hours hunting time.',

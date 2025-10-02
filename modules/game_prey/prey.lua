@@ -655,6 +655,60 @@ local function getWildcardCountOrDefault(wildcards)
     return playerBalance or 0
 end
 
+local function showPickSpecificPreyConfirmation(slot, wildcardCount)
+    local confirmWindow
+    local wasPreyWindowVisible = preyWindow and preyWindow:isVisible()
+    local preyVisibilityRestored = false
+
+    local function restorePreyWindowVisibility()
+        if not preyVisibilityRestored and wasPreyWindowVisible and preyWindow then
+            preyVisibilityRestored = true
+            preyWindow:show()
+            preyWindow:raise()
+            preyWindow:focus()
+        end
+    end
+
+    if wasPreyWindowVisible then
+        preyWindow:hide()
+    end
+
+    local function closeWindow()
+        if confirmWindow then
+            confirmWindow:destroy()
+            confirmWindow = nil
+            restorePreyWindowVisibility()
+        end
+    end
+
+    local function confirm()
+        g_game.preyAction(slot, PREY_ACTION_REQUEST_ALL_MONSTERS, 0)
+        closeWindow()
+    end
+
+    local description = tr(string.format(
+        'Are you sure you want to use 5 of your remaining %s Prey Wildcards?',
+        tostring(wildcardCount)
+    ))
+
+    confirmWindow = displayGeneralBox(tr('Confirmation of Using Prey Wildcards'), description, {
+        {
+            text = tr('No'),
+            callback = closeWindow
+        },
+        {
+            text = tr('Yes'),
+            callback = confirm
+        },
+    }, confirm, closeWindow)
+
+    if confirmWindow then
+        confirmWindow.onDestroy = restorePreyWindowVisibility
+    else
+        restorePreyWindowVisibility()
+    end
+end
+
 function updatePickSpecificPreyButton(slot, wildcards)
     local prey = getPreySlotWidget(slot)
     if not prey then
@@ -675,7 +729,7 @@ function updatePickSpecificPreyButton(slot, wildcards)
             button:setImageSource('/images/game/prey/prey_select')
             button:enable()
             button.onClick = function()
-                g_game.preyAction(slot, PREY_ACTION_REQUEST_ALL_MONSTERS, 0)
+                showPickSpecificPreyConfirmation(slot, wildcardCount)
             end
         else
             button:setImageSource('/images/game/prey/prey_select_blocked')

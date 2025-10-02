@@ -139,6 +139,13 @@ function init()
     setUnsupportedSettings()
 end
 
+local pickSpecificPreyBonusBySlot = {}
+
+local pickSpecificPreyDescriptionDefault =
+'If you like to select another prey creature, click here to choose from all available creatures.\nThe newly selected prey will be active for 2 hours hunting time again.\nYour current bonus will not be affected.'
+local pickSpecificPreyDescriptionTemplate =
+'If you like to select another prey creature, click here to choose from all available creatures.\nThe newly selected prey will be active for 2 hours hunting time again.\nYour current bonus +%s%% %s will not be affected.'
+
 local descriptionTable = {
     ['shopPermButton'] =
     'Go to the Store to purchase the Permanent Prey Slot. Once you have completed the purchase, you can activate a prey here, no matter if your character is on a free or a Premium account.',
@@ -148,7 +155,7 @@ local descriptionTable = {
     'This prey is not available for your character yet.\nCheck the large blue button(s) to learn how to unlock this prey slot',
     ['selectPrey'] =
     'Click here to get a bonus with a higher value. The bonus for your prey will be selected randomly from one of the following: damage boost, damage reduction, bonus XP, improved loot. Your prey will be active for 2 hours hunting time again. Your prey creature will stay the same.',
-    ['pickSpecificPrey'] = 'Available only for protocols 12+',
+    ['pickSpecificPrey'] = pickSpecificPreyDescriptionDefault,
     ['rerollButton'] =
     'If you like to select another prey crature, click here to get a new list with 9 creatures to choose from.\nThe newly selected prey will be active for 2 hours hunting time again.',
     ['preyCandidate'] = 'Select a new prey creature for the next 2 hours hunting time.',
@@ -160,6 +167,50 @@ local descriptionTable = {
     'Do you want to enable the Lock Prey?\nEach time the Lock Prey is triggered, 5 of your Prey Wildcards will be consumed.'
 }
 
+local function getSlotIndexFromWidget(widget)
+    while widget do
+        local id = widget:getId()
+        if id then
+            local slotNumber = id:match('^slot(%d+)$')
+            if slotNumber then
+                return tonumber(slotNumber) - 1
+            end
+        end
+        widget = widget:getParent()
+    end
+
+    return nil
+end
+
+local function getPickSpecificPreyDescription(slot)
+    local bonusInfo = pickSpecificPreyBonusBySlot[slot]
+
+    if bonusInfo then
+        local bonusName = getBonusDescription(bonusInfo.type)
+
+        if bonusName then
+            return string.format(pickSpecificPreyDescriptionTemplate, bonusInfo.value, bonusName)
+        end
+    end
+
+    return pickSpecificPreyDescriptionDefault
+end
+
+local function setPickSpecificPreyBonus(slot, bonusType, bonusValue)
+    if slot == nil then
+        return
+    end
+
+    if bonusType and bonusType ~= PREY_BONUS_NONE and bonusValue ~= nil then
+        pickSpecificPreyBonusBySlot[slot] = {
+            type = bonusType,
+            value = bonusValue
+        }
+    else
+        pickSpecificPreyBonusBySlot[slot] = nil
+    end
+end
+
 function onHover(widget)
     if type(widget) == 'string' then
         return preyWindow.description:setText(descriptionTable[widget])
@@ -170,8 +221,16 @@ function onHover(widget)
         desc = desc:sub(1, desc:len() - 46)
         return preyWindow.description:setText(desc)
     end
-    if widget:isVisible() then
+    if widget and widget:isVisible() then
         local id = widget:getId()
+        if id == 'pickSpecificPrey' then
+            local slot = getSlotIndexFromWidget(widget)
+            if slot then
+                preyWindow.description:setText(getPickSpecificPreyDescription(slot))
+                return
+            end
+        end
+
         local desc = descriptionTable[id]
         if desc then
             preyWindow.description:setText(desc)
@@ -449,6 +508,8 @@ function setTimeUntilFreeReroll(slot, timeUntilFreeReroll) -- minutes
 end
 
 function onPreyLocked(slot, unlockState, timeUntilFreeReroll, wildcards)
+    setPickSpecificPreyBonus(slot)
+
     -- tracker
     slot = 'slot' .. (slot + 1)
     local tracker = preyTracker.contentsPanel[slot]
@@ -500,9 +561,10 @@ function onPreyInactive(slot, timeUntilFreeReroll, wildcards)
     rerollButton:setImageSource('/images/game/prey/prey_reroll_blocked')
     rerollButton:disable()
     rerollButton.onClick = function()
-        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+        showListRerollConfirmation(slot)
     end
 
+    setPickSpecificPreyBonus(slot)
     updatePickSpecificPreyButton(slot, wildcards)
 end
 
@@ -655,7 +717,7 @@ local function getWildcardCountOrDefault(wildcards)
     return playerBalance or 0
 end
 
-local function showPickSpecificPreyConfirmation(slot, wildcardCount)
+local function showPreyConfirmationWindow(title, description, confirmAction)
     local confirmWindow
     local wasPreyWindowVisible = preyWindow and preyWindow:isVisible()
     local preyVisibilityRestored = false
@@ -682,16 +744,13 @@ local function showPickSpecificPreyConfirmation(slot, wildcardCount)
     end
 
     local function confirm()
-        g_game.preyAction(slot, PREY_ACTION_REQUEST_ALL_MONSTERS, 0)
+        if confirmAction then
+            confirmAction()
+        end
         closeWindow()
     end
 
-    local description = tr(string.format(
-        'Are you sure you want to use 5 of your remaining %s Prey Wildcards?',
-        tostring(wildcardCount)
-    ))
-
-    confirmWindow = displayGeneralBox(tr('Confirmation of Using Prey Wildcards'), description, {
+    confirmWindow = displayGeneralBox(tr(title), description, {
         {
             text = tr('No'),
             callback = closeWindow
@@ -709,6 +768,97 @@ local function showPickSpecificPreyConfirmation(slot, wildcardCount)
     end
 end
 
+local function showPreyWildcardConfirmation(description, confirmAction)
+    showPreyConfirmationWindow('Confirmation of Using Prey Wildcards', description, confirmAction)
+end
+
+local function showPickSpecificPreyConfirmation(slot, wildcardCount)
+    local description = tr(string.format(
+        'Are you sure you want to use 5 of your remaining %s Prey Wildcards?',
+        tostring(wildcardCount)
+    ))
+
+    showPreyWildcardConfirmation(description, function()
+        g_game.preyAction(slot, PREY_ACTION_REQUEST_ALL_MONSTERS, 0)
+    end)
+end
+
+local function showBonusRerollConfirmation(slot, wildcardCount)
+    local description = tr(string.format(
+        'Are you sure you want to use 1 of your remaining %s Prey Wildcards?',
+        tostring(wildcardCount)
+    ))
+
+    showPreyWildcardConfirmation(description, function()
+        g_game.preyAction(slot, PREY_ACTION_BONUSREROLL, 0)
+    end)
+end
+
+local function getPlayerTotalGold()
+    local player = g_game.getLocalPlayer()
+    if player and player.getTotalMoney then
+        return player:getTotalMoney()
+    end
+
+    return (bankGold or 0) + (inventoryGold or 0)
+end
+
+local function getDisplayedRerollPrice(slot)
+    local prey = getPreySlotWidget(slot)
+    if not prey then
+        return rerollPrice
+    end
+
+    local function parsePanel(panel)
+        if not panel or not panel:isVisible() or not panel.reroll or not panel.reroll.price then
+            return nil
+        end
+
+        local priceWidget = panel.reroll.price.text
+        if not priceWidget then
+            return nil
+        end
+
+        local text = priceWidget:getText()
+        if not text or text == '' then
+            return nil
+        end
+
+        if text:lower() == 'free' then
+            return 0
+        end
+
+        local digits = text:gsub('[^%d]', '')
+        if digits == '' then
+            return nil
+        end
+
+        return tonumber(digits)
+    end
+
+    return parsePanel(prey.active) or parsePanel(prey.inactive) or rerollPrice
+end
+
+local function showListRerollConfirmation(slot)
+    local price = getDisplayedRerollPrice(slot) or 0
+
+    if price <= 0 then
+        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+        return
+    end
+
+    local totalGold = getPlayerTotalGold()
+    local description = tr(string.format(
+        'Do you want to spend %s gold for a List Reroll?\nYou current have %s gold available for the purchase.',
+        comma_value(price),
+        comma_value(totalGold)
+    ))
+
+    showPreyConfirmationWindow('Confirmation of Using List Reroll', description, function()
+        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+    end)
+end
+
 function updatePickSpecificPreyButton(slot, wildcards)
     local prey = getPreySlotWidget(slot)
     if not prey then
@@ -724,6 +874,8 @@ function updatePickSpecificPreyButton(slot, wildcards)
         end
 
         local button = panel.select.pickSpecificPrey
+
+        button:setTooltip(getPickSpecificPreyDescription(slot))
 
         if hasWildcardsAvailable then
             button:setImageSource('/images/game/prey/prey_select')
@@ -1362,7 +1514,7 @@ local function handleToggleOptions(checkbox, slot, currentOption, checked)
 end
 
 function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, bonusValue, bonusGrade, timeLeft,
-                      timeUntilFreeReroll, wildcards) -- locktype always 0 for protocols <12
+                      timeUntilFreeReroll, wildcards, option) -- locktype always 0 for protocols <12
     local tracker = preyTracker.contentsPanel['slot' .. (slot + 1)]
     currentHolderName = capitalFormatStr(currentHolderName)
     local percent = (timeLeft / (2 * 60 * 60)) * 100
@@ -1405,12 +1557,14 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
     creatureAndBonus.timeLeft:setPercent(percent)
     creatureAndBonus.timeLeft:setText(timeleftTranslation(timeLeft))
     -- bonus reroll
+    local wildcardCount = getWildcardCountOrDefault(wildcards)
+    setPickSpecificPreyBonus(slot, bonusType, bonusValue)
     prey.active.choose.selectPrey.onClick = function()
-        g_game.preyAction(slot, PREY_ACTION_BONUSREROLL, 0)
+        showBonusRerollConfirmation(slot, wildcardCount)
     end
     -- creature reroll
     prey.active.reroll.button.rerollButton.onClick = function()
-        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+        showListRerollConfirmation(slot)
     end
 
     setOptionCheckedSilently(prey.active.autoReroll.autoRerollCheck, option == PREY_ACTION_BONUSREROLL)
@@ -1455,10 +1609,11 @@ function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards)
     raceEntriesBySlot[slot] = nil
     selectedRaceEntryBySlot[slot] = nil
     selectedRaceWidgetBySlot[slot] = nil
+    setPickSpecificPreyBonus(slot)
     prey.title:setText(tr('Select monster'))
     local rerollButton = prey.inactive.reroll.button.rerollButton
     rerollButton.onClick = function()
-        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+        showListRerollConfirmation(slot)
     end
     local list = prey.inactive.list
     list:destroyChildren()
@@ -1513,10 +1668,11 @@ function onPreySelectionChangeMonster(slot, names, outfits, bonusType, bonusValu
     raceEntriesBySlot[slot] = nil
     selectedRaceEntryBySlot[slot] = nil
     selectedRaceWidgetBySlot[slot] = nil
+    setPickSpecificPreyBonus(slot)
     prey.title:setText(tr('Select monster'))
     local rerollButton = prey.inactive.reroll.button.rerollButton
     rerollButton.onClick = function()
-        g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+        showListRerollConfirmation(slot)
     end
     local list = prey.inactive.list
     list:destroyChildren()
@@ -1552,6 +1708,7 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
     prey.active:hide()
     prey.locked:hide()
     prey.inactive:show()
+    setPickSpecificPreyBonus(slot)
     selectedRaceEntryBySlot[slot] = nil
     selectedRaceWidgetBySlot[slot] = nil
 
@@ -1605,7 +1762,7 @@ function onPreyListSelection(slot, races, nextFreeReroll, wildcards)
         prey.inactive.reroll.button.rerollButton
     if rerollButton then
         rerollButton.onClick = function()
-            g_game.preyAction(slot, PREY_ACTION_LISTREROLL, 0)
+            showListRerollConfirmation(slot)
         end
     end
 

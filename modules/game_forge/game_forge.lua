@@ -1,1089 +1,1123 @@
--- Todo
--- change to TypeScript
+ForgeSystem = {}
+ForgeSystem.__index = ForgeSystem
 
-local windowTypes = {}
-local TAB_ORDER = { 'fusion', 'transfer', 'conversion', 'history' }
-local TAB_CONFIG = {
-    fusion = {
-        modeProperty = 'modeFusion'
-    },
-    transfer = {
-        modeProperty = 'modeTransfer'
-    },
-    conversion = {},
-    history = {}
-}
 
-ui = {
-    panels = {}
-}
-forgeController = Controller:new()
-forgeController.historyState = {
-    page = 1,
-    lastPage = 1,
-    currentCount = 0
-}
-local forgeButton
+ForgeSystem.classPrice = {}
+ForgeSystem.transferMap = {}
+ForgeSystem.fusionPrices = {}
+ForgeSystem.transferPrices = {}
+ForgeSystem.baseMultipier = 0
+ForgeSystem.slivers = 0
+ForgeSystem.totalSlivers = 0
+ForgeSystem.dustCost = 0
+ForgeSystem.dustPrice = 0
+ForgeSystem.maxDust = 0
+ForgeSystem.dustFusion = 0
+ForgeSystem.convergenceDustFusion = 0
+ForgeSystem.dustTransfer = 0
+ForgeSystem.convergenceDustTransfer = 0
+ForgeSystem.success = 0
+ForgeSystem.improveRateSuccess = 0
+ForgeSystem.tierLoss = 0
+ForgeSystem.inForgeFusion = false
+ForgeSystem.fusionPrice = 0
+ForgeSystem.exaltedCoreCount = 0
+ForgeSystem.fusionTier = 0
 
-local forgeResourceTypes = {
-    dust = ResourceTypes and ResourceTypes.FORGE_DUST or 70,
-    sliver = ResourceTypes and ResourceTypes.FORGE_SLIVER or 71,
-    cores = ResourceTypes and ResourceTypes.FORGE_CORES or 72
-}
+ForgeSystem.fusionData = {}
+ForgeSystem.fusionConvergenceData = {}
+ForgeSystem.transferData = {}
+ForgeSystem.transferConvergenceData = {}
+ForgeSystem.maxPlayerDust = 100
 
-local function defaultResourceFormatter(value)
-    local numericValue = tonumber(value) or 0
-    return tostring(numericValue)
+function ForgeSystem.init(classPrice, transferMap, fusionPrices, transferPrices, baseMultipier, slivers, totalSlivers, dustCost, dustPrice, maxDust, dustFusion, convergenceDustFusion, dustTransfer, convergenceDustTransfer, success, improveRateSuccess, tierLoss)
+	ForgeSystem.classPrice = classPrice
+	ForgeSystem.transferMap = transferMap
+	ForgeSystem.fusionPrices = fusionPrices
+	ForgeSystem.transferPrices = transferPrices
+	ForgeSystem.baseMultipier = baseMultipier
+	ForgeSystem.slivers = slivers
+	ForgeSystem.totalSlivers = totalSlivers
+	ForgeSystem.dustCost = dustCost
+	ForgeSystem.dustPrice = dustPrice
+	ForgeSystem.maxPlayerDust = dustPrice
+	ForgeSystem.maxDust = maxDust
+	ForgeSystem.dustFusion = dustFusion
+	ForgeSystem.convergenceDustFusion = convergenceDustFusion
+	ForgeSystem.dustTransfer = dustTransfer
+	ForgeSystem.convergenceDustTransfer = convergenceDustTransfer
+	ForgeSystem.success = success
+	ForgeSystem.improveRateSuccess = improveRateSuccess
+	ForgeSystem.tierLoss = tierLoss
+
+	ForgeSystem.inForgeFusion = false
+
+	fusionMenu.itemsFusion.dustPanel.item:setItemId(37160)
+	fusionMenu.converFusion.convergencePanel.dustPanel.item:setItemId(37160)
+	fusionMenu.converFusion.convergencePanel.dustCount.dustamount:setText(ForgeSystem.convergenceDustFusion)
+	local player = g_game.getLocalPlayer()
+	--forgeWindow.dustPanel.dust:setText(player:getResourceValue(ResourceForgeDust) .. '/' ..ForgeSystem.maxDust)
+	fusionMenu.itemsFusion.dustCount.dustamount:setText(ForgeSystem.dustFusion)
+
+
+	fusionMenu.itemsFusion.improveRateSuccessButton:setText('Improve to '.. (ForgeSystem.success + ForgeSystem.improveRateSuccess) ..'%')
+
+	-- configure transfer
+	transferMenu.itemsFusion.itemPanel.item:setItemId(0)
+	transferMenu.itemsFusion.itemPanel.item.questionMark:setVisible(true)
+	transferMenu.itemsFusion.itemCount.value:setText("0 / 1")
+	transferMenu.itemsFusion.dustCount.dustamount:setText("0")
+	transferMenu.itemsFusion.dustCount.dustamount:setColor("#d33c3c")
+
+	transferMenu.itemsFusion.dustPanel.item:setItemId(37160)
+	transferMenu.itemsFusion.dustCount.dustamount:setText(ForgeSystem.dustTransfer)
+	transferMenu.itemsFusion.dustCount.dustamount:setColor("#d33c3c")
+
+	transferMenu.itemsFusion.exaltedPanel.item:setItemId(37110)
+	transferMenu.itemsFusion.exaltedCount.amount:setText("???")
+	transferMenu.itemsFusion.exaltedCount.amount:setColor("#d33c3c")
+	-- configure transfer
+	transferMenu.converFusion.itemPanel.item:setItemId(0)
+	transferMenu.converFusion.itemCount.value:setText("0 / 1")
+	transferMenu.converFusion.dustCount.dustamount:setText("0")
+	transferMenu.converFusion.dustCount.dustamount:setColor("#d33c3c")
+
+	transferMenu.converFusion.dustPanel.item:setItemId(37160)
+	transferMenu.converFusion.dustCount.dustamount:setText(ForgeSystem.convergenceDustTransfer)
+	transferMenu.converFusion.dustCount.dustamount:setColor("#d33c3c")
+
+	transferMenu.converFusion.exaltedPanel.item:setItemId(37110)
+	transferMenu.converFusion.exaltedCount.amount:setText("???")
+	transferMenu.converFusion.exaltedCount.amount:setColor("#d33c3c")
+
+	conversionMenu.windowConvertDust.itemPanel.item:setItemId(37160)
+	conversionMenu.windowConvertDust.itemCount.amount:setText(ForgeSystem.slivers * ForgeSystem.baseMultipier)
+	conversionMenu.windowConvertDust.itemCount.amount:setColor("#d33c3c")
+	conversionMenu.windowConvertDust.dustButton.item:setItemId(37109)
+	conversionMenu.windowConvertDust.generateSlivers:setText("Generate ".. ForgeSystem.slivers)
+
+	conversionMenu.windowConvertSlivers.itemPanel.item:setItemId(37109)
+	conversionMenu.windowConvertSlivers.itemCount.amount:setText(ForgeSystem.totalSlivers)
+	conversionMenu.windowConvertSlivers.itemCount.amount:setColor("#d33c3c")
+	conversionMenu.windowConvertSlivers.sliverButton.item:setItemId(37110)
+
+	local totalDustRequired = (100 - ForgeSystem.dustCost) + (ForgeSystem.maxPlayerDust - 100)
+	conversionMenu.windowIncreaseDustLimit.itemPanel.item:setItemId(37160)
+	conversionMenu.windowIncreaseDustLimit.itemCount.amount:setText(totalDustRequired)
+	conversionMenu.windowIncreaseDustLimit.itemCount.amount:setColor("#d33c3c")
+	conversionMenu.windowIncreaseDustLimit.increaseButton.item:setItemId(37160)
+	conversionMenu.windowIncreaseDustLimit.increaseButton.itemRight:setItemId(37160)
+	conversionMenu.windowIncreaseDustLimit.baseText:setText('Raise limit from')
+	conversionMenu.windowIncreaseDustLimit.currentDust:setVisible(true)
+	conversionMenu.windowIncreaseDustLimit.img1:setVisible(true)
+	conversionMenu.windowIncreaseDustLimit.img2:setVisible(true)
+	conversionMenu.windowIncreaseDustLimit.currentDust:setText('100')
+	conversionMenu.windowIncreaseDustLimit.nextDust:setVisible(true)
+	conversionMenu.windowIncreaseDustLimit.nextDust:setText('to 101')
 end
 
-local function formatGoldAmount(value)
-    local numericValue = tonumber(value) or 0
-    if type(comma_value) == 'function' then
-        return comma_value(tostring(numericValue))
-    end
+function ForgeSystem.onForgeData(fusionData, fusionConvergenceData, transferData, transferConvergenceData, maxPlayerDust)
+	ForgeSystem.fusionData = fusionData
+	ForgeSystem.fusionConvergenceData = fusionConvergenceData
+	ForgeSystem.transferData = transferData
+	ForgeSystem.transferConvergenceData = transferConvergenceData
+	ForgeSystem.maxPlayerDust = maxPlayerDust
+	ForgeSystem.sideButton = false
 
-    return tostring(numericValue)
+	local player = g_game.getLocalPlayer()
+	-- update
+	g_game.doThing(false)
+	g_game.requestResource(ResourceBank)
+	g_game.requestResource(ResourceInventary)
+	g_game.requestResource(ResourceForgeDust)
+	g_game.requestResource(ResourceForgeSlivers)
+	g_game.requestResource(ResourceForgeExaltedCore)
+	g_game.doThing(true)
+
+	forgeWindow.dustPanel.dust:setText(player:getResourceValue(ResourceForgeDust) .. '/' ..ForgeSystem.maxPlayerDust)
+    fusionMenu.itemFusionPanel.mindPanel.convergenceCheckBox:setChecked(false)
+    transferMenu.itemTransferPanel.mindPanel.convergenceCheckBox:setChecked(false)
+	if not ForgeSystem.inForgeFusion then
+		show()
+	end
 end
 
-local function formatDustAmount(value)
-    local numericValue = tonumber(value) or 0
-    local maxDust = (forgeController and forgeController.maxDustLevel) or 100
+-- ################# FUSION
+function ForgeSystem.updateFusion()
+	ForgeSystem.clearFusion()
+	ForgeSystem.clearTransfer()
+	local itemPanel = fusionMenu.itemFusionPanel.itemsPanel
+	fusionMenu.itemFusionPanel.itemsPanel:destroyChildren()
 
-    if maxDust <= 0 then
-        return tostring(numericValue)
-    end
+	if selectedItemFusionRadio then
+		selectedItemFusionRadio:destroy()
+	end
 
-    return string.format('%d/%d', numericValue, maxDust)
+	selectedItemFusionRadio = UIRadioGroup.create()
+
+	selectedItemFusionRadio:clearSelected()
+	connect(selectedItemFusionRadio, { onSelectionChange = onSelectionChange })
+
+	local data = ForgeSystem.fusionData
+
+	if fusionMenu.converFusion:isVisible() then
+		data = ForgeSystem.fusionConvergenceData
+	end
+
+	for _, fusion in pairs(data) do
+		local widget = g_ui.createWidget('FusionItemBox', itemPanel)
+
+		local itemPtr = Item.create(fusion[1], 1)
+		itemPtr:setTier(fusion[2])
+
+		widget.item:setItem(itemPtr)
+		widget.item:setItemCount(fusion[3])
+		widget.itemPtr = itemPtr
+
+		selectedItemFusionRadio:addWidget(widget)
+	end
 end
 
-local forgeStatusConfigs = {
-    {
-        selector = '#forgeGoldAmount',
-        formatter = formatGoldAmount,
-        getValue = function(player)
-            if not player then
-                return 0
-            end
+-- configure panel conversion
+local function ConfigureFusionConversionPanel(selectedWidget)
+	local itemPtr = selectedWidget.itemPtr
+	local itemCount = tonumber(selectedWidget.item:getItemCount())
+	local itemTier = itemPtr:getTier()
 
-            return player:getTotalMoney() or 0
-        end,
-        eventResourceTypes = {
-            ResourceTypes and ResourceTypes.BANK_BALANCE or 0,
-            ResourceTypes and ResourceTypes.GOLD_EQUIPPED or 1
-        }
-    },
-    {
-        selector = '#forgeDustAmount',
-        formatter = formatDustAmount,
-        resourceType = forgeResourceTypes.dust
-    },
-    {
-        selector = '#forgeSliverAmount',
-        formatter = defaultResourceFormatter,
-        resourceType = forgeResourceTypes.sliver
-    },
-    {
-        selector = '#forgeCoreAmount',
-        formatter = defaultResourceFormatter,
-        resourceType = forgeResourceTypes.cores
-    }
-}
+	ForgeSystem.fusionItem = itemPtr
+	ForgeSystem.fusionItemCount = itemCount
 
-local forgeResourceConfig = {}
+	fusionMenu.itemFusionPanel.nextItem:setItemId(itemPtr:getId())
+	fusionMenu.itemFusionPanel.nextItem.questionMark:setVisible(false)
+	fusionMenu.itemFusionPanel.nextItem.tierflags:setVisible(true)
+	fusionMenu.itemFusionPanel.nextItem.tierflags:setImageClip( itemTier * 18 .." 0 18 16")
 
-local fusionTabContext
-local fusionSelectionRadioGroup
-local fusionConvergenceRadioGroup
+	fusionMenu.converFusion.convergencePanel.fusionButton.item:setItemId(itemPtr:getId())
+	fusionMenu.converFusion.convergencePanel.fusionButton.item.questionMark:setVisible(false)
+	if itemTier > 0 then
+		fusionMenu.converFusion.convergencePanel.fusionButton.item.tierflags:setImageClip( (itemTier -1)* 9 .." 0 9 8")
+		fusionMenu.converFusion.convergencePanel.fusionButton.item.tierflags:setVisible(true)
+	else
+		fusionMenu.converFusion.convergencePanel.fusionButton.item.tierflags:setVisible(false)
+	end
 
-local historyActionLabels = {
-    [0] = tr('Fusion'),
-    [1] = tr('Transfer'),
-    [2] = tr('Conversion'),
-    [3] = tr('Conversion'),
-    [4] = tr('Conversion')
-}
+	fusionMenu.converFusion.convergencePanel.fusionButton.itemTo:setItemId(itemPtr:getId())
+	fusionMenu.converFusion.convergencePanel.fusionButton.itemTo.questionMark:setVisible(false)
+	fusionMenu.converFusion.convergencePanel.fusionButton.itemTo.tierflags:setVisible(true)
+	fusionMenu.converFusion.convergencePanel.fusionButton.itemTo.tierflags:setImageClip( (itemTier) * 9 .." 0 9 8")
 
-local function formatHistoryDate(timestamp)
-    if not timestamp or timestamp == 0 then
-        return tr('Unknown')
-    end
+	local data = ForgeSystem.fusionConvergenceData
+	local itemsConvergencePanel = fusionMenu.converFusion.convergencePanel.itemsConvergencePanel
 
-    return os.date('%Y-%m-%d, %H:%M:%S', timestamp)
+	itemsConvergencePanel:destroyChildren()
+
+	if selectedItemFusionConvectionRadio then
+		selectedItemFusionConvectionRadio:destroy()
+	end
+
+	selectedItemFusionConvectionRadio = UIRadioGroup.create()
+
+	ForgeSystem.fusionSelectedItem = 0
+
+	selectedItemFusionConvectionRadio:clearSelected()
+	connect(selectedItemFusionConvectionRadio, { onSelectionChange = onSelectionForgeConvection })
+
+	local player = g_game.getLocalPlayer()
+
+	local function createConversionWidget(itemPtr, fusion)
+		local firstCategory = getItemCategoryBySlot(fusion[1])
+		local secondCategory = getItemCategoryBySlot(itemPtr:getId())
+
+		if (firstCategory == -1 and secondCategory == -1) then
+			return false
+		end
+
+		if firstCategory ~= secondCategory then
+			return false
+		end
+
+		if fusion[1] == itemPtr:getId() and fusion[3] == 1 then
+			return false
+		end
+
+		if fusion[2] ~= itemTier then
+			return false
+		end
+
+		local showItemCount = fusion[3]
+
+		local widget = g_ui.createWidget('FusionItemBox', itemsConvergencePanel)
+		local itemPtr = Item.create(fusion[1], 1)
+		itemPtr:setTier(fusion[2])
+
+		widget.item:setItem(itemPtr)
+		widget.item:setItemCount(showItemCount)
+		widget.itemPtr = itemPtr
+
+		selectedItemFusionConvectionRadio:addWidget(widget)
+	end
+
+	for i = 1, #ForgeSystem.fusionConvergenceData do
+		local fusion = ForgeSystem.fusionConvergenceData[i]
+		createConversionWidget(itemPtr, fusion)
+	end
+
+	local dust = player:getResourceValue(ResourceForgeDust)
+	fusionMenu.converFusion.convergencePanel.dustCount.dustamount:setColor(dust >= ForgeSystem.convergenceDustFusion and "$var-text-cip-color" or "#d33c3c")
+
+	local classification = itemPtr:getClassification()
+	local price = ForgeSystem.fusionPrices[itemTier]
+
+	local messageColor = {}
+	ForgeSystem.fusionPrice = price
+	setStringColor(messageColor, formatMoney(price, ","), ((player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice and "$var-text-cip-color" or "#d33c3c"))
+	setStringColor(messageColor, " $", "#c0c0c0")
+	fusionMenu.converFusion.convergencePanel.moneyPanel.gold:setColoredText(messageColor)
+
+	ForgeSystem.checkFusionConversionButton()
 end
 
-local function resolveHistoryList(panel)
-    if not panel then
-        return nil
-    end
+-- configure normal panel
+local function ConfigureFusionPanel(selectedWidget)
+	local itemPtr = selectedWidget.itemPtr
+	local itemCount = tonumber(selectedWidget.item:getItemCountOrSubType())
+	local itemTier = itemPtr:getTier()
 
-    if panel.historyList and not panel.historyList:isDestroyed() then
-        return panel.historyList
-    end
+	ForgeSystem.fusionItem = itemPtr
+	ForgeSystem.fusionItemCount = itemCount
 
-    local list = panel:getChildById('historyList')
-    if list then
-        panel.historyList = list
-    end
-    return list
+	fusionMenu.itemFusionPanel.nextItem:setItemId(itemPtr:getId())
+	fusionMenu.itemFusionPanel.nextItem.questionMark:setVisible(false)
+	fusionMenu.itemFusionPanel.nextItem.tierflags:setVisible(true)
+	fusionMenu.itemFusionPanel.nextItem.tierflags:setImageClip( itemTier * 18 .." 0 18 16")
+
+	fusionMenu.itemsFusion.itemPanel.item:setItemId(itemPtr:getId())
+	fusionMenu.itemsFusion.itemPanel.questionMark:setVisible(false)
+	fusionMenu.itemsFusion.itemCount.value:setText(itemCount.." / 1")
+	fusionMenu.itemsFusion.itemCount.value:setColor(itemCount > 1 and "$var-text-cip-color" or "#d33c3c")
+
+	fusionMenu.itemsFusion.fusionButton.item:setItemId(itemPtr:getId())
+	fusionMenu.itemsFusion.fusionButton.item.questionMark:setVisible(false)
+	if itemTier > 0 then
+		fusionMenu.itemsFusion.fusionButton.item.tierflags:setImageClip( (itemTier - 1) * 9 .." 0 9 8")
+		fusionMenu.itemsFusion.fusionButton.item.tierflags:setVisible(true)
+	else
+		fusionMenu.itemsFusion.fusionButton.item.tierflags:setVisible(false)
+	end
+
+	local player = g_game.getLocalPlayer()
+	local dust = player:getResourceValue(ResourceForgeDust)
+	fusionMenu.itemsFusion.dustCount.dustamount:setColor(dust >= ForgeSystem.dustFusion and "$var-text-cip-color" or "#d33c3c")
+
+
+	fusionMenu.itemsFusion.fusionButton.itemTo:setItemId(itemPtr:getId())
+	fusionMenu.itemsFusion.fusionButton.itemTo.questionMark:setVisible(false)
+	fusionMenu.itemsFusion.fusionButton.itemTo.tierflags:setImageClip( itemTier * 9 .." 0 9 8")
+	fusionMenu.itemsFusion.fusionButton.itemTo.tierflags:setVisible(true)
+
+	local classification = itemPtr:getClassification()
+	local price = ForgeSystem.classPrice[classification][2][itemTier]
+
+	ForgeSystem.fusionPrice = price
+	local messageColor = {}
+	setStringColor(messageColor, formatMoney(price, ","), ((player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice and "$var-text-cip-color" or "#d33c3c"))
+	setStringColor(messageColor, " $", "#c0c0c0")
+	fusionMenu.itemsFusion.moneyPanel.gold:setColoredText(messageColor)
+
+	ForgeSystem.checkFusionButton()
+
+	ForgeSystem.checkFusionButtons()
+	ForgeSystem.checkFusionLabels()
 end
 
-local function registerResourceConfig(resourceType, config)
-    if not resourceType or forgeResourceConfig[resourceType] == config then
-        return
-    end
-
-    forgeResourceConfig[resourceType] = config
+-- check if ok buttons is enabled
+function ForgeSystem.checkFusionButton()
+	fusionMenu.itemsFusion.fusionButton.locked:setVisible(not ForgeSystem.checkFusionState())
+	fusionMenu.itemsFusion.fusionButton:setEnabled(ForgeSystem.checkFusionState())
 end
 
-for _, config in ipairs(forgeStatusConfigs) do
-    if config.resourceType then
-        registerResourceConfig(config.resourceType, config)
-    end
+-- check if ok buttons is enabled
+function ForgeSystem.checkFusionConversionButton()
+	fusionMenu.converFusion.convergencePanel.fusionButton.locked:setVisible(not ForgeSystem.checkFusionConversionState())
+	fusionMenu.converFusion.convergencePanel.fusionButton:setEnabled(ForgeSystem.checkFusionConversionState())
+end
 
-    if config.eventResourceTypes then
-        for _, resourceType in ipairs(config.eventResourceTypes) do
-            registerResourceConfig(resourceType, config)
+-- check core buttons
+function ForgeSystem.checkFusionButtons()
+	local player = g_game.getLocalPlayer()
+	if not player then
+		return
+	end
+
+	local exaltedCore = player:getResourceValue(ResourceForgeExaltedCore)
+	if ForgeSystem.rateSuccessActive then
+		exaltedCore = exaltedCore - 1
+		fusionMenu.itemsFusion.improveRateSuccessButton:setEnabled(true)
+		fusionMenu.itemsFusion.improveRateSuccessPanel.exaltedcoreamount:setColor("$var-text-cip-color")
+	end
+	if ForgeSystem.tierLossActive then
+		exaltedCore = exaltedCore - 1
+		fusionMenu.itemsFusion.tierLossButton:setEnabled(true)
+		fusionMenu.itemsFusion.tierLossPanel.exaltedcoreamount:setColor("$var-text-cip-color")
+	end
+
+	if exaltedCore < 1 then
+		if not ForgeSystem.rateSuccessActive then
+			fusionMenu.itemsFusion.improveRateSuccessButton:setEnabled(false)
+			fusionMenu.itemsFusion.improveRateSuccessPanel.exaltedcoreamount:setColor("#d33c3c")
+		end
+		if not ForgeSystem.tierLossActive then
+			fusionMenu.itemsFusion.tierLossButton:setEnabled(false)
+			fusionMenu.itemsFusion.tierLossPanel.exaltedcoreamount:setColor("#d33c3c")
+		end
+	else
+		if not ForgeSystem.rateSuccessActive then
+			fusionMenu.itemsFusion.improveRateSuccessButton:setEnabled(true)
+			fusionMenu.itemsFusion.improveRateSuccessPanel.exaltedcoreamount:setColor("$var-text-cip-color")
+		end
+		if not ForgeSystem.tierLossActive then
+			fusionMenu.itemsFusion.tierLossButton:setEnabled(true)
+			fusionMenu.itemsFusion.tierLossPanel.exaltedcoreamount:setColor("$var-text-cip-color")
+		end
+	end
+end
+
+-- check if has condition
+function ForgeSystem.checkFusionConversionState()
+	local player = g_game.getLocalPlayer()
+	if not player then
+		return false
+	end
+
+	local hasDust = player:getResourceValue(ResourceForgeDust) >= ForgeSystem.convergenceDustFusion
+	local hasMoney = (player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice
+
+	return hasDust and hasMoney and ForgeSystem.fusionSelectedItem ~= 0 and not ForgeSystem.sideButton
+end
+
+-- check if has condition
+function ForgeSystem.checkFusionState()
+	local player = g_game.getLocalPlayer()
+	if not player then
+		return false
+	end
+	local hasItemCount = ForgeSystem.fusionItemCount >= 2
+	local hasDust = player:getResourceValue(ResourceForgeDust) >= ForgeSystem.dustFusion
+	local hasMoney = (player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice
+
+	return hasItemCount and hasDust and hasMoney and not ForgeSystem.sideButton
+end
+
+-- check color label (core)
+function ForgeSystem.checkFusionLabels()
+	fusionMenu.itemsFusion.successLabel:setText(ForgeSystem.rateSuccessActive and (ForgeSystem.success + ForgeSystem.improveRateSuccess) .. "%" or "50%")
+	fusionMenu.itemsFusion.successLabel:setColor(ForgeSystem.rateSuccessActive and "#44ad25" or "#d33c3c")
+
+	fusionMenu.itemsFusion.tierLossLabel:setText(ForgeSystem.tierLossActive and ForgeSystem.tierLoss .. "%" or "100%")
+	fusionMenu.itemsFusion.tierLossLabel:setColor(ForgeSystem.tierLossActive and "#44ad25" or "#d33c3c")
+end
+
+-- reset variables
+function ForgeSystem.clearFusion()
+	ForgeSystem.fusionItem = nil
+	ForgeSystem.fusionItemCount = 0
+	ForgeSystem.exaltedCoreCount = 0
+	-- ForgeSystem.fusionPrice = 0
+	ForgeSystem.fusionSelectedItem = 0
+	ForgeSystem.rateSuccessActive = false
+	ForgeSystem.tierLossActive = false
+	ForgeSystem.fusionTier = 0
+
+	-- fusion convergence
+	fusionMenu.converFusion.convergencePanel.itemsConvergencePanel:destroyChildren()
+	fusionMenu.converFusion.convergencePanel.dustCount.dustamount:setColor("#d33c3c")
+	fusionMenu.converFusion.convergencePanel.fusionButton:setEnabled(false)
+	fusionMenu.converFusion.convergencePanel.fusionButton.locked:setVisible(true)
+	fusionMenu.converFusion.convergencePanel.fusionButton.item:setItemId(0)
+	fusionMenu.converFusion.convergencePanel.fusionButton.item.tierflags:setVisible(false)
+	fusionMenu.converFusion.convergencePanel.fusionButton.item.questionMark:setVisible(true)
+	fusionMenu.converFusion.convergencePanel.fusionButton.itemTo:setItemId(0)
+	fusionMenu.converFusion.convergencePanel.fusionButton.itemTo.tierflags:setVisible(false)
+	fusionMenu.converFusion.convergencePanel.fusionButton.itemTo.questionMark:setVisible(true)
+
+
+	local messageColor = {}
+	setStringColor(messageColor, "???", "#d33c3c")
+	setStringColor(messageColor, " $", "#c0c0c0")
+	fusionMenu.converFusion.convergencePanel.moneyPanel.gold:setColoredText(messageColor)
+
+
+	-- fusion normal
+	fusionMenu.itemFusionPanel.nextItem:setItemId(0)
+	fusionMenu.itemFusionPanel.nextItem.tierflags:setVisible(false)
+	fusionMenu.itemFusionPanel.nextItem.questionMark:setVisible(true)
+
+	fusionMenu.itemsFusion.itemPanel.item:setItemId(0)
+	fusionMenu.itemsFusion.itemPanel.questionMark:setVisible(true)
+	fusionMenu.itemsFusion.itemCount.value:setText("0 / 1")
+	fusionMenu.itemsFusion.itemCount.value:setColor("#d33c3c")
+
+	fusionMenu.itemsFusion.fusionButton.item:setItemId(0)
+	fusionMenu.itemsFusion.fusionButton.item.tierflags:setVisible(false)
+	fusionMenu.itemsFusion.fusionButton.item.questionMark:setVisible(true)
+	fusionMenu.itemsFusion.dustCount.dustamount:setColor("#d33c3c")
+
+	fusionMenu.itemsFusion.fusionButton.itemTo:setItemId(0)
+	fusionMenu.itemsFusion.fusionButton.itemTo.tierflags:setVisible(false)
+	fusionMenu.itemsFusion.fusionButton.itemTo.questionMark:setVisible(true)
+
+
+	local messageColor = {}
+	setStringColor(messageColor, "???", "#d33c3c")
+	setStringColor(messageColor, " $", "#c0c0c0")
+	fusionMenu.itemsFusion.moneyPanel.gold:setColoredText(messageColor)
+
+	fusionMenu.itemsFusion.fusionButton.locked:setVisible(true)
+	fusionMenu.itemsFusion.fusionButton:setEnabled(false)
+	ForgeSystem.checkFusionButtons()
+	ForgeSystem.checkFusionLabels()
+
+	ForgeSystem.checkFusionConversionButton()
+end
+
+function ForgeSystem.clearTransfer()
+	ForgeSystem.fusionItem = nil
+	ForgeSystem.fusionItemCount = 0
+	-- ForgeSystem.fusionPrice = 0
+	ForgeSystem.fusionSelectedItem = 0
+	ForgeSystem.exaltedCoreCount = 0
+	ForgeSystem.rateSuccessActive = false
+	ForgeSystem.tierLossActive = false
+	ForgeSystem.fusionTier = 0
+
+	transferMenu.itemTransferPanel.itemsTransferPanel:destroyChildren()
+
+	transferMenu.itemsFusion.itemPanel.item:setItemId(0)
+	transferMenu.itemsFusion.itemPanel.item.questionMark:setVisible(true)
+	transferMenu.itemsFusion.itemCount.value:setText("0 / 1")
+	transferMenu.itemsFusion.itemCount.value:setColor("#d33c3c")
+	transferMenu.itemsFusion.itemPanel.item:setItemId(0)
+	transferMenu.itemsFusion.itemPanel.item.tierflags:setVisible(false)
+
+	transferMenu.itemsFusion.dustCount.dustamount:setColor("#d33c3c")
+
+	transferMenu.itemsFusion.exaltedCount.amount:setText("???")
+	transferMenu.itemsFusion.exaltedCount.amount:setColor("#d33c3c")
+
+	transferMenu.itemsFusion.transferButton.item:setItemId(0)
+	transferMenu.itemsFusion.transferButton.item.questionMark:setVisible(true)
+	transferMenu.itemsFusion.transferButton.item.tierflags:setVisible(false)
+
+	transferMenu.itemsFusion.transferButton.itemTo:setItemId(0)
+	transferMenu.itemsFusion.transferButton.itemTo.questionMark:setVisible(true)
+	transferMenu.itemsFusion.transferButton.itemTo.tierflags:setVisible(false)
+
+	local messageColor = {}
+	setStringColor(messageColor, "???", "#d33c3c")
+	setStringColor(messageColor, " $", "#c0c0c0")
+	transferMenu.itemsFusion.moneyPanel.gold:setColoredText(messageColor)
+
+	transferMenu.converFusion.itemPanel.item:setItemId(0)
+	transferMenu.converFusion.itemPanel.item.questionMark:setVisible(true)
+	transferMenu.converFusion.itemCount.value:setText("0 / 1")
+	transferMenu.converFusion.itemCount.value:setColor("#d33c3c")
+	transferMenu.converFusion.itemPanel.item:setItemId(0)
+	transferMenu.converFusion.itemPanel.item.tierflags:setVisible(false)
+
+	transferMenu.converFusion.dustCount.dustamount:setColor("#d33c3c")
+
+	transferMenu.converFusion.exaltedCount.amount:setText("???")
+	transferMenu.converFusion.exaltedCount.amount:setColor("#d33c3c")
+
+	transferMenu.converFusion.transferButton.item:setItemId(0)
+	transferMenu.converFusion.transferButton.item.questionMark:setVisible(true)
+	transferMenu.converFusion.transferButton.item.tierflags:setVisible(false)
+
+	transferMenu.converFusion.transferButton.itemTo:setItemId(0)
+	transferMenu.converFusion.transferButton.itemTo.questionMark:setVisible(true)
+	transferMenu.converFusion.transferButton.itemTo.tierflags:setVisible(false)
+
+	local messageColor = {}
+	setStringColor(messageColor, "???", "#d33c3c")
+	setStringColor(messageColor, " $", "#c0c0c0")
+	transferMenu.converFusion.moneyPanel.gold:setColoredText(messageColor)
+
+	ForgeSystem.checkTransferConvergenceButton()
+end
+
+
+function onSelectionForgeConvection(widget, selectedWidget)
+	local itemPtr = selectedWidget.itemPtr
+
+	ForgeSystem.fusionSelectedItem = itemPtr:getId()
+
+	ForgeSystem.checkFusionConversionButton()
+end
+
+function onConvergenceFusionChange(_, isChecked)
+	ForgeSystem.clearFusion()
+	fusionMenu.itemsFusion:setVisible(not isChecked)
+	fusionMenu.converFusion:setVisible(isChecked)
+	ForgeSystem.updateFusion()
+end
+
+function ForgeSystem.onForgeFusion(convergence, success, otherItem, otherTier, itemId, tier, resultType, itemResult, tierResult, count)
+	hideForge()
+	resultWindow:show(true)
+
+	resultWindow:setText('Fusion Result')
+
+	resultWindow.contentPanel.resultWindow:setVisible(false)
+	resultWindow.contentPanel.bonusWindow:setVisible(false)
+
+	local resultWindowPanel = resultWindow.contentPanel.resultWindow
+	ForgeSystem.inForgeFusion = true
+	resultWindowPanel:setVisible(true)
+	resultWindowPanel.resultLabel:setText('')
+
+	resultWindowPanel.transferItem:setItemId(otherItem)
+	resultWindowPanel.transferItem:setItemShader("item_print_white")
+	resultWindowPanel.transferItem.tierflags:setImageClip((otherTier -1) * 18 .. " 0 18 16")
+	resultWindowPanel.transferItem.tierflags:setVisible(false)
+
+	resultWindowPanel.recvItem:setItemId(itemId)
+	resultWindowPanel.recvItem:setItemShader("item_black_white")
+	resultWindowPanel.recvItem.tierflags:setImageClip((tier - 1) * 18 .. " 0 18 16")
+	resultWindowPanel.recvItem.tierflags:setVisible(false)
+
+	resultWindowPanel.finishButton:setEnabled(false)
+	resultWindowPanel.finishButton:setText("Close")
+	resultWindowPanel.finishButton.locked:setVisible(true)
+	if resultType == 0 then
+		resultWindowPanel.finishButton.onClick = function() modules.game_forge.ForgeSystem.closeFinish() end
+	else
+		resultWindowPanel.finishButton.onClick = function() modules.game_forge.ForgeSystem.openBonusFinish(convergence, ForgeSystem.fusionPrice, resultType, itemResult, tierResult, count) end
+		scheduleEvent(function() resultWindowPanel.finishButton:setText("Next") end, 3550)
+	end
+
+	scheduleEvent(function() ForgeSystemEventFusionColor(false, success, otherItem, otherTier, itemId, tier, resultType, itemResult, tierResult, count, 1) end, 750)
+end
+
+function ForgeSystem.onForgeTransfer(convergence, success, otherItem, otherTier, itemId, tier)
+	hideForge()
+	resultWindow:show(true)
+
+	resultWindow:setText('Transfer Result')
+
+	resultWindow.contentPanel.resultWindow:setVisible(false)
+	resultWindow.contentPanel.bonusWindow:setVisible(false)
+
+	local resultWindowPanel = resultWindow.contentPanel.resultWindow
+	ForgeSystem.inForgeFusion = true
+	resultWindowPanel:setVisible(true)
+	resultWindowPanel.resultLabel:setText('')
+
+	resultWindowPanel.transferItem:setItemId(otherItem)
+	resultWindowPanel.transferItem:setItemShader("item_print_white")
+	resultWindowPanel.transferItem.tierflags:setImageClip((otherTier - 1) * 18 .. " 0 18 16")
+	resultWindowPanel.transferItem.tierflags:setVisible(true)
+
+	resultWindowPanel.recvItem:setItemId(itemId)
+	resultWindowPanel.recvItem:setItemShader("item_black_white")
+	resultWindowPanel.recvItem.tierflags:setImageClip((tier - 1) * 18 .. " 0 18 16")
+	resultWindowPanel.recvItem.tierflags:setVisible(false)
+
+	resultWindowPanel.finishButton:setEnabled(false)
+	resultWindowPanel.finishButton:setText("Close")
+	resultWindowPanel.finishButton.locked:setVisible(true)
+	resultWindowPanel.finishButton.onClick = function() modules.game_forge.ForgeSystem.closeFinish() end
+
+	scheduleEvent(function() ForgeSystemEventFusionColor(true, success, otherItem, otherTier, itemId, tier, 0, 0, 0, 0, 1) end, 750)
+end
+
+function ForgeSystem.sendForgeFusion(convergence)
+	ForgeSystem.inForgeFusion = false
+	if not convergence then
+		g_game.sendForgeFusion(false, ForgeSystem.fusionItem:getId(), ForgeSystem.fusionItem:getTier(), ForgeSystem.fusionItem:getId(), ForgeSystem.rateSuccessActive, ForgeSystem.tierLossActive)
+	else
+		g_game.sendForgeFusion(true, ForgeSystem.fusionItem:getId(), ForgeSystem.fusionItem:getTier(), ForgeSystem.fusionSelectedItem, false, false)
+	end
+end
+
+-- ################# FUSION
+-- ################# TRANSFER
+function ForgeSystem.updateTransfer()
+	ForgeSystem.clearFusion()
+	ForgeSystem.clearTransfer()
+
+	local itemPanel = transferMenu.itemTransferPanel.itemsPanel
+	transferMenu.itemTransferPanel.itemsPanel:destroyChildren()
+
+	if selectedItemFusionRadio then
+		selectedItemFusionRadio:destroy()
+	end
+
+	selectedItemFusionRadio = UIRadioGroup.create()
+
+	selectedItemFusionRadio:clearSelected()
+	connect(selectedItemFusionRadio, { onSelectionChange = onSelectionChange })
+
+	local data = ForgeSystem.transferData
+
+	if transferMenu.converFusion:isVisible() then
+		data = ForgeSystem.transferConvergenceData
+	end
+
+	local itemsVec = {}
+	for _, fusion in pairs(data) do
+		if not itemsVec[fusion[1] .. "." ..fusion[2]] then
+			local widget = g_ui.createWidget('FusionItemBox', itemPanel)
+
+			local itemPtr = Item.create(fusion[1], 1)
+			itemPtr:setTier(fusion[2])
+
+			widget.item:setItem(itemPtr)
+			widget.item:setItemCount(fusion[3])
+			widget.itemPtr = itemPtr
+			widget.subItems = fusion[4]
+
+			selectedItemFusionRadio:addWidget(widget)
+
+			itemsVec[fusion[1] .. "." ..fusion[2]] = true
+		end
+	end
+end
+
+
+local function ConfigureTransferPanel(selectedWidget)
+	ForgeSystem.fusionSelectedItem = 0
+
+	local itemPtr = selectedWidget.itemPtr
+	local itemCount = tonumber(selectedWidget.item:getItemCount())
+	local itemTier = itemPtr:getTier()
+	local subItems = selectedWidget.subItems
+
+	ForgeSystem.fusionItem = itemPtr
+	ForgeSystem.fusionItemCount = itemCount
+	ForgeSystem.fusionTier = itemTier
+
+	transferMenu.itemTransferPanel.itemsTransferPanel:destroyChildren()
+	local itemsTransferPanel = transferMenu.itemTransferPanel.itemsTransferPanel
+
+	selectedItemFusionConvectionRadio = UIRadioGroup.create()
+
+	ForgeSystem.fusionSelectedItem = 0
+
+	selectedItemFusionConvectionRadio:clearSelected()
+	connect(selectedItemFusionConvectionRadio, { onSelectionChange = onSelectionForgeTransfer })
+
+
+	for item, count in pairs(subItems) do
+		if item == itemPtr:getId() then
+			goto continue
+		end
+		local widget = g_ui.createWidget('FusionItemBox', itemsTransferPanel)
+
+		local itemPtr = Item.create(item, 1)
+
+		widget.item:setItem(itemPtr)
+		widget.item:setItemCount(count)
+		widget.itemPtr = itemPtr
+		selectedItemFusionConvectionRadio:addWidget(widget)
+		::continue::
+	end
+
+	transferMenu.itemsFusion.itemPanel.item:setItemId(itemPtr:getId())
+	transferMenu.itemsFusion.itemPanel.item.questionMark:setVisible(false)
+	transferMenu.itemsFusion.itemCount.value:setText(itemCount.." / 1")
+	transferMenu.itemsFusion.itemCount.value:setColor("$var-text-cip-color")
+
+	transferMenu.itemsFusion.itemPanel.item:setItemId(itemPtr:getId())
+	if itemTier > 0 then
+		transferMenu.itemsFusion.itemPanel.item.tierflags:setImageClip( (itemTier - 1) * 18 .." 0 18 16")
+		transferMenu.itemsFusion.itemPanel.item.tierflags:setVisible(true)
+	else
+		transferMenu.itemsFusion.itemPanel.item.tierflags:setVisible(false)
+	end
+
+	local player = g_game.getLocalPlayer()
+	local dust = player:getResourceValue(ResourceForgeDust)
+	transferMenu.itemsFusion.dustCount.dustamount:setColor((dust >= ForgeSystem.dustTransfer and "$var-text-cip-color" or "#d33c3c"))
+	forgeWindow.dustPanel.dust:setText(dust .. '/' ..ForgeSystem.maxPlayerDust)
+
+	local exaltedCoreCount = ForgeSystem.transferMap[itemTier - 1] or 1
+	transferMenu.itemsFusion.exaltedCount.amount:setText(exaltedCoreCount)
+	local exaltedCore = player:getResourceValue(ResourceForgeExaltedCore)
+	transferMenu.itemsFusion.exaltedCount.amount:setColor((exaltedCore >= exaltedCoreCount and "$var-text-cip-color" or "#d33c3c"))
+
+	ForgeSystem.exaltedCoreCount = exaltedCoreCount
+
+	transferMenu.itemsFusion.transferButton.item:setItemId(itemPtr:getId())
+	transferMenu.itemsFusion.transferButton.item.questionMark:setVisible(false)
+	transferMenu.itemsFusion.transferButton.item.tierflags:setVisible(true)
+	transferMenu.itemsFusion.transferButton.item.tierflags:setImageClip( (itemTier - 1) * 9 .." 0 9 8")
+
+	local classification = itemPtr:getClassification()
+	local price = ForgeSystem.classPrice[classification][2][itemTier - 1]
+	ForgeSystem.fusionPrice = price
+
+	local messageColor = {}
+	setStringColor(messageColor, formatMoney(price, ","), (player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice and "$var-text-cip-color" or "#d33c3c")
+	setStringColor(messageColor, " $", "#c0c0c0")
+	transferMenu.itemsFusion.moneyPanel.gold:setColoredText(messageColor)
+
+
+	ForgeSystem.checkTransferButton()
+end
+
+local function ConfigureTransferConvergencePanel(selectedWidget)
+	ForgeSystem.fusionSelectedItem = 0
+
+	local itemPtr = selectedWidget.itemPtr
+	local itemCount = tonumber(selectedWidget.item:getItemCount())
+	local itemTier = itemPtr:getTier()
+	local subItems = selectedWidget.subItems
+
+	ForgeSystem.fusionItem = itemPtr
+	ForgeSystem.fusionItemCount = itemCount
+	ForgeSystem.fusionTier = itemTier
+
+	transferMenu.itemTransferPanel.itemsTransferPanel:destroyChildren()
+	local itemsTransferPanel = transferMenu.itemTransferPanel.itemsTransferPanel
+
+	selectedItemFusionConvectionRadio = UIRadioGroup.create()
+
+	ForgeSystem.fusionSelectedItem = 0
+
+	selectedItemFusionConvectionRadio:clearSelected()
+	connect(selectedItemFusionConvectionRadio, { onSelectionChange = onSelectionForgeConversionTransfer })
+
+	for item, count in pairs(subItems) do
+		if item == itemPtr:getId() then
+			goto continue
+		end
+		local widget = g_ui.createWidget('FusionItemBox', itemsTransferPanel)
+
+		local itemPtr = Item.create(item, 1)
+
+		widget.item:setItem(itemPtr)
+		widget.item:setItemCount(count)
+		widget.itemPtr = itemPtr
+		selectedItemFusionConvectionRadio:addWidget(widget)
+		::continue::
+	end
+
+	transferMenu.converFusion.itemPanel.item:setItemId(itemPtr:getId())
+	transferMenu.converFusion.itemPanel.item.questionMark:setVisible(false)
+	transferMenu.converFusion.itemCount.value:setText(itemCount.." / 1")
+	transferMenu.converFusion.itemCount.value:setColor("$var-text-cip-color")
+
+	transferMenu.converFusion.itemPanel.item:setItemId(itemPtr:getId())
+	if itemTier > 0 then
+		transferMenu.converFusion.itemPanel.item.tierflags:setImageClip( (itemTier - 1) * 18 .." 0 18 16")
+		transferMenu.converFusion.itemPanel.item.tierflags:setVisible(true)
+	else
+		transferMenu.converFusion.itemPanel.item.tierflags:setVisible(false)
+	end
+
+	local player = g_game.getLocalPlayer()
+	local dust = player:getResourceValue(ResourceForgeDust)
+	transferMenu.converFusion.dustCount.dustamount:setColor((dust >= ForgeSystem.convergenceDustTransfer and "$var-text-cip-color" or "#d33c3c"))
+	forgeWindow.dustPanel.dust:setText(dust .. '/' ..ForgeSystem.maxPlayerDust)
+
+	local exaltedCoreCount = ForgeSystem.transferMap[itemTier]
+	transferMenu.converFusion.exaltedCount.amount:setText(exaltedCoreCount)
+	local exaltedCore = player:getResourceValue(ResourceForgeExaltedCore)
+	transferMenu.converFusion.exaltedCount.amount:setColor((exaltedCore >= exaltedCoreCount and "$var-text-cip-color" or "#d33c3c"))
+
+	ForgeSystem.exaltedCoreCount = exaltedCoreCount
+
+	transferMenu.converFusion.transferButton.item:setItemId(itemPtr:getId())
+	transferMenu.converFusion.transferButton.item.questionMark:setVisible(false)
+	transferMenu.converFusion.transferButton.item.tierflags:setVisible(true)
+	transferMenu.converFusion.transferButton.item.tierflags:setImageClip( (itemTier - 1) * 9 .." 0 9 8")
+
+	local price = ForgeSystem.transferPrices[itemTier]
+	ForgeSystem.fusionPrice = price
+
+	local messageColor = {}
+	setStringColor(messageColor, formatMoney(price, ","), (player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice and "$var-text-cip-color" or "#d33c3c")
+	setStringColor(messageColor, " $", "#c0c0c0")
+	transferMenu.converFusion.moneyPanel.gold:setColoredText(messageColor)
+
+
+	ForgeSystem.checkTransferButton()
+end
+
+function ForgeSystem.checkTransferConvergenceButton()
+	transferMenu.converFusion.transferButton.locked:setVisible(not ForgeSystem.checkTransferState())
+	transferMenu.converFusion.transferButton:setEnabled(ForgeSystem.checkTransferState())
+end
+
+function ForgeSystem.checkTransferButton()
+	transferMenu.itemsFusion.transferButton.locked:setVisible(not ForgeSystem.checkTransferState())
+	transferMenu.itemsFusion.transferButton:setEnabled(ForgeSystem.checkTransferState())
+end
+
+function ForgeSystem.checkTransferState()
+	local player = g_game.getLocalPlayer()
+	if not player then
+		return false
+	end
+	local hasItemCount = ForgeSystem.fusionSelectedItem ~= 0
+	local hasDust = false
+	if not transferMenu.converFusion:isVisible() then
+		hasDust = player:getResourceValue(ResourceForgeDust) >= ForgeSystem.dustTransfer
+	else
+		hasDust = player:getResourceValue(ResourceForgeDust) >= ForgeSystem.convergenceDustTransfer
+	end
+
+	local hasExalted = player:getResourceValue(ResourceForgeExaltedCore) >= ForgeSystem.exaltedCoreCount
+	local hasMoney = (player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice
+
+	return hasItemCount and hasDust and hasMoney and hasExalted and not ForgeSystem.sideButton
+end
+
+function ForgeSystem.addSecondTransferItem()
+	transferMenu.itemsFusion.transferButton.itemTo:setItemId(ForgeSystem.fusionSelectedItem)
+	transferMenu.itemsFusion.transferButton.itemTo.questionMark:setVisible(false)
+	transferMenu.itemsFusion.transferButton.itemTo.tierflags:setVisible(true)
+	transferMenu.itemsFusion.transferButton.itemTo.tierflags:setImageClip( (ForgeSystem.fusionTier - 2) * 9 .." 0 9 8")
+end
+
+function ForgeSystem.addSecondTransferConvergenceItem()
+	transferMenu.converFusion.transferButton.itemTo:setItemId(ForgeSystem.fusionSelectedItem)
+	transferMenu.converFusion.transferButton.itemTo.questionMark:setVisible(false)
+	transferMenu.converFusion.transferButton.itemTo.tierflags:setVisible(true)
+	transferMenu.converFusion.transferButton.itemTo.tierflags:setImageClip( (ForgeSystem.fusionTier - 1) * 9 .." 0 9 8")
+end
+
+function onSelectionForgeTransfer(widget, selectedWidget)
+	local itemPtr = selectedWidget.itemPtr
+	local itemCount = tonumber(selectedWidget.item:getItemCount())
+	local itemTier = itemPtr:getTier()
+
+	ForgeSystem.fusionSelectedItem = itemPtr:getId()
+
+	ForgeSystem.addSecondTransferItem()
+	ForgeSystem.checkTransferButton()
+end
+
+function onSelectionForgeConversionTransfer(widget, selectedWidget)
+	local itemPtr = selectedWidget.itemPtr
+	local itemCount = tonumber(selectedWidget.item:getItemCount())
+	local itemTier = itemPtr:getTier()
+
+	ForgeSystem.fusionSelectedItem = itemPtr:getId()
+
+	ForgeSystem.addSecondTransferConvergenceItem()
+	ForgeSystem.checkTransferConvergenceButton()
+end
+
+---
+function ForgeSystemEventFusionColor(transfer, success, otherItem, otherTier, itemId, tier, resultType, itemResult, tierResult, count, eventCount)
+	if not g_game.isOnline() then
+		ForgeSystem.inForgeFusion = false
+		return
+	end
+
+	local resultWindowPanel = resultWindow.contentPanel.resultWindow
+
+	if eventCount == 1 then
+		resultWindowPanel.panel.tick1:setImageSource("/images/arrows/icon-arrow-rightlarge-filled")
+		resultWindowPanel.panel.tick2:setImageSource("/images/arrows/icon-arrow-rightlarge")
+		resultWindowPanel.panel.tick3:setImageSource("/images/arrows/icon-arrow-rightlarge")
+	elseif eventCount == 2 then
+		resultWindowPanel.panel.tick1:setImageSource("/images/arrows/icon-arrow-rightlarge-filled")
+		resultWindowPanel.panel.tick2:setImageSource("/images/arrows/icon-arrow-rightlarge-filled")
+		resultWindowPanel.panel.tick3:setImageSource("/images/arrows/icon-arrow-rightlarge")
+	elseif eventCount == 3 then
+		resultWindowPanel.panel.tick1:setImageSource("/images/arrows/icon-arrow-rightlarge")
+		resultWindowPanel.panel.tick2:setImageSource("/images/arrows/icon-arrow-rightlarge-filled")
+		resultWindowPanel.panel.tick3:setImageSource("/images/arrows/icon-arrow-rightlarge-filled")
+	elseif eventCount == 4 then
+		resultWindowPanel.panel.tick1:setImageSource("/images/arrows/icon-arrow-rightlarge")
+		resultWindowPanel.panel.tick2:setImageSource("/images/arrows/icon-arrow-rightlarge")
+		resultWindowPanel.panel.tick3:setImageSource("/images/arrows/icon-arrow-rightlarge-filled")
+	elseif eventCount == 5 then
+		resultWindowPanel.panel.tick1:setImageSource("/images/arrows/icon-arrow-rightlarge-filled")
+		resultWindowPanel.panel.tick2:setImageSource("/images/arrows/icon-arrow-rightlarge-filled")
+		resultWindowPanel.panel.tick3:setImageSource("/images/arrows/icon-arrow-rightlarge-filled")
+		ForgeSystem.inForgeFusion = false
+
+		resultWindowPanel.transferItem:setItemShader("")
+		if not success then
+			resultWindowPanel.recvItem:setItemShader("item_red")
+			scheduleEvent(function()
+				resultWindowPanel.recvItem:setItemId(0)
+			end, 500)
+		else
+			resultWindowPanel.transferItem:setItemId(0)
+			resultWindowPanel.recvItem:setItemShader("")
+			resultWindowPanel.recvItem.tierflags:setVisible(true)
+		end
+
+		-- message
+		local message = {}
+		setStringColor(message, "Your ".. (transfer and "transfer" or "fusion") .." attempt was ", "$var-text-cip-color-grey")
+		if not success then
+			setStringColor(message, "failed", "#d33c3c")
+		else
+			setStringColor(message, "successful", "$var-text-cip-color-green")
+		end
+		setStringColor(message, ".", "$var-text-cip-color-grey")
+
+		resultWindowPanel.resultLabel:setColoredText(message)
+
+		resultWindowPanel.finishButton:setEnabled(true)
+		resultWindowPanel.finishButton.locked:setVisible(false)
+
+		return
+	end
+
+	scheduleEvent(function() ForgeSystemEventFusionColor(transfer, success, otherItem, otherTier, itemId, tier, resultType, itemResult, tierResult, count, eventCount + 1) end, 750)
+end
+
+function ForgeSystem.openBonusFinish(convergence, price, resultType, itemResult, tierResult, count)
+	resultWindow.contentPanel.resultWindow:setVisible(false)
+	resultWindow.contentPanel.bonusWindow:setVisible(true)
+
+	local bonusResult = resultWindow.contentPanel.bonusWindow
+
+	bonusResult.bonusItem.tierflags:setVisible(false)
+	bonusResult.bonusItem:setItemShader("")
+	if resultType == 1 then
+		bonusResult.bonusItem:setItemId(37160)
+		bonusResult.resultLabel:setText("Near! The used ".. (not convergence and ForgeSystem.dustPrice or ForgeSystem.convergenceDustFusion) .." where not consumed.")
+	elseif resultType == 2 then
+		bonusResult.bonusItem:setItemId(37110)
+		bonusResult.resultLabel:setText("Fantastic! The used ".. count .." where not consumed.")
+	elseif resultType == 3 then
+		bonusResult.bonusItem:setItemId(3031)
+		bonusResult.resultLabel:setText("Awesome! The used ".. formatMoney(price, ",") .." where not consumed.")
+	elseif resultType == 4 then
+		bonusResult.bonusItem:setItemId(itemResult)
+		bonusResult.bonusItem.tierflags:setImageClip((tierResult - 1) * 18 .. " 0 18 16")
+		bonusResult.bonusItem.tierflags:setVisible(true)
+		bonusResult.resultLabel:setText("What luck! Your item only lost one tier instead of being\n                                     consumed.")
+	end
+end
+
+function ForgeSystem.closeFinish()
+	resultWindow:hide()
+	show()
+end
+
+function onSelectionChange(widget, selectedWidget)
+	if fusionMenu.itemsFusion:isVisible() then
+		ConfigureFusionPanel(selectedWidget)
+	elseif fusionMenu.converFusion:isVisible() then
+		ConfigureFusionConversionPanel(selectedWidget)
+	elseif transferMenu.itemsFusion:isVisible() then
+		ConfigureTransferPanel(selectedWidget)
+	elseif transferMenu.converFusion:isVisible() then
+		ConfigureTransferConvergencePanel(selectedWidget)
+	end
+end
+
+function ForgeSystem.sendForgeTransfer(convergence)
+	ForgeSystem.inForgeFusion = false
+	if not convergence then
+		g_game.sendForgeTransfer(false, ForgeSystem.fusionItem:getId(), ForgeSystem.fusionItem:getTier(), ForgeSystem.fusionSelectedItem)
+	else
+		g_game.sendForgeTransfer(true, ForgeSystem.fusionItem:getId(), ForgeSystem.fusionItem:getTier(), ForgeSystem.fusionSelectedItem)
+	end
+
+	g_game.doThing(false)
+	g_game.requestResource(ResourceBank)
+	g_game.requestResource(ResourceInventary)
+	g_game.requestResource(ResourceForgeDust)
+	g_game.requestResource(ResourceForgeSlivers)
+	g_game.requestResource(ResourceForgeExaltedCore)
+	g_game.doThing(true)
+end
+
+-- transfer convergence
+function onConvergenceTransferChange(widget, isChecked)
+	ForgeSystem.clearTransfer()
+	if isChecked then
+		transferMenu.itemsFusion:setVisible(false)
+		transferMenu.converFusion:setVisible(true)
+	else
+		transferMenu.itemsFusion:setVisible(true)
+		transferMenu.converFusion:setVisible(false)
+	end
+	ForgeSystem.updateTransfer()
+end
+
+function ForgeSystem.updateConversion()
+	local player = g_game.getLocalPlayer()
+	if not player then
+		return false
+	end
+
+	local dust = player:getResourceValue(ResourceForgeDust)
+
+	local price1 = ForgeSystem.slivers * ForgeSystem.baseMultipier
+	conversionMenu.windowConvertDust.itemCount.amount:setColor(dust >= price1 and "$var-text-cip-color" or "#d33c3c")
+
+	conversionMenu.windowConvertDust.dustButton:setEnabled(dust >= price1)
+	conversionMenu.windowConvertDust.dustButton.locked:setVisible(dust < price1)
+
+	conversionMenu.windowConvertSlivers.itemCount.amount:setText(ForgeSystem.totalSlivers)
+	conversionMenu.windowConvertSlivers.itemCount.amount:setColor(player:getResourceValue(ResourceForgeSlivers) >= ForgeSystem.totalSlivers and "$var-text-cip-color" or "#d33c3c")
+	conversionMenu.windowConvertSlivers.sliverButton:setEnabled(player:getResourceValue(ResourceForgeSlivers) >= ForgeSystem.totalSlivers)
+	conversionMenu.windowConvertSlivers.sliverButton.locked:setVisible(player:getResourceValue(ResourceForgeSlivers) < ForgeSystem.totalSlivers)
+
+	local totalDustRequired = (100 - ForgeSystem.dustCost) + (ForgeSystem.maxPlayerDust - 100)
+	conversionMenu.windowIncreaseDustLimit.itemCount.amount:setText(totalDustRequired)
+	conversionMenu.windowIncreaseDustLimit.itemCount.amount:setColor(dust >= totalDustRequired and "$var-text-cip-color" or "#d33c3c")
+	conversionMenu.windowIncreaseDustLimit.currentDust:setText(ForgeSystem.maxPlayerDust)
+	conversionMenu.windowIncreaseDustLimit.nextDust:setText('to ' .. math.min(ForgeSystem.maxPlayerDust + 1, ForgeSystem.maxDust))
+
+	if ForgeSystem.maxPlayerDust >= ForgeSystem.maxDust then
+		conversionMenu.windowIncreaseDustLimit.baseText:setText('Maximum Reached')
+		conversionMenu.windowIncreaseDustLimit.currentDust:setVisible(false)
+		conversionMenu.windowIncreaseDustLimit.img1:setVisible(false)
+		conversionMenu.windowIncreaseDustLimit.img2:setVisible(false)
+		conversionMenu.windowIncreaseDustLimit.nextDust:setVisible(false)
+	else
+		conversionMenu.windowIncreaseDustLimit.baseText:setText('Raise limit from')
+		conversionMenu.windowIncreaseDustLimit.currentDust:setVisible(true)
+		conversionMenu.windowIncreaseDustLimit.img1:setVisible(true)
+		conversionMenu.windowIncreaseDustLimit.img2:setVisible(true)
+		conversionMenu.windowIncreaseDustLimit.nextDust:setVisible(true)
+	end
+
+	conversionMenu.windowIncreaseDustLimit.increaseButton:setEnabled(dust >= totalDustRequired and ForgeSystem.maxPlayerDust < ForgeSystem.maxDust)
+	conversionMenu.windowIncreaseDustLimit.increaseButton.locked:setVisible(not (dust >= totalDustRequired and ForgeSystem.maxPlayerDust < ForgeSystem.maxDust))
+end
+
+function ForgeSystem.onForgeHistory(history)
+    historyMenu.historyList:destroyChildren()
+    local colors = { '#414141', '#484848' }
+
+    for id, info in ipairs(history) do
+        local widget = g_ui.createWidget('HistoryForgePanel', historyMenu.historyList)
+		local backgroundColor = colors[((id-1) % #colors) + 1]
+        widget:setHeight(30)
+
+		if id == 1 then
+            widget:setMarginTop(16)
         end
-    end
-end
-
-local function resolveStatusWidget(controller, config)
-    if config.widget then
-        if config.widget:isDestroyed() then
-            config.widget = nil
+        widget:setBackgroundColor(backgroundColor)
+        widget.date:setText(os.date("%Y-%m-%d, %X", info[1]))
+        widget.date:setColor("$var-text-cip-color")
+        local actionText
+        local actionColor
+        if info[2] == 0 then
+            actionText = 'Fusion'
+            actionColor = "$var-text-cip-color"
+        elseif info[2] == 1 then
+            actionText = 'Transfer'
+            actionColor = "$var-text-cip-color"
         else
-            return config.widget
+            actionText = 'Conversion'
+            actionColor = "$var-text-cip-color-blue"
         end
+        widget.action:setText(actionText)
+        widget.action:setColor(actionColor)
+        widget.details:setText(info[3])
+        widget.details:setColor("$var-text-cip-color")
     end
-
-    if not controller.ui then
-        return nil
-    end
-
-    local widget = controller:findWidget(config.selector)
-    if widget then
-        config.widget = widget
-    end
-
-    return widget
-end
-
-local function loadTabFragment(tabName)
-    local fragment = io.content(('modules/%s/tab/%s/%s.html'):format(forgeController.name, tabName, tabName))
-    local container = forgeController.ui.content:prepend(fragment)
-    local panel = container and container[tabName]
-    if panel and panel.hide then
-        panel:hide()
-    end
-    return panel
-end
-
-local function setWindowState(window, enabled)
-    if window.obj then
-        window.obj:setOn(not enabled)
-        if enabled then
-            window.obj:enable()
-        else
-            window.obj:disable()
-        end
-    end
-end
-
-local function hideAllPanels()
-    for _, panel in pairs(ui.panels) do
-        if panel and panel.hide then
-            panel:hide()
-        end
-    end
-end
-
-local function resetWindowTypes()
-    for key in pairs(windowTypes) do
-        windowTypes[key] = nil
-    end
-end
-
-local function invalidateFusionContext()
-    fusionTabContext = nil
-
-    if fusionSelectionRadioGroup then
-        fusionSelectionRadioGroup:destroy()
-        fusionSelectionRadioGroup = nil
-    end
-
-    if fusionConvergenceRadioGroup then
-        fusionConvergenceRadioGroup:destroy()
-        fusionConvergenceRadioGroup = nil
-    end
-end
-
-local function resolveScrollContents(widget)
-    if not widget or widget:isDestroyed() then
-        return nil
-    end
-
-    if widget.getChildById then
-        local contents = widget:getChildById('contentsPanel')
-        if contents and not contents:isDestroyed() then
-            return contents
-        end
-    end
-
-    return widget
-end
-
-local function getChildrenByStyleName(widget, styleName)
-    if not widget or widget:isDestroyed() then
-        return {}
-    end
-
-    local children = widget:recursiveGetChildrenByStyleName(styleName)
-    if type(children) ~= 'table' then
-        return {}
-    end
-
-    local results = {}
-    for _, child in ipairs(children) do
-        if child and not child:isDestroyed() then
-            table.insert(results, child)
-        end
-    end
-
-    return results
-end
-
-local function getFirstChildByStyleName(widget, styleName)
-    local children = getChildrenByStyleName(widget, styleName)
-    return children[1]
-end
-
-local function resolveFusionTabContext()
-    local panel = forgeController:loadTab('fusion')
-    if not panel then
-        return nil
-    end
-
-    if not fusionTabContext or fusionTabContext.panel ~= panel or panel:isDestroyed() then
-        local resultArea = panel.test or panel:recursiveGetChildById('test')
-        local selectionPanel = panel.fusionSelectionArea or getFirstChildByStyleName(panel, 'fusion-selection-area')
-        local convergenceSection = panel.fusionConvergenceSection
-            or (resultArea and resultArea.fusionConvergenceSection)
-            or getFirstChildByStyleName(resultArea, 'fusion-convergence-section')
-
-        local targetItem = panel.fusionTargetItemPreview
-            or panel:recursiveGetChildById('fusionTargetItemPreview')
-            or getFirstChildByStyleName(panel, 'fusion-slot-item')
-
-        fusionTabContext = {
-            panel = panel,
-            selectionPanel = selectionPanel,
-            targetItem = targetItem,
-            selectedItemIcon = panel.fusionSelectedItemIcon
-                or panel:recursiveGetChildById('fusionSelectedItemIcon'),
-            selectedItemQuestion = panel.fusionSelectedItemQuestion
-                or panel:recursiveGetChildById('fusionSelectedItemQuestion'),
-            selectedItemCounter = panel.fusionSelectedItemCounter
-                or panel:recursiveGetChildById('fusionSelectedItemCounter'),
-            resultArea = resultArea,
-            placeholder = getFirstChildByStyleName(resultArea, 'forge-result-placeholder'),
-            convergenceSection = convergenceSection,
-            fusionButton = nil,
-            fusionButtonItem = nil,
-            fusionButtonItemTo = nil,
-            convergenceItemsPanel = nil,
-            dustAmountLabel = nil,
-            costLabel = nil
-        }
-    end
-
-    if not fusionTabContext.selectionPanel or fusionTabContext.selectionPanel:isDestroyed() then
-        fusionTabContext.selectionPanel = panel.fusionSelectionArea or
-            getFirstChildByStyleName(panel, 'fusion-selection-area')
-        fusionTabContext.selectionItemsPanel = nil
-    end
-
-    if fusionTabContext.selectionPanel and (not fusionTabContext.selectionItemsPanel or fusionTabContext.selectionItemsPanel:isDestroyed()) then
-        local selectionGrid = fusionTabContext.selectionPanel.fusionSelectionGrid
-            or panel.fusionSelectionGrid
-        if not selectionGrid then
-            local selectionGrids = getChildrenByStyleName(fusionTabContext.selectionPanel, 'forge-slot-grid')
-            selectionGrid = selectionGrids[1]
-        end
-        fusionTabContext.selectionItemsPanel = resolveScrollContents(selectionGrid)
-    end
-
-    if fusionTabContext.targetItem and fusionTabContext.targetItem:isDestroyed() then
-        fusionTabContext.targetItem = nil
-    end
-
-    if not fusionTabContext.targetItem then
-        fusionTabContext.targetItem = panel.fusionTargetItemPreview
-            or panel:recursiveGetChildById('fusionTargetItemPreview')
-            or getFirstChildByStyleName(panel, 'fusion-slot-item')
-    end
-
-    if not fusionTabContext.selectedItemIcon or fusionTabContext.selectedItemIcon:isDestroyed() then
-        fusionTabContext.selectedItemIcon = panel.fusionSelectedItemIcon
-            or panel:recursiveGetChildById('fusionSelectedItemIcon')
-    end
-
-    if fusionTabContext.selectedItemIcon then
-        fusionTabContext.selectedItemIcon:setShowCount(true)
-    end
-
-    if not fusionTabContext.selectedItemQuestion or fusionTabContext.selectedItemQuestion:isDestroyed() then
-        fusionTabContext.selectedItemQuestion = panel.fusionSelectedItemQuestion
-            or panel:recursiveGetChildById('fusionSelectedItemQuestion')
-    end
-
-    if not fusionTabContext.selectedItemCounter or fusionTabContext.selectedItemCounter:isDestroyed() then
-        fusionTabContext.selectedItemCounter = panel.fusionSelectedItemCounter
-            or panel:recursiveGetChildById('fusionSelectedItemCounter')
-    end
-
-    if fusionTabContext.resultArea and (not fusionTabContext.fusionButton or fusionTabContext.fusionButton:isDestroyed()) then
-        local actionButton = getFirstChildByStyleName(fusionTabContext.resultArea, 'forge-action-button')
-        if actionButton then
-            fusionTabContext.fusionButton = actionButton
-            local resultItems = getChildrenByStyleName(actionButton, 'forge-result-item')
-            fusionTabContext.fusionButtonItem = resultItems[1]
-            fusionTabContext.fusionButtonItemTo = resultItems[2]
-        end
-    end
-
-    if fusionTabContext.resultArea and (not fusionTabContext.costLabel or fusionTabContext.costLabel:isDestroyed()) then
-        local costContainer = getFirstChildByStyleName(fusionTabContext.resultArea, 'fusion-result-cost')
-        if costContainer then
-            local labels = getChildrenByStyleName(costContainer, 'forge-full-width-label')
-            fusionTabContext.costLabel = labels[1]
-        end
-    end
-
-    if fusionTabContext.convergenceSection and (not fusionTabContext.convergenceItemsPanel or fusionTabContext.convergenceItemsPanel:isDestroyed()) then
-        local convergenceGrid = fusionTabContext.convergenceSection.fusionConvergenceGrid
-            or (fusionTabContext.resultArea and fusionTabContext.resultArea.fusionConvergenceGrid)
-        if not convergenceGrid then
-            convergenceGrid = getFirstChildByStyleName(fusionTabContext.convergenceSection, 'forge-slot-grid')
-        end
-        fusionTabContext.convergenceItemsPanel = resolveScrollContents(convergenceGrid)
-        local labels = getChildrenByStyleName(fusionTabContext.convergenceSection, 'forge-full-width-label')
-        fusionTabContext.dustAmountLabel = labels[1]
-    end
-
-    return fusionTabContext
-end
-
-local function onFusionSelectionChange(_, selectedWidget)
-    if not selectedWidget or selectedWidget:isDestroyed() then
-        forgeController:resetFusionConversionPanel()
-        return
-    end
-
-    forgeController:configureFusionConversionPanel(selectedWidget)
-end
-
-local function onFusionConvergenceSelectionChange(_, selectedWidget)
-    if not selectedWidget or selectedWidget:isDestroyed() then
-        forgeController.fusionSelectedItem = nil
-        return
-    end
-
-    forgeController.fusionSelectedItem = selectedWidget.fusionItemInfo
-end
-
-local function show(self, skipRequest)
-    local needsReload = not self.ui or self.ui:isDestroyed()
-    if needsReload then
-        self:loadHtml('game_forge.html')
-        ui.panels = {}
-        invalidateFusionContext()
-    end
-
-    if not self.ui then
-        return
-    end
-
-    if not skipRequest then
-        g_game.forgeRequest()
-    end
-
-    for _, config in ipairs(forgeStatusConfigs) do
-        config.widget = nil
-    end
-
-    self.modeFusion, self.modeTransfer = false, false
-
-    resetWindowTypes()
-
-    for _, tabName in ipairs(TAB_ORDER) do
-        self:loadTab(tabName)
-    end
-
-    hideAllPanels()
-
-    local buttonPanel = self.ui.buttonPanel
-    for tabName, config in pairs(TAB_CONFIG) do
-        windowTypes[tabName .. 'Menu'] = {
-            obj = buttonPanel and buttonPanel[tabName .. 'Btn'],
-            panel = tabName,
-            modeProperty = config.modeProperty
-        }
-    end
-
-    self.ui:centerIn('parent')
-    self.ui:show()
-    self.ui:raise()
-    self.ui:focus()
-
-    if forgeButton then
-        forgeButton:setOn(true)
-    end
-
-    SelectWindow('fusionMenu')
-    self:updateResourceBalances()
-end
-
-local function hide()
-    if not forgeController.ui then
-        return
-    end
-
-    forgeController.ui:hide()
-
-    if forgeButton then
-        forgeButton:setOn(false)
-    end
-end
-
-function forgeController:close()
-    hide()
-end
-
-local function toggle(self)
-    if not self.ui or self.ui:isDestroyed() then
-        show(self)
-        return
-    end
-
-    if self.ui:isVisible() then
-        hide()
-    else
-        show(self)
-    end
-end
-
-function forgeController:toggle()
-    toggle(self)
-end
-
-function forgeController:show(skipRequest)
-    show(self, skipRequest)
-end
-
-function forgeController:hide()
-    hide()
-end
-
-local function updateStatusConfig(controller, config, player)
-    local widget = resolveStatusWidget(controller, config)
-    if not widget then
-        return
-    end
-
-    local amount = 0
-    if config.getValue then
-        amount = config.getValue(player) or 0
-    elseif player and config.resourceType then
-        amount = player:getResourceBalance(config.resourceType) or 0
-    end
-
-    local formatter = config.formatter or defaultResourceFormatter
-    widget:setText(formatter(amount))
-end
-
-function forgeController:updateResourceBalances(resourceType)
-    if not self.ui then
-        return
-    end
-
-    local player = g_game.getLocalPlayer()
-
-    if resourceType then
-        local config = forgeResourceConfig[resourceType]
-        if config then
-            updateStatusConfig(self, config, player)
-        end
-    else
-        for _, config in ipairs(forgeStatusConfigs) do
-            updateStatusConfig(self, config, player)
-        end
-    end
-end
-
-function forgeController:onInit()
-    connect(g_game, {
-        onBrowseForgeHistory = onBrowseForgeHistory
-    })
-
-    if not forgeButton then
-        forgeButton = modules.game_mainpanel.addToggleButton('forgeButton', tr('Open Exaltation Forge'),
-            '/images/options/button-exaltation-forge.png', function() toggle(self) end)
-    end
-
-    self:registerEvents(g_game, {
-        onResourcesBalanceChange = function(_, _, resourceType)
-            if forgeResourceConfig[resourceType] then
-                self:updateResourceBalances(resourceType)
-            end
-        end
-    })
-end
-
-function SelectWindow(type, isBackButtonPress)
-    local nextWindow = windowTypes[type]
-    if not nextWindow then
-        return
-    end
-
-    for windowType, window in pairs(windowTypes) do
-        if windowType ~= type then
-            setWindowState(window, true)
-        end
-    end
-
-    setWindowState(nextWindow, false)
-    forgeController.currentWindowType = type
-
-    hideAllPanels()
-    local panel = forgeController:loadTab(nextWindow.panel)
-    if panel then
-        panel:show()
-        panel:raise()
-    end
-
-    if type == "historyMenu" then
-        if not isBackButtonPress then
-            g_game.sendForgeBrowseHistoryRequest(1)
-        end
-    end
-end
-
-function forgeController:loadTab(tabName)
-    if ui.panels[tabName] then
-        return ui.panels[tabName]
-    end
-
-    local panel = loadTabFragment(tabName)
-    if panel then
-        ui.panels[tabName] = panel
-    end
-    return panel
-end
-
-function forgeController:getCurrentWindow()
-    return self.currentWindowType and windowTypes[self.currentWindowType]
-end
-
-function onBrowseForgeHistory(page, lastPage, currentCount, historyList)
-    local state = forgeController.historyState or {}
-    page = math.max(tonumber(page) or 1, 1)
-    lastPage = math.max(tonumber(lastPage) or page, 1)
-    currentCount = tonumber(currentCount) or 0
-
-    lastPage = lastPage > 1 and lastPage - 1 or lastPage
-
-    state.page = page
-    state.lastPage = lastPage
-    state.currentCount = currentCount
-    forgeController.historyState = state
-
-    local historyPanel = forgeController:loadTab('history')
-    if not historyPanel then
-        return
-    end
-
-    local historyListWidget = resolveHistoryList(historyPanel)
-    if not historyListWidget then
-        return
-    end
-
-    historyListWidget:destroyChildren()
-
-    if historyList and #historyList > 0 then
-        for index, entry in ipairs(historyList) do
-            local row = g_ui.createWidget('HistoryForgePanel', historyListWidget)
-            if row then
-                local rowBackground = index % 2 == 1 and '#484848' or '#414141'
-                row:setBackgroundColor(rowBackground)
-                local dateLabel = row:getChildById('date')
-                if dateLabel then
-                    dateLabel:setText(formatHistoryDate(entry.createdAt))
-                end
-
-                local actionLabel = row:getChildById('action')
-                if actionLabel then
-                    actionLabel:setText(historyActionLabels[entry.actionType] or tr('Unknown'))
-                end
-
-                local detailLabel = row:getChildById('details')
-                if detailLabel then
-                    detailLabel:setText(entry.description or '')
-                end
-            end
-        end
-    else
-        local emptyRow = g_ui.createWidget('HistoryForgePanel', historyListWidget)
-        if emptyRow then
-            local dateLabel = emptyRow:getChildById('date')
-            if dateLabel then
-                dateLabel:setText('-')
-            end
-
-            local actionLabel = emptyRow:getChildById('action')
-            if actionLabel then
-                actionLabel:setText(tr('No history'))
-            end
-
-            local detailLabel = emptyRow:getChildById('details')
-            if detailLabel then
-                detailLabel:setText(tr('There are no forge history entries to display.'))
-            end
-        end
-    end
-
-    local pageLabel = historyPanel.historyPageLabel
-    if not pageLabel or pageLabel:isDestroyed() then
-        pageLabel = historyPanel:recursiveGetChildById('historyPageLabel')
-        historyPanel.historyPageLabel = pageLabel
-    end
-    if pageLabel then
-        g_logger.info(page .. "/" .. lastPage)
-        pageLabel:setText(tr('Page %d/%d', page, lastPage))
-    end
-
-    local prevButton = historyPanel.previousPageButton
-    if not prevButton or prevButton:isDestroyed() then
-        prevButton = historyPanel:recursiveGetChildById('previousPageButton')
-        historyPanel.previousPageButton = prevButton
-    end
-    if prevButton then
-        prevButton:setVisible(page > 1)
-    end
-
-    local nextButton = historyPanel.nextPageButton
-    if not nextButton or nextButton:isDestroyed() then
-        nextButton = historyPanel:recursiveGetChildById('nextPageButton')
-        historyPanel.nextPageButton = nextButton
-    end
-    if nextButton then
-        nextButton:setVisible(lastPage > page)
-    end
-end
-
-function forgeController:onTerminate()
-    disconnect(g_game, {
-        onBrowseForgeHistory = onBrowseForgeHistory
-    })
-end
-
-function forgeController:onGameStart()
-    g_ui.importStyle('otui/style.otui')
-    if not self.ui or self.ui:isDestroyed() then
-        self:loadHtml('game_forge.html')
-        ui.panels = {}
-        invalidateFusionContext()
-    end
-
-    resetWindowTypes()
-
-    if self.ui then
-        self.ui:hide()
-    end
-
-    self.historyState = {
-        page = 1,
-        lastPage = 1,
-        currentCount = 0
-    }
-end
-
-function forgeController:onGameEnd()
-    if self.ui and self.ui:isVisible() then
-        self.ui:hide()
-    end
-
-    if forgeButton then
-        forgeButton:setOn(false)
-    end
-end
-
-function g_game.onOpenForge(openData)
-    openData = openData or {}
-
-    forgeController.openData = openData
-    forgeController.fusionItems = openData.fusionItems or {}
-    forgeController.convergenceFusion = openData.convergenceFusion or {}
-    forgeController.transfers = openData.transfers or {}
-    forgeController.convergenceTransfers = openData.convergenceTransfers or {}
-    local dustLevel = tonumber(openData.dustLevel) or 0
-    forgeController.maxDustLevel = dustLevel > 0 and dustLevel or forgeController.maxDustLevel or 0
-
-    forgeController.modeFusion = false
-    forgeController.modeTransfer = false
-
-    local shouldShow = not forgeController.ui or forgeController.ui:isDestroyed() or not forgeController.ui:isVisible()
-    if shouldShow then
-        forgeController:show(true)
-    end
-
-    forgeController:updateResourceBalances()
-    forgeController:updateFusionItems()
-end
-
-function forgeController:configureFusionConversionPanel(selectedWidget)
-    if not selectedWidget or not selectedWidget.itemPtr then
-        return
-    end
-
-    local context = resolveFusionTabContext()
-    if not context then
-        return
-    end
-
-    if context.convergenceSection and (not context.convergenceItemsPanel or context.convergenceItemsPanel:isDestroyed()) then
-        context.convergenceItemsPanel = resolveScrollContents(
-            getFirstChildByStyleName(context.convergenceSection, 'forge-slot-grid')
-        )
-    end
-
-    local itemPtr = selectedWidget.itemPtr
-    local itemWidget = selectedWidget.item
-    local itemCount = 1
-    if itemWidget and itemWidget.getItemCount then
-        itemCount = tonumber(itemWidget:getItemCount()) or itemCount
-    elseif itemPtr and itemPtr.getCount then
-        itemCount = tonumber(itemPtr:getCount()) or itemCount
-    elseif itemPtr and itemPtr.getCountOrSubType then
-        itemCount = tonumber(itemPtr:getCountOrSubType()) or itemCount
-    end
-    local itemTier = itemPtr:getTier() or 0
-
-    self.fusionItem = itemPtr
-    self.fusionItemCount = itemCount
-
-    if context.targetItem then
-        local targetPreview = Item.create(itemPtr:getId(), 1)
-        targetPreview:setTier(itemTier + 1)
-        context.targetItem:setItem(targetPreview)
-        context.targetItem:setItemCount(1)
-        ItemsDatabase.setTier(context.targetItem, targetPreview)
-    end
-
-    if context.selectedItemIcon then
-        local selectedPreview = Item.create(itemPtr:getId(), itemCount)
-        selectedPreview:setTier(itemTier)
-        context.selectedItemIcon:setItem(selectedPreview)
-        context.selectedItemIcon:setItemCount(itemCount)
-        ItemsDatabase.setTier(context.selectedItemIcon, selectedPreview)
-    end
-
-    if context.selectedItemQuestion then
-        context.selectedItemQuestion:setVisible(false)
-    end
-
-    if context.selectedItemCounter then
-        local ownedCount = math.max(itemCount, 0)
-        context.selectedItemCounter:setText(string.format('%d / 1', ownedCount))
-    end
-
-    if context.fusionButtonItem then
-        context.fusionButtonItem:setItemId(itemPtr:getId())
-        context.fusionButtonItem:setItemCount(1)
-        ItemsDatabase.setTier(context.fusionButtonItem, math.max(itemTier - 1, 0))
-    end
-
-    if context.fusionButtonItemTo then
-        context.fusionButtonItemTo:setItemId(itemPtr:getId())
-        context.fusionButtonItemTo:setItemCount(1)
-        ItemsDatabase.setTier(context.fusionButtonItemTo, itemTier + 1)
-    end
-
-    if context.convergenceItemsPanel then
-        context.convergenceItemsPanel:destroyChildren()
-    end
-
-    if fusionConvergenceRadioGroup then
-        fusionConvergenceRadioGroup:destroy()
-        fusionConvergenceRadioGroup = nil
-    end
-
-    fusionConvergenceRadioGroup = UIRadioGroup.create()
-    fusionConvergenceRadioGroup.onSelectionChange = onFusionConvergenceSelectionChange
-
-    self.fusionSelectedItem = nil
-
-    local player = g_game.getLocalPlayer()
-    local dustRequirement = (self.openData and tonumber(self.openData.convergenceDustFusion)) or
-        tonumber(self.convergenceDustFusion) or 0
-    local priceList = self.fusionPrices or (self.openData and self.openData.fusionPrices) or {}
-    local price = 0
-
-    if type(priceList) == 'table' then
-        price = tonumber(priceList[itemTier + 1]) or tonumber(priceList[itemTier]) or 0
-    end
-
-    if context.dustAmountLabel and player then
-        local dustBalance = player:getResourceBalance(forgeResourceTypes.dust) or 0
-        local hasEnoughDust = dustRequirement <= 0 or dustBalance >= dustRequirement
-        context.dustAmountLabel:setColor(hasEnoughDust and '$var-text-cip-color' or '#d33c3c')
-    end
-
-    self.fusionPrice = price
-
-    if context.costLabel then
-        context.costLabel:setText(formatGoldAmount(price))
-        if player then
-            local totalMoney = player:getTotalMoney() or 0
-            context.costLabel:setColor(totalMoney >= price and '$var-text-cip-color' or '#d33c3c')
-        end
-    end
-
-    local hasConvergenceOptions = false
-    local convergenceData = self.convergenceFusion or {}
-    if context.convergenceItemsPanel then
-        for _, option in ipairs(convergenceData) do
-            if type(option) == 'table' then
-                for _, fusionInfo in ipairs(option) do
-                    if type(fusionInfo) == 'table' and fusionInfo.id then
-                        local widget = g_ui.createWidget('UICheckBox', context.convergenceItemsPanel)
-                        if widget then
-                            widget:setText('')
-                            widget:setFocusable(true)
-                            widget:setHeight(36)
-                            widget:setWidth(36)
-                            widget:setMargin(2)
-
-                            local itemDisplay = g_ui.createWidget('UIItem', widget)
-                            if itemDisplay then
-                                itemDisplay:fill('parent')
-                                itemDisplay:setItemId(fusionInfo.id)
-                                if fusionInfo.count and fusionInfo.count > 0 then
-                                    itemDisplay:setItemCount(fusionInfo.count)
-                                end
-                                ItemsDatabase.setTier(itemDisplay, fusionInfo.tier or 0)
-                                widget.item = itemDisplay
-                            end
-
-                            widget.fusionItemInfo = fusionInfo
-                            fusionConvergenceRadioGroup:addWidget(widget)
-                            hasConvergenceOptions = true
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    if context.convergenceSection then
-        context.convergenceSection:setVisible(self.modeFusion and hasConvergenceOptions)
-    end
-
-    local firstWidget = fusionConvergenceRadioGroup:getFirstWidget()
-    if firstWidget then
-        fusionConvergenceRadioGroup:selectWidget(firstWidget, true)
-        onFusionConvergenceSelectionChange(fusionConvergenceRadioGroup, firstWidget)
-    end
-end
-
-function forgeController:resetFusionConversionPanel()
-    local context = resolveFusionTabContext()
-    if not context then
-        return
-    end
-
-    self.fusionItem = nil
-    self.fusionItemCount = nil
-    self.fusionSelectedItem = nil
-
-    if context.targetItem then
-        context.targetItem:setItemId(0)
-        context.targetItem:setItemCount(0)
-        ItemsDatabase.setTier(context.targetItem, 0)
-    end
-
-    if context.selectedItemIcon then
-        context.selectedItemIcon:setItemId(0)
-        context.selectedItemIcon:setItemCount(0)
-        ItemsDatabase.setTier(context.selectedItemIcon, 0)
-    end
-
-    if context.selectedItemQuestion then
-        context.selectedItemQuestion:setVisible(true)
-    end
-
-    if context.selectedItemCounter then
-        context.selectedItemCounter:setText('0 / 1')
-    end
-
-    if context.placeholder then
-        context.placeholder:setVisible(true)
-    end
-
-    if context.convergenceSection then
-        context.convergenceSection:setVisible(false)
-    end
-
-    if context.fusionButtonItem then
-        context.fusionButtonItem:setItemId(0)
-        context.fusionButtonItem:setItemCount(0)
-        ItemsDatabase.setTier(context.fusionButtonItem, 0)
-    end
-
-    if context.fusionButtonItemTo then
-        context.fusionButtonItemTo:setItemId(0)
-        context.fusionButtonItemTo:setItemCount(0)
-        ItemsDatabase.setTier(context.fusionButtonItemTo, 0)
-    end
-
-    if context.convergenceItemsPanel then
-        context.convergenceItemsPanel:destroyChildren()
-    end
-
-    if fusionConvergenceRadioGroup then
-        fusionConvergenceRadioGroup:destroy()
-        fusionConvergenceRadioGroup = nil
-    end
-
-    if context.dustAmountLabel then
-        context.dustAmountLabel:setColor('$var-text-cip-color')
-    end
-
-    if context.costLabel then
-        context.costLabel:setText('???')
-        context.costLabel:setColor('$var-text-cip-color')
-    end
-end
-
-function forgeController:updateFusionItems(fusionData)
-    local context = resolveFusionTabContext()
-    if not context then
-        return
-    end
-
-    if context.selectionPanel and (not context.selectionItemsPanel or context.selectionItemsPanel:isDestroyed()) then
-        local selectionGrids = getChildrenByStyleName(context.selectionPanel, 'forge-slot-grid')
-        context.selectionItemsPanel = resolveScrollContents(selectionGrids[1])
-    end
-
-    self:resetFusionConversionPanel()
-
-    local itemsPanel = context.selectionItemsPanel
-    if not itemsPanel then
-        return
-    end
-
-    itemsPanel:destroyChildren()
-
-    if fusionSelectionRadioGroup then
-        fusionSelectionRadioGroup:destroy()
-        fusionSelectionRadioGroup = nil
-    end
-
-    fusionSelectionRadioGroup = UIRadioGroup.create()
-    fusionSelectionRadioGroup:clearSelected()
-    fusionSelectionRadioGroup.onSelectionChange = onFusionSelectionChange
-
-    local data = fusionData
-    if not data then
-        if self.modeFusion then
-            data = self.convergenceFusion
-        else
-            data = self.fusionItems
-        end
-    end
-
-    local function applySelectionHighlight(widget, checked)
-        if not widget or widget:isDestroyed() then
-            return
-        end
-
-        if checked then
-            widget:setBorderWidth(1)
-            widget:setBorderColor('#ffffff')
-        else
-            widget:setBorderWidth(0)
-        end
-    end
-
-    local function appendItem(info)
-        if type(info) ~= 'table' or not info.id or info.id <= 0 then
-            return
-        end
-
-        local widget = g_ui.createWidget('UICheckBox', itemsPanel)
-        if not widget then
-            return
-        end
-
-        widget:setText('')
-        widget:setFocusable(true)
-        widget:setSize('36 36')
-        widget:setBorderWidth(0)
-        widget:setBorderColor('#ffffff')
-
-        widget.onCheckChange = function(self, checked)
-            applySelectionHighlight(self, checked)
-        end
-
-        local frame = g_ui.createWidget('UIWidget', widget)
-        frame:setSize('34 34')
-        frame:setMarginLeft(1)
-        frame:setMarginTop(1)
-        frame:addAnchor(AnchorTop, 'parent', AnchorTop)
-        frame:addAnchor(AnchorLeft, 'parent', AnchorLeft)
-        frame:setImageSource('/images/ui/item')
-        frame:setPhantom(true)
-        frame:setFocusable(false)
-
-        local itemWidget = g_ui.createWidget('UIItem', widget)
-        itemWidget:setSize('32 32')
-        itemWidget:setMarginTop(2)
-        itemWidget:addAnchor(AnchorTop, 'parent', AnchorTop)
-        itemWidget:addAnchor(AnchorHorizontalCenter, 'parent', AnchorHorizontalCenter)
-        itemWidget:setPhantom(true)
-        itemWidget:setVirtual(true)
-        itemWidget:setShowCount(true)
-        local itemPtr = Item.create(info.id, info.count or 1)
-        itemPtr:setTier(info.tier or 0)
-        itemWidget:setItem(itemPtr)
-        itemWidget:setItemCount(info.count or itemPtr:getCount())
-        ItemsDatabase.setRarityItem(itemWidget, itemWidget:getItem())
-        ItemsDatabase.setTier(itemWidget, info.tier or 0)
-
-        widget.item = itemWidget
-        widget.itemPtr = itemPtr
-        widget.fusionItemInfo = info
-
-        applySelectionHighlight(widget, widget:isChecked())
-
-        fusionSelectionRadioGroup:addWidget(widget)
-    end
-
-    local function processEntries(entries)
-        if type(entries) ~= 'table' then
-            return
-        end
-
-        for _, entry in ipairs(entries) do
-            if type(entry) == 'table' then
-                if entry.id then
-                    appendItem(entry)
-                else
-                    processEntries(entry)
-                end
-            end
-        end
-    end
-
-    processEntries(data or {})
 end

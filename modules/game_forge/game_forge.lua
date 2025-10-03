@@ -273,7 +273,11 @@ local function resolveFusionTabContext()
             panel = panel,
             selectionPanel = selectionPanel,
             selectionItemsPanel = nil,
-            targetItem = getFirstChildByStyleName(panel, 'fusion-slot-item'),
+            targetItem = panel.fusionTargetItemPreview
+                or panel:recursiveGetChildById('fusionTargetItemPreview')
+                or getFirstChildByStyleName(panel, 'fusion-slot-item'),
+            selectedItemIcon = panel.fusionSelectedItemIcon
+                or panel:recursiveGetChildById('fusionSelectedItemIcon'),
             resultArea = resultArea,
             placeholder = getFirstChildByStyleName(resultArea, 'forge-result-placeholder'),
             convergenceSection = convergenceSection,
@@ -299,6 +303,21 @@ local function resolveFusionTabContext()
             selectionGrid = selectionGrids[1]
         end
         fusionTabContext.selectionItemsPanel = resolveScrollContents(selectionGrid)
+    end
+
+    if fusionTabContext.targetItem and fusionTabContext.targetItem:isDestroyed() then
+        fusionTabContext.targetItem = nil
+    end
+
+    if not fusionTabContext.targetItem then
+        fusionTabContext.targetItem = panel.fusionTargetItemPreview
+            or panel:recursiveGetChildById('fusionTargetItemPreview')
+            or getFirstChildByStyleName(panel, 'fusion-slot-item')
+    end
+
+    if not fusionTabContext.selectedItemIcon or fusionTabContext.selectedItemIcon:isDestroyed() then
+        fusionTabContext.selectedItemIcon = panel.fusionSelectedItemIcon
+            or panel:recursiveGetChildById('fusionSelectedItemIcon')
     end
 
     if fusionTabContext.resultArea and (not fusionTabContext.fusionButton or fusionTabContext.fusionButton:isDestroyed()) then
@@ -734,11 +753,13 @@ function forgeController:configureFusionConversionPanel(selectedWidget)
     if context.targetItem then
         context.targetItem:setItemId(itemPtr:getId())
         context.targetItem:setItemCount(itemCount)
-        ItemsDatabase.setTier(context.targetItem, itemPtr)
+        ItemsDatabase.setTier(context.targetItem, itemTier + 1)
     end
 
-    if context.placeholder then
-        context.placeholder:setVisible(false)
+    if context.selectedItemIcon then
+        context.selectedItemIcon:setItemId(itemPtr:getId())
+        context.selectedItemIcon:setItemCount(itemCount)
+        ItemsDatabase.setTier(context.selectedItemIcon, itemTier)
     end
 
     if context.convergenceSection then
@@ -851,6 +872,12 @@ function forgeController:resetFusionConversionPanel()
         context.targetItem:setItemId(0)
         context.targetItem:setItemCount(0)
         ItemsDatabase.setTier(context.targetItem, 0)
+    end
+
+    if context.selectedItemIcon then
+        context.selectedItemIcon:setItemId(0)
+        context.selectedItemIcon:setItemCount(0)
+        ItemsDatabase.setTier(context.selectedItemIcon, 0)
     end
 
     if context.placeholder then

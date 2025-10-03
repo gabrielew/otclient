@@ -12,7 +12,7 @@
         onchange="self:onCheckChangeConvergence(event)" />
     </div>
     <UIWidget class="fusion-target-slot">
-      <UIItem class="fusion-slot-item"></UIItem>
+      <UIItem id="fusionTargetItemPreview" class="fusion-slot-item"></UIItem>
     </UIWidget>
   </div>
 
@@ -21,7 +21,7 @@
     <div class="forge-result-placeholder" focusable="false" *visible="not self.modeFusion">
       <div class="forge-required-block">
         <div class="forge-card">
-          <UIItem class="forge-item-icon"></UIItem>
+          <UIItem id="fusionSelectedItemIcon" class="forge-item-icon"></UIItem>
           <img class="forge-question-icon" src="/images/ui/icon-questionmark" />
         </div>
         <div class="forge-counter">

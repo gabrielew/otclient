@@ -752,7 +752,7 @@ function forgeController:configureFusionConversionPanel(selectedWidget)
 
     if context.targetItem then
         context.targetItem:setItemId(itemPtr:getId())
-        context.targetItem:setItemCount(itemCount)
+        context.targetItem:setItemCount(1)
         ItemsDatabase.setTier(context.targetItem, itemTier + 1)
     end
 
@@ -760,14 +760,6 @@ function forgeController:configureFusionConversionPanel(selectedWidget)
         context.selectedItemIcon:setItemId(itemPtr:getId())
         context.selectedItemIcon:setItemCount(itemCount)
         ItemsDatabase.setTier(context.selectedItemIcon, itemTier)
-    end
-
-    if context.placeholder then
-        context.placeholder:setVisible(false)
-    end
-
-    if context.convergenceSection then
-        context.convergenceSection:setVisible(true)
     end
 
     if context.fusionButtonItem then
@@ -821,6 +813,7 @@ function forgeController:configureFusionConversionPanel(selectedWidget)
         end
     end
 
+    local hasConvergenceOptions = false
     local convergenceData = self.convergenceFusion or {}
     if context.convergenceItemsPanel then
         for _, option in ipairs(convergenceData) do
@@ -848,11 +841,16 @@ function forgeController:configureFusionConversionPanel(selectedWidget)
 
                             widget.fusionItemInfo = fusionInfo
                             fusionConvergenceRadioGroup:addWidget(widget)
+                            hasConvergenceOptions = true
                         end
                     end
                 end
             end
         end
+    end
+
+    if context.convergenceSection then
+        context.convergenceSection:setVisible(hasConvergenceOptions)
     end
 
     local firstWidget = fusionConvergenceRadioGroup:getFirstWidget()

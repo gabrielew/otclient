@@ -177,10 +177,7 @@
 }
 
 .forge-card-item {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  size: 30 30;
 }
 
 .forge-question-icon {

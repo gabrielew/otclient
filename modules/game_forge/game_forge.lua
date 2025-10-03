@@ -325,6 +325,8 @@ local function resolveFusionTabContext()
     end
 
     if fusionTabContext.selectedItemIcon then
+        fusionTabContext.selectedItemIcon:setSize('30 30')
+        fusionTabContext.selectedItemIcon:centerIn('parent')
         fusionTabContext.selectedItemIcon:setShowCount(true)
     end
 

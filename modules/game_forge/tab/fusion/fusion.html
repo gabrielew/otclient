@@ -91,9 +91,10 @@
           <tr>
             <td>
               <button
+                id="fusionImproveButton"
                 class="fusion-stat-button"
                 text="Improve to 65%"
-                disabled
+                onclick="self:onToggleFusionCore('success')"
               ></button>
             </td>
             <td>
@@ -114,9 +115,10 @@
           <tr>
             <td>
               <button
+                id="fusionReduceButton"
                 class="fusion-stat-button"
                 text="Reduce to 50%"
-                disabled
+                onclick="self:onToggleFusionCore('tier')"
               ></button>
             </td>
             <td>

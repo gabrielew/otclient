@@ -23,6 +23,10 @@ forgeController.historyState = {
     lastPage = 1,
     currentCount = 0
 }
+forgeController.fusionCoreSelections = {
+    success = false,
+    tier = false
+}
 local forgeButton
 
 local forgeResourceTypes = {
@@ -359,6 +363,18 @@ local function resolveFusionTabContext()
         end
     end
 
+    if fusionTabContext.resultArea and (not fusionTabContext.successCoreButton or fusionTabContext.successCoreButton:isDestroyed()) then
+        fusionTabContext.successCoreButton = fusionTabContext.panel.fusionImproveButton
+            or fusionTabContext.resultArea.fusionImproveButton
+            or fusionTabContext.panel:recursiveGetChildById('fusionImproveButton')
+    end
+
+    if fusionTabContext.resultArea and (not fusionTabContext.tierCoreButton or fusionTabContext.tierCoreButton:isDestroyed()) then
+        fusionTabContext.tierCoreButton = fusionTabContext.panel.fusionReduceButton
+            or fusionTabContext.resultArea.fusionReduceButton
+            or fusionTabContext.panel:recursiveGetChildById('fusionReduceButton')
+    end
+
     if fusionTabContext.convergenceSection and (not fusionTabContext.convergenceItemsPanel or fusionTabContext.convergenceItemsPanel:isDestroyed()) then
         local convergenceGrid = fusionTabContext.convergenceSection.fusionConvergenceGrid
             or (fusionTabContext.resultArea and fusionTabContext.resultArea.fusionConvergenceGrid)
@@ -518,6 +534,176 @@ function forgeController:updateResourceBalances(resourceType)
             updateStatusConfig(self, config, player)
         end
     end
+
+    if not resourceType or resourceType == forgeResourceTypes.cores then
+        self:updateFusionCoreButtons()
+    end
+end
+
+function forgeController:updateFusionCoreButtons()
+    if not self.ui then
+        return
+    end
+
+    local context = resolveFusionTabContext()
+    if not context then
+        return
+    end
+
+    local successButton = context.successCoreButton
+    if not successButton or successButton:isDestroyed() then
+        successButton = context.panel and context.panel:recursiveGetChildById('fusionImproveButton')
+        context.successCoreButton = successButton
+    end
+
+    local tierButton = context.tierCoreButton
+    if not tierButton or tierButton:isDestroyed() then
+        tierButton = context.panel and context.panel:recursiveGetChildById('fusionReduceButton')
+        context.tierCoreButton = tierButton
+    end
+
+    if not successButton and not tierButton then
+        return
+    end
+
+    local selections = self.fusionCoreSelections
+    if type(selections) ~= 'table' then
+        selections = {
+            success = false,
+            tier = false
+        }
+        self.fusionCoreSelections = selections
+    end
+
+    local player = g_game.getLocalPlayer()
+    local coreBalance = 0
+    if player then
+        coreBalance = player:getResourceBalance(forgeResourceTypes.cores) or 0
+    end
+
+    local function setButtonState(button, selected, enabled)
+        if not button or button:isDestroyed() then
+            return
+        end
+
+        if button.setOn then
+            button:setOn(selected)
+        end
+
+        if button.setEnabled then
+            button:setEnabled(enabled or selected)
+        end
+    end
+
+    if coreBalance <= 0 then
+        selections.success = false
+        selections.tier = false
+        setButtonState(successButton, false, false)
+        setButtonState(tierButton, false, false)
+        return
+    end
+
+    local selectedSuccess = selections.success and true or false
+    local selectedTier = selections.tier and true or false
+
+    local selectedCount = (selectedSuccess and 1 or 0) + (selectedTier and 1 or 0)
+    if selectedCount > coreBalance then
+        if selectedTier then
+            selectedTier = false
+            selections.tier = false
+            selectedCount = selectedCount - 1
+        end
+        if selectedCount > coreBalance and selectedSuccess then
+            selectedSuccess = false
+            selections.success = false
+            selectedCount = selectedCount - 1
+        end
+    end
+
+    local hasAvailableCore = coreBalance > selectedCount
+
+    local successEnabled = selectedSuccess or hasAvailableCore
+    local tierEnabled = selectedTier or hasAvailableCore
+
+    if coreBalance == 1 then
+        if selectedSuccess and not selectedTier then
+            tierEnabled = false
+        elseif selectedTier and not selectedSuccess then
+            successEnabled = false
+        end
+    end
+
+    setButtonState(successButton, selectedSuccess, successEnabled)
+    setButtonState(tierButton, selectedTier, tierEnabled)
+end
+
+function forgeController:onToggleFusionCore(coreType)
+    if not self.ui then
+        return
+    end
+
+    if coreType ~= 'success' and coreType ~= 'tier' then
+        return
+    end
+
+    local context = resolveFusionTabContext()
+    if not context then
+        return
+    end
+
+    local button
+    if coreType == 'success' then
+        button = context.successCoreButton
+        if not button or button:isDestroyed() then
+            context.successCoreButton = context.panel and context.panel:recursiveGetChildById('fusionImproveButton') or nil
+            button = context.successCoreButton
+        end
+    else
+        button = context.tierCoreButton
+        if not button or button:isDestroyed() then
+            context.tierCoreButton = context.panel and context.panel:recursiveGetChildById('fusionReduceButton') or nil
+            button = context.tierCoreButton
+        end
+    end
+
+    if not button or button:isDestroyed() then
+        return
+    end
+
+    local selections = self.fusionCoreSelections
+    if type(selections) ~= 'table' then
+        selections = {
+            success = false,
+            tier = false
+        }
+        self.fusionCoreSelections = selections
+    end
+
+    local isSelected = selections[coreType] and true or false
+
+    local player = g_game.getLocalPlayer()
+    local coreBalance = 0
+    if player then
+        coreBalance = player:getResourceBalance(forgeResourceTypes.cores) or 0
+    end
+
+    if isSelected then
+        selections[coreType] = false
+        self:updateFusionCoreButtons()
+        return
+    end
+
+    local otherType = coreType == 'success' and 'tier' or 'success'
+    local otherSelected = selections[otherType] and 1 or 0
+    if coreBalance <= otherSelected then
+        if g_game.playCancelSound then
+            g_game.playCancelSound()
+        end
+        return
+    end
+
+    selections[coreType] = true
+    self:updateFusionCoreButtons()
 end
 
 function forgeController:onInit()
@@ -704,6 +890,11 @@ function forgeController:onGameStart()
         page = 1,
         lastPage = 1,
         currentCount = 0
+    }
+
+    self.fusionCoreSelections = {
+        success = false,
+        tier = false
     }
 end
 
@@ -893,6 +1084,8 @@ function forgeController:configureFusionConversionPanel(selectedWidget)
         fusionConvergenceRadioGroup:selectWidget(firstWidget, true)
         onFusionConvergenceSelectionChange(fusionConvergenceRadioGroup, firstWidget)
     end
+
+    self:updateFusionCoreButtons()
 end
 
 function forgeController:resetFusionConversionPanel()
@@ -962,6 +1155,18 @@ function forgeController:resetFusionConversionPanel()
         context.costLabel:setText('???')
         context.costLabel:setColor('$var-text-cip-color')
     end
+
+    if type(self.fusionCoreSelections) ~= 'table' then
+        self.fusionCoreSelections = {
+            success = false,
+            tier = false
+        }
+    else
+        self.fusionCoreSelections.success = false
+        self.fusionCoreSelections.tier = false
+    end
+
+    self:updateFusionCoreButtons()
 end
 
 function forgeController:updateFusionItems(fusionData)

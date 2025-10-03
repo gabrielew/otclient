@@ -762,6 +762,10 @@ function forgeController:configureFusionConversionPanel(selectedWidget)
         ItemsDatabase.setTier(context.selectedItemIcon, itemTier)
     end
 
+    if context.placeholder then
+        context.placeholder:setVisible(false)
+    end
+
     if context.convergenceSection then
         context.convergenceSection:setVisible(true)
     end
@@ -1043,9 +1047,4 @@ function forgeController:updateFusionItems(fusionData)
 
     processEntries(data or {})
 
-    local firstWidget = fusionSelectionRadioGroup:getFirstWidget()
-    if firstWidget then
-        fusionSelectionRadioGroup:selectWidget(firstWidget, true)
-        onFusionSelectionChange(fusionSelectionRadioGroup, firstWidget)
-    end
 end

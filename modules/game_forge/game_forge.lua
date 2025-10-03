@@ -324,6 +324,10 @@ local function resolveFusionTabContext()
             or panel:recursiveGetChildById('fusionSelectedItemIcon')
     end
 
+    if fusionTabContext.selectedItemIcon then
+        fusionTabContext.selectedItemIcon:setShowCount(true)
+    end
+
     if not fusionTabContext.selectedItemQuestion or fusionTabContext.selectedItemQuestion:isDestroyed() then
         fusionTabContext.selectedItemQuestion = panel.fusionSelectedItemQuestion
             or panel:recursiveGetChildById('fusionSelectedItemQuestion')

@@ -25,6 +25,17 @@
 #include "protocolgame.h"
 #include <framework/util/crypt.h>
 
+namespace
+{
+enum class ForgeOperation : uint8_t
+{
+    Enter = 0,
+    Fusion = 1,
+    Transfer = 2,
+    Conversion = 3
+};
+}
+
 void ProtocolGame::onSend() {}
 void ProtocolGame::sendExtendedOpcode(const uint8_t opcode, const std::string& buffer)
 {
@@ -1026,6 +1037,56 @@ void ProtocolGame::sendInspectionObject(const Otc::InspectObjectTypes inspection
     msg->addU8(inspectionType);
     msg->addU16(itemId);
     msg->addU8(itemCount);
+    send(msg);
+}
+
+void ProtocolGame::sendForgeEnter()
+{
+    const auto& msg = std::make_shared<OutputMessage>();
+    msg->addU8(Proto::ClientForgeEnter);
+    msg->addU8(static_cast<uint8_t>(ForgeOperation::Enter));
+    send(msg);
+}
+
+void ProtocolGame::sendForgeFusion(const bool convergence, const uint16_t itemId, const uint8_t tier, const uint16_t donorItemId, const bool improveSuccess, const bool protectTier)
+{
+    const auto& msg = std::make_shared<OutputMessage>();
+    msg->addU8(Proto::ClientForgeEnter);
+    msg->addU8(static_cast<uint8_t>(ForgeOperation::Fusion));
+    msg->addU8(convergence ? 1 : 0);
+    msg->addU16(itemId);
+    msg->addU8(tier);
+    msg->addU16(donorItemId);
+    msg->addU8(improveSuccess ? 1 : 0);
+    msg->addU8(protectTier ? 1 : 0);
+    send(msg);
+}
+
+void ProtocolGame::sendForgeTransfer(const bool convergence, const uint16_t itemId, const uint8_t tier, const uint16_t donorItemId)
+{
+    const auto& msg = std::make_shared<OutputMessage>();
+    msg->addU8(Proto::ClientForgeEnter);
+    msg->addU8(static_cast<uint8_t>(ForgeOperation::Transfer));
+    msg->addU8(convergence ? 1 : 0);
+    msg->addU16(itemId);
+    msg->addU8(tier);
+    msg->addU16(donorItemId);
+    send(msg);
+}
+
+void ProtocolGame::sendForgeConverter(const uint8_t action)
+{
+    const auto& msg = std::make_shared<OutputMessage>();
+    msg->addU8(Proto::ClientForgeEnter);
+    msg->addU8(static_cast<uint8_t>(ForgeOperation::Conversion));
+    msg->addU8(action);
+    send(msg);
+}
+
+void ProtocolGame::sendForgeBrowseHistory()
+{
+    const auto& msg = std::make_shared<OutputMessage>();
+    msg->addU8(Proto::ClientForgeBrowseHistory);
     send(msg);
 }
 

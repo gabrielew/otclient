@@ -160,6 +160,11 @@ public:
     void openContainerQuickLoot(uint8_t action, uint8_t category, const Position& pos, uint16_t itemId, uint8_t stackpos, bool useMainAsFallback);
     void sendInspectionNormalObject(const Position& position);
     void sendInspectionObject(Otc::InspectObjectTypes inspectionType, uint16_t itemId, uint8_t itemCount);
+    void sendForgeEnter();
+    void sendForgeFusion(bool convergence, uint16_t itemId, uint8_t tier, uint16_t donorItemId, bool improveSuccess, bool protectTier);
+    void sendForgeTransfer(bool convergence, uint16_t itemId, uint8_t tier, uint16_t donorItemId);
+    void sendForgeConverter(uint8_t action);
+    void sendForgeBrowseHistory();
 
     // otclient only
     void sendChangeMapAwareRange(uint8_t xrange, uint8_t yrange);
@@ -245,6 +250,8 @@ private:
     void parseCreatureMark(const InputMessagePtr& msg);
     void parseTrappers(const InputMessagePtr& msg);
     void parseOpenForge(const InputMessagePtr& msg);
+    void parseForgeHistory(const InputMessagePtr& msg);
+    void parseForgeResult(const InputMessagePtr& msg);
     void setCreatureVocation(const InputMessagePtr& msg, const uint32_t creatureId) const;
     void addCreatureIcon(const InputMessagePtr& msg, const uint32_t creatureId) const;
     void parseCloseForgeWindow(const InputMessagePtr& msg);

@@ -137,6 +137,9 @@ public:
     void sendPreyAction(uint8_t slot, uint8_t actionType, uint16_t index);
     void sendPreyRequest();
     void sendForgeRequest(Otc::ForgeAction_t actionType = Otc::ForgeAction_t::FUSION);
+    void sendForgeFusion(bool isConvergence, uint16_t itemId, uint8_t itemTier, uint16_t materialItemId, bool useSuccessBoost, bool useTierLossProtection);
+    void sendForgeTransfer(bool isConvergence, uint16_t itemId, uint8_t itemTier, uint16_t donorItemId);
+    void sendForgeConverter(Otc::ForgeAction_t actionType);
     void sendForgeBrowseHistoryRequest(uint16_t page);
     void sendApplyImbuement(uint8_t slot, uint32_t imbuementId, bool protectionCharm);
     void sendClearImbuement(uint8_t slot);

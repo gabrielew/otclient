@@ -383,12 +383,14 @@ local function resolveFusionTabContext()
         fusionTabContext.successRateLabel = fusionTabContext.panel.fusionSuccessRateValue
             or fusionTabContext.resultArea.fusionSuccessRateValue
             or fusionTabContext.panel:recursiveGetChildById('fusionSuccessRateValue')
+        fusionTabContext.successRateLabelBaseColor = nil
     end
 
     if fusionTabContext.resultArea and (not fusionTabContext.tierLossLabel or fusionTabContext.tierLossLabel:isDestroyed()) then
         fusionTabContext.tierLossLabel = fusionTabContext.panel.fusionTierLossValue
             or fusionTabContext.resultArea.fusionTierLossValue
             or fusionTabContext.panel:recursiveGetChildById('fusionTierLossValue')
+        fusionTabContext.tierLossLabelBaseColor = nil
     end
 
     if fusionTabContext.convergenceSection and (not fusionTabContext.convergenceItemsPanel or fusionTabContext.convergenceItemsPanel:isDestroyed()) then
@@ -582,12 +584,14 @@ function forgeController:updateFusionCoreButtons()
     if not successRateLabel or successRateLabel:isDestroyed() then
         successRateLabel = context.panel and context.panel:recursiveGetChildById('fusionSuccessRateValue')
         context.successRateLabel = successRateLabel
+        context.successRateLabelBaseColor = nil
     end
 
     local tierLossLabel = context.tierLossLabel
     if not tierLossLabel or tierLossLabel:isDestroyed() then
         tierLossLabel = context.panel and context.panel:recursiveGetChildById('fusionTierLossValue')
         context.tierLossLabel = tierLossLabel
+        context.tierLossLabelBaseColor = nil
     end
 
     local lastSuccessSelection = context.lastSuccessSelection and true or false
@@ -635,6 +639,28 @@ function forgeController:updateFusionCoreButtons()
         end
     end
 
+    local function applyLabelSelection(label, selected, baseColorField)
+        if not label or label:isDestroyed() then
+            context[baseColorField] = nil
+            return
+        end
+
+        if not label.setColor or not label.getColor then
+            return
+        end
+
+        local baseColor = context[baseColorField]
+        if not baseColor then
+            baseColor = label:getColor()
+            context[baseColorField] = baseColor
+        end
+
+        local targetColor = selected and FUSION_CORE_ACTIVE_COLOR or baseColor
+        if targetColor and label:getColor() ~= targetColor then
+            label:setColor(targetColor)
+        end
+    end
+
     if not successButton and not tierButton then
         local successBaseText = resolveBaseText(context.successRateBaseText, successRateLabel, '50%', false,
             lastSuccessSelection)
@@ -645,6 +671,8 @@ function forgeController:updateFusionCoreButtons()
         context.tierCoreButtonBaseColor = nil
         updateLabel(successRateLabel, successBaseText)
         updateLabel(tierLossLabel, tierBaseText)
+        applyLabelSelection(successRateLabel, false, 'successRateLabelBaseColor')
+        applyLabelSelection(tierLossLabel, false, 'tierLossLabelBaseColor')
         context.lastSuccessSelection = false
         context.lastTierSelection = false
         return
@@ -707,6 +735,8 @@ function forgeController:updateFusionCoreButtons()
         context.tierLossBaseText = tierBaseText
         updateLabel(successRateLabel, successBaseText)
         updateLabel(tierLossLabel, tierBaseText)
+        applyLabelSelection(successRateLabel, false, 'successRateLabelBaseColor')
+        applyLabelSelection(tierLossLabel, false, 'tierLossLabelBaseColor')
         context.lastSuccessSelection = false
         context.lastTierSelection = false
         return
@@ -754,6 +784,8 @@ function forgeController:updateFusionCoreButtons()
 
     updateLabel(successRateLabel, selectedSuccess and successSelectedText or successBaseText)
     updateLabel(tierLossLabel, selectedTier and tierSelectedText or tierBaseText)
+    applyLabelSelection(successRateLabel, selectedSuccess, 'successRateLabelBaseColor')
+    applyLabelSelection(tierLossLabel, selectedTier, 'tierLossLabelBaseColor')
 
     context.lastSuccessSelection = selectedSuccess
     context.lastTierSelection = selectedTier

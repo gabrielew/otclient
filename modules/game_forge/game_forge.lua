@@ -35,6 +35,8 @@ local forgeResourceTypes = {
     cores = ResourceTypes and ResourceTypes.FORGE_CORES or 72
 }
 
+local FUSION_CORE_ACTIVE_COLOR = '#619258'
+
 local function defaultResourceFormatter(value)
     local numericValue = tonumber(value) or 0
     return tostring(numericValue)
@@ -367,12 +369,14 @@ local function resolveFusionTabContext()
         fusionTabContext.successCoreButton = fusionTabContext.panel.fusionImproveButton
             or fusionTabContext.resultArea.fusionImproveButton
             or fusionTabContext.panel:recursiveGetChildById('fusionImproveButton')
+        fusionTabContext.successCoreButtonBaseColor = nil
     end
 
     if fusionTabContext.resultArea and (not fusionTabContext.tierCoreButton or fusionTabContext.tierCoreButton:isDestroyed()) then
         fusionTabContext.tierCoreButton = fusionTabContext.panel.fusionReduceButton
             or fusionTabContext.resultArea.fusionReduceButton
             or fusionTabContext.panel:recursiveGetChildById('fusionReduceButton')
+        fusionTabContext.tierCoreButtonBaseColor = nil
     end
 
     if fusionTabContext.resultArea and (not fusionTabContext.successRateLabel or fusionTabContext.successRateLabel:isDestroyed()) then
@@ -637,6 +641,8 @@ function forgeController:updateFusionCoreButtons()
         local tierBaseText = resolveBaseText(context.tierLossBaseText, tierLossLabel, '100%', false, lastTierSelection)
         context.successRateBaseText = successBaseText
         context.tierLossBaseText = tierBaseText
+        context.successCoreButtonBaseColor = nil
+        context.tierCoreButtonBaseColor = nil
         updateLabel(successRateLabel, successBaseText)
         updateLabel(tierLossLabel, tierBaseText)
         context.lastSuccessSelection = false
@@ -659,7 +665,7 @@ function forgeController:updateFusionCoreButtons()
         coreBalance = player:getResourceBalance(forgeResourceTypes.cores) or 0
     end
 
-    local function setButtonState(button, selected, enabled)
+    local function setButtonState(button, selected, enabled, baseColorField)
         if not button or button:isDestroyed() then
             return
         end
@@ -671,6 +677,19 @@ function forgeController:updateFusionCoreButtons()
         if button.setEnabled then
             button:setEnabled(enabled or selected)
         end
+
+        if button.setBackgroundColor then
+            local baseColor = context[baseColorField]
+            if not baseColor then
+                baseColor = button:getBackgroundColor()
+                context[baseColorField] = baseColor
+            end
+
+            local targetColor = selected and FUSION_CORE_ACTIVE_COLOR or baseColor
+            if targetColor then
+                button:setBackgroundColor(targetColor)
+            end
+        end
     end
 
     local successSelectedText = context.successRateSelectedText or '65%'
@@ -679,8 +698,8 @@ function forgeController:updateFusionCoreButtons()
     if coreBalance <= 0 then
         selections.success = false
         selections.tier = false
-        setButtonState(successButton, false, false)
-        setButtonState(tierButton, false, false)
+        setButtonState(successButton, false, false, 'successCoreButtonBaseColor')
+        setButtonState(tierButton, false, false, 'tierCoreButtonBaseColor')
         local successBaseText = resolveBaseText(context.successRateBaseText, successRateLabel, '50%', false,
             lastSuccessSelection)
         local tierBaseText = resolveBaseText(context.tierLossBaseText, tierLossLabel, '100%', false, lastTierSelection)
@@ -723,8 +742,8 @@ function forgeController:updateFusionCoreButtons()
         end
     end
 
-    setButtonState(successButton, selectedSuccess, successEnabled)
-    setButtonState(tierButton, selectedTier, tierEnabled)
+    setButtonState(successButton, selectedSuccess, successEnabled, 'successCoreButtonBaseColor')
+    setButtonState(tierButton, selectedTier, tierEnabled, 'tierCoreButtonBaseColor')
 
     local successBaseText = resolveBaseText(context.successRateBaseText, successRateLabel, '50%', selectedSuccess,
         lastSuccessSelection)

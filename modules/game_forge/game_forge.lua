@@ -274,8 +274,16 @@ local function resolveFusionTabContext()
             selectionPanel = selectionPanel,
             selectionItemsPanel = nil,
             targetItem = getFirstChildByStyleName(panel, 'fusion-slot-item'),
+            targetTierLabel = panel.fusionTargetTierLabel or panel:recursiveGetChildById('fusionTargetTierLabel'),
+            targetPlaceholder = panel.fusionTargetPlaceholder or panel:recursiveGetChildById('fusionTargetPlaceholder'),
             resultArea = resultArea,
             placeholder = getFirstChildByStyleName(resultArea, 'forge-result-placeholder'),
+            selectedItemIcon = resultArea and (resultArea.fusionSelectedItemIcon
+                or resultArea:recursiveGetChildById('fusionSelectedItemIcon')),
+            selectedItemPlaceholder = resultArea and (resultArea.fusionSelectedItemPlaceholder
+                or resultArea:recursiveGetChildById('fusionSelectedItemPlaceholder')),
+            selectedItemCountLabel = resultArea and (resultArea.fusionSelectedItemCount
+                or resultArea:recursiveGetChildById('fusionSelectedItemCount')),
             convergenceSection = convergenceSection,
             fusionButton = nil,
             fusionButtonItem = nil,
@@ -317,6 +325,29 @@ local function resolveFusionTabContext()
             local labels = getChildrenByStyleName(costContainer, 'forge-full-width-label')
             fusionTabContext.costLabel = labels[1]
         end
+    end
+
+    if fusionTabContext.targetTierLabel and fusionTabContext.targetTierLabel:isDestroyed() then
+        fusionTabContext.targetTierLabel = panel:recursiveGetChildById('fusionTargetTierLabel')
+    end
+
+    if fusionTabContext.targetPlaceholder and fusionTabContext.targetPlaceholder:isDestroyed() then
+        fusionTabContext.targetPlaceholder = panel:recursiveGetChildById('fusionTargetPlaceholder')
+    end
+
+    if fusionTabContext.selectedItemIcon and fusionTabContext.selectedItemIcon:isDestroyed() then
+        fusionTabContext.selectedItemIcon = fusionTabContext.resultArea
+            and fusionTabContext.resultArea:recursiveGetChildById('fusionSelectedItemIcon')
+    end
+
+    if fusionTabContext.selectedItemPlaceholder and fusionTabContext.selectedItemPlaceholder:isDestroyed() then
+        fusionTabContext.selectedItemPlaceholder = fusionTabContext.resultArea
+            and fusionTabContext.resultArea:recursiveGetChildById('fusionSelectedItemPlaceholder')
+    end
+
+    if fusionTabContext.selectedItemCountLabel and fusionTabContext.selectedItemCountLabel:isDestroyed() then
+        fusionTabContext.selectedItemCountLabel = fusionTabContext.resultArea
+            and fusionTabContext.resultArea:recursiveGetChildById('fusionSelectedItemCount')
     end
 
     if fusionTabContext.convergenceSection and (not fusionTabContext.convergenceItemsPanel or fusionTabContext.convergenceItemsPanel:isDestroyed()) then
@@ -730,15 +761,22 @@ function forgeController:configureFusionConversionPanel(selectedWidget)
 
     self.fusionItem = itemPtr
     self.fusionItemCount = itemCount
+    self.fusionItemTier = itemTier
+    self.fusionTargetTier = itemTier + 1
+    self.fusionSelectedItemInfo = selectedWidget.fusionItemInfo
 
     if context.targetItem then
         context.targetItem:setItemId(itemPtr:getId())
-        context.targetItem:setItemCount(itemCount)
-        ItemsDatabase.setTier(context.targetItem, itemPtr)
+        context.targetItem:setItemCount(1)
+        ItemsDatabase.setTier(context.targetItem, itemTier + 1)
     end
 
-    if context.placeholder then
-        context.placeholder:setVisible(false)
+    if context.targetTierLabel then
+        context.targetTierLabel:setText(tr('Upgrade to tier %d', math.max(itemTier + 1, 0)))
+    end
+
+    if context.targetPlaceholder then
+        context.targetPlaceholder:setVisible(false)
     end
 
     if context.convergenceSection then
@@ -755,6 +793,21 @@ function forgeController:configureFusionConversionPanel(selectedWidget)
         context.fusionButtonItemTo:setItemId(itemPtr:getId())
         context.fusionButtonItemTo:setItemCount(1)
         ItemsDatabase.setTier(context.fusionButtonItemTo, itemTier + 1)
+    end
+
+    if context.selectedItemIcon then
+        context.selectedItemIcon:setItemId(itemPtr:getId())
+        context.selectedItemIcon:setItemCount(itemCount)
+        ItemsDatabase.setTier(context.selectedItemIcon, itemTier)
+        context.selectedItemIcon:setVisible(true)
+    end
+
+    if context.selectedItemPlaceholder then
+        context.selectedItemPlaceholder:setVisible(false)
+    end
+
+    if context.selectedItemCountLabel then
+        context.selectedItemCountLabel:setText(string.format('%d / 1', math.max(itemCount, 1)))
     end
 
     if context.convergenceItemsPanel then
@@ -846,11 +899,22 @@ function forgeController:resetFusionConversionPanel()
     self.fusionItem = nil
     self.fusionItemCount = nil
     self.fusionSelectedItem = nil
+    self.fusionSelectedItemInfo = nil
+    self.fusionItemTier = nil
+    self.fusionTargetTier = nil
 
     if context.targetItem then
         context.targetItem:setItemId(0)
         context.targetItem:setItemCount(0)
         ItemsDatabase.setTier(context.targetItem, 0)
+    end
+
+    if context.targetTierLabel then
+        context.targetTierLabel:setText(tr('Select an item to preview the upgrade'))
+    end
+
+    if context.targetPlaceholder then
+        context.targetPlaceholder:setVisible(true)
     end
 
     if context.placeholder then
@@ -859,6 +923,21 @@ function forgeController:resetFusionConversionPanel()
 
     if context.convergenceSection then
         context.convergenceSection:setVisible(false)
+    end
+
+    if context.selectedItemIcon then
+        context.selectedItemIcon:setItemId(0)
+        context.selectedItemIcon:setItemCount(0)
+        ItemsDatabase.setTier(context.selectedItemIcon, 0)
+        context.selectedItemIcon:setVisible(false)
+    end
+
+    if context.selectedItemPlaceholder then
+        context.selectedItemPlaceholder:setVisible(true)
+    end
+
+    if context.selectedItemCountLabel then
+        context.selectedItemCountLabel:setText('0 / 1')
     end
 
     if context.fusionButtonItem then

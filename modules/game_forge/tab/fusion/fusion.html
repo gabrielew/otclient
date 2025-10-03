@@ -2,8 +2,17 @@
 <div id="fusion" anchor="parent" class="fusion-container forge-tab" layout="type: verticalBox; spacing: 5">
   <div id="fusionSelectionArea" class="minipanel forge-selection-area forge-selection-area--primary fusion-selection-area"
     title="Select Item For Fusion">
-    <div id="fusionSelectionGrid" class="slot-grid forge-slot-grid UIScrollArea"
-      layout="type: grid; cell-size: 36 38;flow: true"></div>
+    <div class="fusion-selection-content">
+      <div class="fusion-target-panel">
+        <Label id="fusionTargetTierLabel" class="fusion-target-label" text="Select an item to preview the upgrade"></Label>
+        <UIWidget class="fusion-target-slot">
+          <UIItem id="fusionTargetSlotItem" class="fusion-slot-item"></UIItem>
+          <img id="fusionTargetPlaceholder" class="forge-question-icon" src="/images/ui/icon-questionmark" />
+        </UIWidget>
+      </div>
+      <div id="fusionSelectionGrid" class="slot-grid forge-slot-grid UIScrollArea"
+        layout="type: grid; cell-size: 36 38;flow: true"></div>
+    </div>
     <div class="forge-selection-side" style="margin-left: 0px;">
       <img class="forge-arrow-large" src="/images/arrows/icon-arrow-rightlarge" />
       <img class="forge-arrow-large" src="/images/arrows/icon-arrow-rightlarge" />
@@ -11,22 +20,19 @@
       <input class="forge-convergence-checkbox" type="checkbox" text="Convergence"
         onchange="self:onCheckChangeConvergence(event)" />
     </div>
-    <UIWidget class="fusion-target-slot">
-      <UIItem class="fusion-slot-item"></UIItem>
-    </UIWidget>
   </div>
 
   <div id="test" class="minipanel forge-selection-area forge-selection-area--secondary fusion-result-area"
     focusable="false" title="Further Items Needed For fusion">
     <div class="forge-result-placeholder" focusable="false" *visible="not self.modeFusion">
       <div class="forge-required-block">
-        <div class="forge-card">
-          <UIItem class="forge-item-icon"></UIItem>
-          <img class="forge-question-icon" src="/images/ui/icon-questionmark" />
+        <div id="fusionSelectedItemCard" class="forge-card">
+          <UIItem id="fusionSelectedItemIcon" class="forge-item-icon" show-count="true"></UIItem>
+          <img id="fusionSelectedItemPlaceholder" class="forge-question-icon" src="/images/ui/icon-questionmark" />
         </div>
         <div class="forge-counter">
-          <Label class="forge-full-width-label" text="0 / 1"></Label>
-          
+          <Label id="fusionSelectedItemCount" class="forge-full-width-label" text="0 / 1"></Label>
+
         </div>
       </div>
 

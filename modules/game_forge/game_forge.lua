@@ -273,7 +273,15 @@ local function resolveFusionTabContext()
             panel = panel,
             selectionPanel = selectionPanel,
             selectionItemsPanel = nil,
-            targetItem = getFirstChildByStyleName(panel, 'fusion-slot-item'),
+            targetItem = panel.fusionTargetItemPreview
+                or panel:recursiveGetChildById('fusionTargetItemPreview')
+                or getFirstChildByStyleName(panel, 'fusion-slot-item'),
+            selectedItemIcon = panel.fusionSelectedItemIcon
+                or panel:recursiveGetChildById('fusionSelectedItemIcon'),
+            selectedItemQuestion = panel.fusionSelectedItemQuestion
+                or panel:recursiveGetChildById('fusionSelectedItemQuestion'),
+            selectedItemCounter = panel.fusionSelectedItemCounter
+                or panel:recursiveGetChildById('fusionSelectedItemCounter'),
             resultArea = resultArea,
             placeholder = getFirstChildByStyleName(resultArea, 'forge-result-placeholder'),
             convergenceSection = convergenceSection,
@@ -299,6 +307,37 @@ local function resolveFusionTabContext()
             selectionGrid = selectionGrids[1]
         end
         fusionTabContext.selectionItemsPanel = resolveScrollContents(selectionGrid)
+    end
+
+    if fusionTabContext.targetItem and fusionTabContext.targetItem:isDestroyed() then
+        fusionTabContext.targetItem = nil
+    end
+
+    if not fusionTabContext.targetItem then
+        fusionTabContext.targetItem = panel.fusionTargetItemPreview
+            or panel:recursiveGetChildById('fusionTargetItemPreview')
+            or getFirstChildByStyleName(panel, 'fusion-slot-item')
+    end
+
+    if not fusionTabContext.selectedItemIcon or fusionTabContext.selectedItemIcon:isDestroyed() then
+        fusionTabContext.selectedItemIcon = panel.fusionSelectedItemIcon
+            or panel:recursiveGetChildById('fusionSelectedItemIcon')
+    end
+
+    if fusionTabContext.selectedItemIcon then
+        fusionTabContext.selectedItemIcon:setSize('30 30')
+        fusionTabContext.selectedItemIcon:centerIn('parent')
+        fusionTabContext.selectedItemIcon:setShowCount(true)
+    end
+
+    if not fusionTabContext.selectedItemQuestion or fusionTabContext.selectedItemQuestion:isDestroyed() then
+        fusionTabContext.selectedItemQuestion = panel.fusionSelectedItemQuestion
+            or panel:recursiveGetChildById('fusionSelectedItemQuestion')
+    end
+
+    if not fusionTabContext.selectedItemCounter or fusionTabContext.selectedItemCounter:isDestroyed() then
+        fusionTabContext.selectedItemCounter = panel.fusionSelectedItemCounter
+            or panel:recursiveGetChildById('fusionSelectedItemCounter')
     end
 
     if fusionTabContext.resultArea and (not fusionTabContext.fusionButton or fusionTabContext.fusionButton:isDestroyed()) then
@@ -732,17 +771,28 @@ function forgeController:configureFusionConversionPanel(selectedWidget)
     self.fusionItemCount = itemCount
 
     if context.targetItem then
-        context.targetItem:setItemId(itemPtr:getId())
-        context.targetItem:setItemCount(itemCount)
-        ItemsDatabase.setTier(context.targetItem, itemPtr)
+        local targetPreview = Item.create(itemPtr:getId(), 1)
+        targetPreview:setTier(itemTier + 1)
+        context.targetItem:setItem(targetPreview)
+        context.targetItem:setItemCount(1)
+        ItemsDatabase.setTier(context.targetItem, targetPreview)
     end
 
-    if context.placeholder then
-        context.placeholder:setVisible(false)
+    if context.selectedItemIcon then
+        local selectedPreview = Item.create(itemPtr:getId(), itemCount)
+        selectedPreview:setTier(itemTier)
+        context.selectedItemIcon:setItem(selectedPreview)
+        context.selectedItemIcon:setItemCount(itemCount)
+        ItemsDatabase.setTier(context.selectedItemIcon, selectedPreview)
     end
 
-    if context.convergenceSection then
-        context.convergenceSection:setVisible(true)
+    if context.selectedItemQuestion then
+        context.selectedItemQuestion:setVisible(false)
+    end
+
+    if context.selectedItemCounter then
+        local ownedCount = math.max(itemCount, 0)
+        context.selectedItemCounter:setText(string.format('%d / 1', ownedCount))
     end
 
     if context.fusionButtonItem then
@@ -796,6 +846,7 @@ function forgeController:configureFusionConversionPanel(selectedWidget)
         end
     end
 
+    local hasConvergenceOptions = false
     local convergenceData = self.convergenceFusion or {}
     if context.convergenceItemsPanel then
         for _, option in ipairs(convergenceData) do
@@ -823,11 +874,16 @@ function forgeController:configureFusionConversionPanel(selectedWidget)
 
                             widget.fusionItemInfo = fusionInfo
                             fusionConvergenceRadioGroup:addWidget(widget)
+                            hasConvergenceOptions = true
                         end
                     end
                 end
             end
         end
+    end
+
+    if context.convergenceSection then
+        context.convergenceSection:setVisible(self.modeFusion and hasConvergenceOptions)
     end
 
     local firstWidget = fusionConvergenceRadioGroup:getFirstWidget()
@@ -851,6 +907,20 @@ function forgeController:resetFusionConversionPanel()
         context.targetItem:setItemId(0)
         context.targetItem:setItemCount(0)
         ItemsDatabase.setTier(context.targetItem, 0)
+    end
+
+    if context.selectedItemIcon then
+        context.selectedItemIcon:setItemId(0)
+        context.selectedItemIcon:setItemCount(0)
+        ItemsDatabase.setTier(context.selectedItemIcon, 0)
+    end
+
+    if context.selectedItemQuestion then
+        context.selectedItemQuestion:setVisible(true)
+    end
+
+    if context.selectedItemCounter then
+        context.selectedItemCounter:setText('0 / 1')
     end
 
     if context.placeholder then
@@ -1016,9 +1086,4 @@ function forgeController:updateFusionItems(fusionData)
 
     processEntries(data or {})
 
-    local firstWidget = fusionSelectionRadioGroup:getFirstWidget()
-    if firstWidget then
-        fusionSelectionRadioGroup:selectWidget(firstWidget, true)
-        onFusionSelectionChange(fusionSelectionRadioGroup, firstWidget)
-    end
 end

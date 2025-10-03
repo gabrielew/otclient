@@ -1859,6 +1859,46 @@ void Game::openContainerQuickLoot(const uint8_t action, const uint8_t category, 
     m_protocolGame->openContainerQuickLoot(action, category, pos, itemId, stackpos, useMainAsFallback);
 }
 
+void Game::sendForgeEnter()
+{
+    if (!canPerformGameAction())
+        return;
+
+    m_protocolGame->sendForgeEnter();
+}
+
+void Game::sendForgeFusion(const bool convergence, const uint16_t itemId, const uint8_t tier, const uint16_t donorItemId, const bool improveSuccess, const bool protectTier)
+{
+    if (!canPerformGameAction())
+        return;
+
+    m_protocolGame->sendForgeFusion(convergence, itemId, tier, donorItemId, improveSuccess, protectTier);
+}
+
+void Game::sendForgeTransfer(const bool convergence, const uint16_t itemId, const uint8_t tier, const uint16_t donorItemId)
+{
+    if (!canPerformGameAction())
+        return;
+
+    m_protocolGame->sendForgeTransfer(convergence, itemId, tier, donorItemId);
+}
+
+void Game::sendForgeConverter(const uint8_t action)
+{
+    if (!canPerformGameAction())
+        return;
+
+    m_protocolGame->sendForgeConverter(action);
+}
+
+void Game::requestForgeHistory()
+{
+    if (!canPerformGameAction())
+        return;
+
+    m_protocolGame->sendForgeBrowseHistory();
+}
+
 void Game::sendGmTeleport(const Position& pos)
 {
     if (!canPerformGameAction())

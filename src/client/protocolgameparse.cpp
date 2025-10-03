@@ -35,6 +35,8 @@
 #include "tile.h"
 #include <ctime>
 #include <framework/core/eventdispatcher.h>
+#include <map>
+#include <tuple>
 
 void ProtocolGame::parseMessage(const InputMessagePtr& msg)
 {
@@ -277,8 +279,14 @@ void ProtocolGame::parseMessage(const InputMessagePtr& msg)
                         parseTrappers(msg);
                     }
                     break;
+                case Proto::GameServerBrowseForgeHistory:
+                    parseForgeHistory(msg);
+                    break;
                 case Proto::GameServerCloseForgeWindow:
                     parseCloseForgeWindow(msg);
+                    break;
+                case Proto::GameServerForgeResult:
+                    parseForgeResult(msg);
                     break;
                 case Proto::GameServerCreatureData:
                     parseCreatureData(msg);
@@ -1845,62 +1853,114 @@ void ProtocolGame::parseDistanceMissile(const InputMessagePtr& msg)
 void ProtocolGame::parseItemClasses(const InputMessagePtr& msg)
 {
     const uint8_t classSize = msg->getU8();
-    for (auto i = 0; i < classSize; ++i) {
-        msg->getU8(); // class id
+    std::vector<std::tuple<uint8_t, std::vector<uint64_t>>> classPrices;
+    classPrices.reserve(classSize);
 
-        // tiers
+    for (auto i = 0; i < classSize; ++i) {
+        const uint8_t classId = msg->getU8();
+
         const uint8_t tiersSize = msg->getU8();
+        std::vector<uint64_t> tierPrices;
+        tierPrices.reserve(tiersSize + 1);
+
         for (auto j = 0; j < tiersSize; ++j) {
-            msg->getU8(); // tier id
-            msg->getU64(); // upgrade cost
+            const uint8_t tierId = msg->getU8();
+            const uint64_t upgradeCost = msg->getU64();
+
+            if (tierId >= tierPrices.size()) {
+                tierPrices.resize(tierId + 1, 0);
+            }
+
+            tierPrices[tierId] = upgradeCost;
         }
+
+        if (tierPrices.empty()) {
+            tierPrices.emplace_back(0);
+        }
+
+        classPrices.emplace_back(classId, tierPrices);
     }
 
     if (g_game.getFeature(Otc::GameDynamicForgeVariables)) {
+        std::vector<uint8_t> transferMap;
         const uint8_t grades = msg->getU8();
+        transferMap.reserve(grades + 1);
+
         for (auto i = 0; i < grades; ++i) {
-            msg->getU8(); // Tier
-            msg->getU8(); // Exalted cores
+            const uint8_t tier = msg->getU8();
+            const uint8_t exaltedCores = msg->getU8();
+
+            if (tier >= transferMap.size()) {
+                transferMap.resize(tier + 1, 0);
+            }
+
+            transferMap[tier] = exaltedCores;
         }
 
+        std::vector<uint64_t> convergenceFusionPrices;
+        std::vector<uint64_t> convergenceTransferPrices;
+
         if (g_game.getFeature(Otc::GameForgeConvergence)) {
-            // Convergence fusion prices per tier
-            const uint8_t totalConvergenceFusion = msg->getU8(); // total size count
+            const uint8_t totalConvergenceFusion = msg->getU8();
             for (auto i = 0; i < totalConvergenceFusion; ++i) {
-                msg->getU8(); // tier id
-                msg->getU64(); // upgrade cost
+                const uint8_t tier = msg->getU8();
+                const uint64_t upgradeCost = msg->getU64();
+
+                if (tier >= convergenceFusionPrices.size()) {
+                    convergenceFusionPrices.resize(tier + 1, 0);
+                }
+
+                convergenceFusionPrices[tier] = upgradeCost;
             }
 
-            // Convergence transfer prices per tier
-            const uint8_t totalConvergenceTransfer = msg->getU8(); // total size count
+            const uint8_t totalConvergenceTransfer = msg->getU8();
             for (auto i = 0; i < totalConvergenceTransfer; ++i) {
-                msg->getU8(); // tier id
-                msg->getU64(); // upgrade cost
+                const uint8_t tier = msg->getU8();
+                const uint64_t upgradeCost = msg->getU64();
+
+                if (tier >= convergenceTransferPrices.size()) {
+                    convergenceTransferPrices.resize(tier + 1, 0);
+                }
+
+                convergenceTransferPrices[tier] = upgradeCost;
             }
         }
 
-        msg->getU8(); // Dust Percent
-        msg->getU8(); // Dust To Sleaver
-        msg->getU8(); // Sliver To Core
-        msg->getU8(); // Dust Percent Upgrade
+        const uint8_t baseMultiplier = msg->getU8();
+        const uint8_t slivers = msg->getU8();
+        const uint8_t totalSlivers = msg->getU8();
+        const uint8_t dustCost = msg->getU8();
+
+        uint16_t maxPlayerDust = 0;
+        uint16_t maxDustCap = 0;
+
         if (g_game.getClientVersion() >= 1316) {
-            msg->getU16(); // Max Dust
-            msg->getU16(); // Max Dust Cap
+            maxPlayerDust = msg->getU16();
+            maxDustCap = msg->getU16();
         } else {
-            msg->getU8(); // Max Dust
-            msg->getU8(); // Max Dust Cap
+            maxPlayerDust = msg->getU8();
+            maxDustCap = msg->getU8();
         }
-        msg->getU8(); // Dust Normal Fusion
+
+        const uint8_t dustFusion = msg->getU8();
+        uint8_t convergenceDustFusion = 0;
         if (g_game.getFeature(Otc::GameForgeConvergence)) {
-            msg->getU8(); // Dust Convergence Fusion
+            convergenceDustFusion = msg->getU8();
         }
-        msg->getU8(); // Dust Normal Transfer
+
+        const uint8_t dustTransfer = msg->getU8();
+        uint8_t convergenceDustTransfer = 0;
         if (g_game.getFeature(Otc::GameForgeConvergence)) {
-            msg->getU8(); // Dust Convergence Transfer
+            convergenceDustTransfer = msg->getU8();
         }
-        msg->getU8(); // Chance Base
-        msg->getU8(); // Chance Improved
-        msg->getU8(); // Reduce Tier Loss
+
+        const uint8_t success = msg->getU8();
+        const uint8_t improveRateSuccess = msg->getU8();
+        const uint8_t tierLoss = msg->getU8();
+
+        g_lua.callGlobalField("g_game", "onForgeInit", classPrices, transferMap, convergenceFusionPrices, convergenceTransferPrices,
+                              baseMultiplier, slivers, totalSlivers, dustCost, maxPlayerDust, maxDustCap, dustFusion,
+                              convergenceDustFusion, dustTransfer, convergenceDustTransfer, success, improveRateSuccess, tierLoss);
     } else {
         uint8_t totalForgeValues = 11;
         if (g_game.getClientVersion() >= 1316) {
@@ -1908,11 +1968,11 @@ void ProtocolGame::parseItemClasses(const InputMessagePtr& msg)
         }
 
         if (g_game.getFeature(Otc::GameForgeConvergence)) {
-            totalForgeValues = totalForgeValues + 2;
+            totalForgeValues += 2;
         }
 
         for (auto i = 0; i < totalForgeValues; ++i) {
-            msg->getU8(); // Forge values
+            msg->getU8();
         }
     }
 }
@@ -1952,85 +2012,158 @@ void ProtocolGame::parseTrappers(const InputMessagePtr& msg)
 
 void ProtocolGame::parseOpenForge(const InputMessagePtr& msg)
 {
-    ForgeOpenData data;
-
+    std::vector<std::tuple<uint16_t, uint8_t, uint16_t>> fusionItems;
     const uint16_t fusionCount = msg->getU16();
-    data.fusionItems.reserve(fusionCount);
+    fusionItems.reserve(fusionCount);
+
     for (auto i = 0; i < fusionCount; ++i) {
-        ForgeItemInfo item;
-        msg->getU8(); // unknown count of friend items
-        item.id = msg->getU16();
-        item.tier = msg->getU8();
-        item.count = msg->getU16();
-        data.fusionItems.emplace_back(item);
+        msg->getU8(); // skip friend count
+        const uint16_t itemId = msg->getU16();
+        const uint8_t tier = msg->getU8();
+        const uint16_t count = msg->getU16();
+        fusionItems.emplace_back(itemId, tier, count);
     }
 
+    std::vector<std::tuple<uint16_t, uint8_t, uint16_t>> convergenceFusionItems;
     const uint16_t convergenceFusionCount = msg->getU16();
-    data.convergenceFusion.reserve(convergenceFusionCount);
+    convergenceFusionItems.reserve(convergenceFusionCount);
+
     for (auto i = 0; i < convergenceFusionCount; ++i) {
         const uint8_t items = msg->getU8();
-        std::vector<ForgeItemInfo> slotItems;
-        slotItems.reserve(items);
         for (auto j = 0; j < items; ++j) {
-            ForgeItemInfo item;
-            item.id = msg->getU16();
-            item.tier = msg->getU8();
-            item.count = msg->getU16();
-            slotItems.emplace_back(item);
+            const uint16_t itemId = msg->getU16();
+            const uint8_t tier = msg->getU8();
+            const uint16_t count = msg->getU16();
+            convergenceFusionItems.emplace_back(itemId, tier, count);
         }
-        data.convergenceFusion.emplace_back(slotItems);
     }
 
+    std::vector<std::tuple<uint16_t, uint8_t, uint16_t, std::map<uint16_t, uint16_t>>> transferData;
     const uint8_t transferTotalCount = msg->getU8();
-    data.transfers.reserve(transferTotalCount);
+    transferData.reserve(transferTotalCount);
+
     for (auto i = 0; i < transferTotalCount; ++i) {
-        ForgeTransferData transfer;
+        uint16_t baseItemId = 0;
+        uint8_t baseTier = 0;
+        uint16_t baseCount = 0;
+        std::map<uint16_t, uint16_t> subItems;
+
         const uint16_t donorCount = msg->getU16();
-        transfer.donors.reserve(donorCount);
         for (auto j = 0; j < donorCount; ++j) {
-            ForgeItemInfo donor;
-            donor.id = msg->getU16();
-            donor.tier = msg->getU8();
-            donor.count = msg->getU16();
-            transfer.donors.emplace_back(donor);
+            const uint16_t donorId = msg->getU16();
+            const uint8_t donorTier = msg->getU8();
+            const uint16_t donorAmount = msg->getU16();
+
+            if (j == 0) {
+                baseItemId = donorId;
+                baseTier = donorTier;
+                baseCount = donorAmount;
+            }
+
+            subItems[donorId] = donorAmount;
         }
+
         const uint16_t receiverCount = msg->getU16();
-        transfer.receivers.reserve(receiverCount);
         for (auto j = 0; j < receiverCount; ++j) {
-            ForgeItemInfo receiver;
-            receiver.id = msg->getU16();
-            receiver.count = msg->getU16();
-            receiver.tier = 0;
-            transfer.receivers.emplace_back(receiver);
+            const uint16_t receiverId = msg->getU16();
+            const uint16_t receiverAmount = msg->getU16();
+            subItems[receiverId] = receiverAmount;
         }
-        data.transfers.emplace_back(transfer);
+
+        transferData.emplace_back(baseItemId, baseTier, baseCount, subItems);
     }
 
+    std::vector<std::tuple<uint16_t, uint8_t, uint16_t, std::map<uint16_t, uint16_t>>> convergenceTransferData;
     const uint8_t convergenceTransferCount = msg->getU8();
-    data.convergenceTransfers.reserve(convergenceTransferCount);
+    convergenceTransferData.reserve(convergenceTransferCount);
+
     for (auto i = 0; i < convergenceTransferCount; ++i) {
-        ForgeTransferData transfer;
+        uint16_t baseItemId = 0;
+        uint8_t baseTier = 0;
+        uint16_t baseCount = 0;
+        std::map<uint16_t, uint16_t> subItems;
+
         const uint16_t donorCount = msg->getU16();
-        transfer.donors.reserve(donorCount);
         for (auto j = 0; j < donorCount; ++j) {
-            ForgeItemInfo donor;
-            donor.id = msg->getU16();
-            donor.tier = msg->getU8();
-            donor.count = msg->getU16();
-            transfer.donors.emplace_back(donor);
+            const uint16_t donorId = msg->getU16();
+            const uint8_t donorTier = msg->getU8();
+            const uint16_t donorAmount = msg->getU16();
+
+            if (j == 0) {
+                baseItemId = donorId;
+                baseTier = donorTier;
+                baseCount = donorAmount;
+            }
+
+            subItems[donorId] = donorAmount;
         }
+
         const uint16_t receiverCount = msg->getU16();
-        transfer.receivers.reserve(receiverCount);
         for (auto j = 0; j < receiverCount; ++j) {
-            ForgeItemInfo receiver;
-            receiver.id = msg->getU16();
-            receiver.count = msg->getU16();
-            receiver.tier = 0;
-            transfer.receivers.emplace_back(receiver);
+            const uint16_t receiverId = msg->getU16();
+            const uint16_t receiverAmount = msg->getU16();
+            subItems[receiverId] = receiverAmount;
         }
-        data.convergenceTransfers.emplace_back(transfer);
+
+        convergenceTransferData.emplace_back(baseItemId, baseTier, baseCount, subItems);
     }
-    data.dustLevel = msg->getU16();
+
+    const uint16_t dustLevel = msg->getU16();
+
+    g_lua.callGlobalField("g_game", "onForgeData", fusionItems, convergenceFusionItems, transferData, convergenceTransferData, dustLevel);
+}
+
+void ProtocolGame::parseForgeHistory(const InputMessagePtr& msg)
+{
+    const uint8_t historyCount = msg->getU8();
+    std::vector<std::tuple<uint32_t, uint8_t, std::string>> history;
+    history.reserve(historyCount);
+
+    for (auto i = 0; i < historyCount; ++i) {
+        const uint32_t timestamp = msg->getU32();
+        const uint8_t action = msg->getU8();
+        const std::string description = msg->getString();
+        history.emplace_back(timestamp, action, description);
+    }
+
+    g_lua.callGlobalField("g_game", "onForgeHistory", history);
+}
+
+void ProtocolGame::parseForgeResult(const InputMessagePtr& msg)
+{
+    const uint8_t resultCategory = msg->getU8();
+
+    switch (resultCategory) {
+        case 0: { // Fusion
+            const bool convergence = msg->getU8() != 0;
+            const bool success = msg->getU8() != 0;
+            const uint16_t otherItem = msg->getU16();
+            const uint8_t otherTier = msg->getU8();
+            const uint16_t itemId = msg->getU16();
+            const uint8_t tier = msg->getU8();
+            const uint8_t bonusType = msg->getU8();
+            const uint16_t bonusItem = msg->getU16();
+            const uint8_t bonusTier = msg->getU8();
+            const uint16_t bonusCount = msg->getU16();
+
+            g_lua.callGlobalField("g_game", "onForgeFusion", convergence, success, otherItem, otherTier, itemId, tier, bonusType,
+                                  bonusItem, bonusTier, bonusCount);
+            break;
+        }
+        case 1: { // Transfer
+            const bool convergence = msg->getU8() != 0;
+            const bool success = msg->getU8() != 0;
+            const uint16_t otherItem = msg->getU16();
+            const uint8_t otherTier = msg->getU8();
+            const uint16_t itemId = msg->getU16();
+            const uint8_t tier = msg->getU8();
+
+            g_lua.callGlobalField("g_game", "onForgeTransfer", convergence, success, otherItem, otherTier, itemId, tier);
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 void ProtocolGame::setCreatureVocation(const InputMessagePtr& msg, const uint32_t creatureId) const

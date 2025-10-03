@@ -953,6 +953,12 @@ public:
     void requestQuickLootBlackWhiteList(uint8_t filter, uint16_t size, const std::vector<uint16_t>& listedItems);
     void openContainerQuickLoot(uint8_t action, uint8_t category, const Position& pos, uint16_t itemId, uint8_t stackpos, bool useMainAsFallback);
 
+    void sendForgeEnter();
+    void sendForgeFusion(bool convergence, uint16_t itemId, uint8_t tier, uint16_t donorItemId, bool improveSuccess, bool protectTier);
+    void sendForgeTransfer(bool convergence, uint16_t itemId, uint8_t tier, uint16_t donorItemId);
+    void sendForgeConverter(uint8_t action);
+    void requestForgeHistory();
+
     void sendGmTeleport(const Position& pos);
 
     // cyclopedia related

@@ -36,6 +36,7 @@ local forgeResourceTypes = {
 }
 
 local FUSION_CORE_ACTIVE_COLOR = '#619258'
+local FUSION_CORE_DEFAULT_COLOR = '#d33c3c'
 
 local function defaultResourceFormatter(value)
     local numericValue = tonumber(value) or 0
@@ -650,8 +651,24 @@ function forgeController:updateFusionCoreButtons()
         end
 
         local baseColor = context[baseColorField]
+        if type(baseColor) == 'string' then
+            local normalized = baseColor:lower()
+            if normalized == '#ffffff' or normalized == 'white' then
+                baseColor = FUSION_CORE_DEFAULT_COLOR
+                context[baseColorField] = baseColor
+            end
+        end
         if not baseColor then
             baseColor = label:getColor()
+            if type(baseColor) == 'string' then
+                local normalized = baseColor:lower()
+                if normalized == '#ffffff' or normalized == 'white' then
+                    baseColor = nil
+                end
+            end
+            if not baseColor or baseColor == '' then
+                baseColor = FUSION_CORE_DEFAULT_COLOR
+            end
             context[baseColorField] = baseColor
         end
 

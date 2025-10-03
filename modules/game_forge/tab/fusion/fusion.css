@@ -3,6 +3,11 @@
     flex-direction: column;
     gap: 6px;
     width: 165px;
+    height: 100%;
+  }
+
+  .fusion-selection-content > .forge-slot-grid {
+    flex: 1 1 auto;
   }
 
 .fusion-target-panel {

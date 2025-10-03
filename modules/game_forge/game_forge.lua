@@ -302,6 +302,8 @@ local function resolveFusionTabContext()
     if fusionTabContext.selectionPanel and (not fusionTabContext.selectionItemsPanel or fusionTabContext.selectionItemsPanel:isDestroyed()) then
         local selectionGrid = fusionTabContext.selectionPanel.fusionSelectionGrid
             or panel.fusionSelectionGrid
+            or fusionTabContext.selectionPanel:recursiveGetChildById('fusionSelectionGrid')
+            or panel:recursiveGetChildById('fusionSelectionGrid')
         if not selectionGrid then
             local selectionGrids = getChildrenByStyleName(fusionTabContext.selectionPanel, 'forge-slot-grid')
             selectionGrid = selectionGrids[1]
@@ -910,7 +912,7 @@ function forgeController:resetFusionConversionPanel()
     end
 
     if context.targetTierLabel then
-        context.targetTierLabel:setText(tr('Select an item to preview the upgrade'))
+        context.targetTierLabel:setText('')
     end
 
     if context.targetPlaceholder then

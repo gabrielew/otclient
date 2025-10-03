@@ -375,6 +375,18 @@ local function resolveFusionTabContext()
             or fusionTabContext.panel:recursiveGetChildById('fusionReduceButton')
     end
 
+    if fusionTabContext.resultArea and (not fusionTabContext.successRateLabel or fusionTabContext.successRateLabel:isDestroyed()) then
+        fusionTabContext.successRateLabel = fusionTabContext.panel.fusionSuccessRateValue
+            or fusionTabContext.resultArea.fusionSuccessRateValue
+            or fusionTabContext.panel:recursiveGetChildById('fusionSuccessRateValue')
+    end
+
+    if fusionTabContext.resultArea and (not fusionTabContext.tierLossLabel or fusionTabContext.tierLossLabel:isDestroyed()) then
+        fusionTabContext.tierLossLabel = fusionTabContext.panel.fusionTierLossValue
+            or fusionTabContext.resultArea.fusionTierLossValue
+            or fusionTabContext.panel:recursiveGetChildById('fusionTierLossValue')
+    end
+
     if fusionTabContext.convergenceSection and (not fusionTabContext.convergenceItemsPanel or fusionTabContext.convergenceItemsPanel:isDestroyed()) then
         local convergenceGrid = fusionTabContext.convergenceSection.fusionConvergenceGrid
             or (fusionTabContext.resultArea and fusionTabContext.resultArea.fusionConvergenceGrid)
@@ -562,7 +574,73 @@ function forgeController:updateFusionCoreButtons()
         context.tierCoreButton = tierButton
     end
 
+    local successRateLabel = context.successRateLabel
+    if not successRateLabel or successRateLabel:isDestroyed() then
+        successRateLabel = context.panel and context.panel:recursiveGetChildById('fusionSuccessRateValue')
+        context.successRateLabel = successRateLabel
+    end
+
+    local tierLossLabel = context.tierLossLabel
+    if not tierLossLabel or tierLossLabel:isDestroyed() then
+        tierLossLabel = context.panel and context.panel:recursiveGetChildById('fusionTierLossValue')
+        context.tierLossLabel = tierLossLabel
+    end
+
+    local lastSuccessSelection = context.lastSuccessSelection and true or false
+    local lastTierSelection = context.lastTierSelection and true or false
+
+    local function resolveBaseText(currentBase, label, defaultText, isSelected, wasSelected)
+        if not label or label:isDestroyed() then
+            return currentBase or defaultText
+        end
+
+        if not isSelected then
+            if not wasSelected then
+                local labelText = label:getText()
+                if labelText and labelText ~= '' then
+                    currentBase = labelText
+                end
+            end
+
+            if currentBase and currentBase ~= '' then
+                return currentBase
+            end
+
+            return defaultText
+        end
+
+        if currentBase and currentBase ~= '' then
+            return currentBase
+        end
+
+        local labelText = label:getText()
+        if labelText and labelText ~= '' then
+            return labelText
+        end
+
+        return defaultText
+    end
+
+    local function updateLabel(label, text)
+        if not label or label:isDestroyed() then
+            return
+        end
+
+        if label:getText() ~= text then
+            label:setText(text)
+        end
+    end
+
     if not successButton and not tierButton then
+        local successBaseText = resolveBaseText(context.successRateBaseText, successRateLabel, '50%', false,
+            lastSuccessSelection)
+        local tierBaseText = resolveBaseText(context.tierLossBaseText, tierLossLabel, '100%', false, lastTierSelection)
+        context.successRateBaseText = successBaseText
+        context.tierLossBaseText = tierBaseText
+        updateLabel(successRateLabel, successBaseText)
+        updateLabel(tierLossLabel, tierBaseText)
+        context.lastSuccessSelection = false
+        context.lastTierSelection = false
         return
     end
 
@@ -595,11 +673,23 @@ function forgeController:updateFusionCoreButtons()
         end
     end
 
+    local successSelectedText = context.successRateSelectedText or '65%'
+    local tierSelectedText = context.tierLossSelectedText or '50%'
+
     if coreBalance <= 0 then
         selections.success = false
         selections.tier = false
         setButtonState(successButton, false, false)
         setButtonState(tierButton, false, false)
+        local successBaseText = resolveBaseText(context.successRateBaseText, successRateLabel, '50%', false,
+            lastSuccessSelection)
+        local tierBaseText = resolveBaseText(context.tierLossBaseText, tierLossLabel, '100%', false, lastTierSelection)
+        context.successRateBaseText = successBaseText
+        context.tierLossBaseText = tierBaseText
+        updateLabel(successRateLabel, successBaseText)
+        updateLabel(tierLossLabel, tierBaseText)
+        context.lastSuccessSelection = false
+        context.lastTierSelection = false
         return
     end
 
@@ -635,6 +725,19 @@ function forgeController:updateFusionCoreButtons()
 
     setButtonState(successButton, selectedSuccess, successEnabled)
     setButtonState(tierButton, selectedTier, tierEnabled)
+
+    local successBaseText = resolveBaseText(context.successRateBaseText, successRateLabel, '50%', selectedSuccess,
+        lastSuccessSelection)
+    local tierBaseText = resolveBaseText(context.tierLossBaseText, tierLossLabel, '100%', selectedTier, lastTierSelection)
+
+    context.successRateBaseText = successBaseText
+    context.tierLossBaseText = tierBaseText
+
+    updateLabel(successRateLabel, selectedSuccess and successSelectedText or successBaseText)
+    updateLabel(tierLossLabel, selectedTier and tierSelectedText or tierBaseText)
+
+    context.lastSuccessSelection = selectedSuccess
+    context.lastTierSelection = selectedTier
 end
 
 function forgeController:onToggleFusionCore(coreType)
@@ -1155,6 +1258,24 @@ function forgeController:resetFusionConversionPanel()
         context.costLabel:setText('???')
         context.costLabel:setColor('$var-text-cip-color')
     end
+
+    local successSelectedText = context.successRateSelectedText or '65%'
+    local tierSelectedText = context.tierLossSelectedText or '50%'
+
+    if context.successRateLabel and not context.successRateLabel:isDestroyed() then
+        context.lastSuccessSelection = context.successRateLabel:getText() == successSelectedText
+    else
+        context.lastSuccessSelection = false
+    end
+
+    if context.tierLossLabel and not context.tierLossLabel:isDestroyed() then
+        context.lastTierSelection = context.tierLossLabel:getText() == tierSelectedText
+    else
+        context.lastTierSelection = false
+    end
+
+    context.successRateBaseText = nil
+    context.tierLossBaseText = nil
 
     if type(self.fusionCoreSelections) ~= 'table' then
         self.fusionCoreSelections = {

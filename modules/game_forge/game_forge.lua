@@ -30,6 +30,72 @@ ForgeSystem.transferData = {}
 ForgeSystem.transferConvergenceData = {}
 ForgeSystem.maxPlayerDust = 100
 
+local function convertForgeItems(items)
+        local result = {}
+
+        if type(items) ~= 'table' then
+                return result
+        end
+
+        for _, item in ipairs(items) do
+                if type(item) == 'table' then
+                        table.insert(result, { item.id or 0, item.tier or 0, item.count or 0 })
+                end
+        end
+
+        return result
+end
+
+local function convertConvergenceItems(items)
+        local result = {}
+
+        if type(items) ~= 'table' then
+                return result
+        end
+
+        for _, option in ipairs(items) do
+                if type(option) == 'table' then
+                        for _, item in ipairs(option) do
+                                if type(item) == 'table' then
+                                        table.insert(result, { item.id or 0, item.tier or 0, item.count or 0 })
+                                end
+                        end
+                end
+        end
+
+        return result
+end
+
+local function convertTransferItems(items)
+        local result = {}
+
+        if type(items) ~= 'table' then
+                return result
+        end
+
+        for _, transfer in ipairs(items) do
+                if type(transfer) == 'table' then
+                        local donors = transfer.donors or {}
+                        local receivers = transfer.receivers or {}
+
+                        for _, donor in ipairs(donors) do
+                                if type(donor) == 'table' then
+                                        local subItems = {}
+                                        for _, receiver in ipairs(receivers) do
+                                                if type(receiver) == 'table' then
+                                                        subItems[receiver.id or 0] = receiver.count or 0
+                                                end
+                                        end
+
+                                        table.insert(result, { donor.id or 0, donor.tier or 0, donor.count or 0, subItems })
+                                end
+                        end
+                end
+        end
+
+        return result
+end
+
 function ForgeSystem.init(classPrice, transferMap, fusionPrices, transferPrices, baseMultipier, slivers, totalSlivers, dustCost, dustPrice, maxDust, dustFusion, convergenceDustFusion, dustTransfer, convergenceDustTransfer, success, improveRateSuccess, tierLoss)
 	ForgeSystem.classPrice = classPrice
 	ForgeSystem.transferMap = transferMap
@@ -117,11 +183,25 @@ function ForgeSystem.init(classPrice, transferMap, fusionPrices, transferPrices,
 end
 
 function ForgeSystem.onForgeData(fusionData, fusionConvergenceData, transferData, transferConvergenceData, maxPlayerDust)
-	ForgeSystem.fusionData = fusionData
-	ForgeSystem.fusionConvergenceData = fusionConvergenceData
-	ForgeSystem.transferData = transferData
-	ForgeSystem.transferConvergenceData = transferConvergenceData
-	ForgeSystem.maxPlayerDust = maxPlayerDust
+        if fusionData and fusionData.fusionItems then
+                local openData = fusionData
+                local convertedFusion = convertForgeItems(openData.fusionItems)
+                local convertedConvergence = convertConvergenceItems(openData.convergenceFusion)
+                local convertedTransfers = convertTransferItems(openData.transfers)
+                local convertedTransferConvergence = convertTransferItems(openData.convergenceTransfers)
+                local dustLevel = openData.dustLevel
+                if dustLevel == nil then
+                        dustLevel = maxPlayerDust or ForgeSystem.maxPlayerDust
+                end
+
+                return ForgeSystem.onForgeData(convertedFusion, convertedConvergence, convertedTransfers, convertedTransferConvergence, dustLevel)
+        end
+
+        ForgeSystem.fusionData = fusionData
+        ForgeSystem.fusionConvergenceData = fusionConvergenceData
+        ForgeSystem.transferData = transferData
+        ForgeSystem.transferConvergenceData = transferConvergenceData
+        ForgeSystem.maxPlayerDust = maxPlayerDust
 	ForgeSystem.sideButton = false
 
 	local player = g_game.getLocalPlayer()
@@ -1120,4 +1200,26 @@ function ForgeSystem.onForgeHistory(history)
         widget.details:setText(info[3])
         widget.details:setColor("$var-text-cip-color")
     end
+end
+
+function ForgeSystem.onOpenForge(openData)
+        ForgeSystem.onForgeData(openData)
+end
+
+function ForgeSystem.onBrowseForgeHistory(_, _, _, historyList)
+        local history = {}
+
+        if type(historyList) == 'table' then
+                for _, info in ipairs(historyList) do
+                        if type(info) == 'table' then
+                                table.insert(history, { info.createdAt or 0, info.actionType or 0, info.description or '', info.bonus or 0 })
+                        end
+                end
+        end
+
+        ForgeSystem.onForgeHistory(history)
+end
+
+function ForgeSystem.onCloseForgeCloseWindows()
+        offlineForge()
 end

@@ -1775,6 +1775,36 @@ void Game::forgeRequest()
     m_protocolGame->sendForgeRequest();
 }
 
+void Game::sendForgeFusion(bool isConvergence, uint16_t itemId, uint8_t itemTier, uint16_t materialItemId, bool useSuccessBoost, bool useTierLossProtection)
+{
+    if (!canPerformGameAction())
+        return;
+
+    m_protocolGame->sendForgeFusion(isConvergence, itemId, itemTier, materialItemId, useSuccessBoost, useTierLossProtection);
+}
+
+void Game::sendForgeTransfer(bool isConvergence, uint16_t itemId, uint8_t itemTier, uint16_t donorItemId)
+{
+    if (!canPerformGameAction())
+        return;
+
+    m_protocolGame->sendForgeTransfer(isConvergence, itemId, itemTier, donorItemId);
+}
+
+void Game::sendForgeConverter(uint8_t actionType)
+{
+    if (!canPerformGameAction())
+        return;
+
+    const auto action = static_cast<Otc::ForgeAction_t>(actionType);
+    if (action != Otc::ForgeAction_t::DUST2SLIVER && action != Otc::ForgeAction_t::SLIVER2CORE && action != Otc::ForgeAction_t::INCREASELIMIT) {
+        g_logger.traceWarning("Game::sendForgeConverter: invalid action {}", static_cast<int>(actionType));
+        return;
+    }
+
+    m_protocolGame->sendForgeConverter(action);
+}
+
 void Game::sendForgeBrowseHistoryRequest(uint16_t page)
 {
     if (!canPerformGameAction())

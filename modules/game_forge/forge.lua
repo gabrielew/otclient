@@ -37,6 +37,9 @@ function init()
     onForgeFusion = ForgeSystem.onForgeFusion,
     onForgeTransfer = ForgeSystem.onForgeTransfer,
     onForgeHistory = ForgeSystem.onForgeHistory,
+    onOpenForge = ForgeSystem.onOpenForge,
+    onBrowseForgeHistory = ForgeSystem.onBrowseForgeHistory,
+    onCloseForgeCloseWindows = ForgeSystem.onCloseForgeCloseWindows,
     onResourceBalance = onResourceBalance,
     onGameEnd = offlineForge,
   })
@@ -58,6 +61,9 @@ function terminate()
     onForgeFusion = ForgeSystem.onForgeFusion,
     onForgeTransfer = ForgeSystem.onForgeTransfer,
     onForgeHistory = ForgeSystem.onForgeHistory,
+    onOpenForge = ForgeSystem.onOpenForge,
+    onBrowseForgeHistory = ForgeSystem.onBrowseForgeHistory,
+    onCloseForgeCloseWindows = ForgeSystem.onCloseForgeCloseWindows,
     onResourceBalance = onResourceBalance,
     onGameEnd = offlineForge,
   })
@@ -158,7 +164,11 @@ function loadMenu(menuId)
   elseif menuId == 'historyMenu' then
     historyMenu:show(true)
     historyMenuButton:setChecked(true)
-    g_game.requestForgeHistory()
+    if g_game.sendForgeBrowseHistoryRequest then
+      g_game.sendForgeBrowseHistoryRequest(1)
+    else
+      g_game.requestForgeHistory()
+    end
   end
 
   local player = g_game.getLocalPlayer()

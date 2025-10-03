@@ -1374,7 +1374,42 @@ void ProtocolGame::sendPreyRequest()
 
 void ProtocolGame::sendForgeRequest(Otc::ForgeAction_t actionType) {
     const auto& msg = std::make_shared<OutputMessage>();
-    msg->addU8(Proto::ClientPreyRequest);
+    msg->addU8(Proto::ClientForgeEnter);
+    msg->addU8(static_cast<uint8_t>(actionType));
+    send(msg);
+}
+
+void ProtocolGame::sendForgeFusion(bool isConvergence, uint16_t itemId, uint8_t itemTier, uint16_t materialItemId, bool useSuccessBoost, bool useTierLossProtection)
+{
+    const auto& msg = std::make_shared<OutputMessage>();
+    msg->addU8(Proto::ClientForgeEnter);
+    msg->addU8(static_cast<uint8_t>(Otc::ForgeAction_t::FUSION));
+    msg->addU8(isConvergence);
+    msg->addU16(itemId);
+    msg->addU8(itemTier);
+    msg->addU16(materialItemId);
+    msg->addU8(useSuccessBoost);
+    msg->addU8(useTierLossProtection);
+    send(msg);
+}
+
+void ProtocolGame::sendForgeTransfer(bool isConvergence, uint16_t itemId, uint8_t itemTier, uint16_t donorItemId)
+{
+    const auto& msg = std::make_shared<OutputMessage>();
+    msg->addU8(Proto::ClientForgeEnter);
+    msg->addU8(static_cast<uint8_t>(Otc::ForgeAction_t::TRANSFER));
+    msg->addU8(isConvergence);
+    msg->addU16(itemId);
+    msg->addU8(itemTier);
+    msg->addU16(donorItemId);
+    send(msg);
+}
+
+void ProtocolGame::sendForgeConverter(Otc::ForgeAction_t actionType)
+{
+    const auto& msg = std::make_shared<OutputMessage>();
+    msg->addU8(Proto::ClientForgeEnter);
+    msg->addU8(static_cast<uint8_t>(actionType));
     send(msg);
 }
 

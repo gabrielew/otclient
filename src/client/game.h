@@ -937,6 +937,9 @@ public:
 
     // forge related
     void forgeRequest();
+    void sendForgeFusion(bool isConvergence, uint16_t itemId, uint8_t itemTier, uint16_t materialItemId, bool useSuccessBoost, bool useTierLossProtection);
+    void sendForgeTransfer(bool isConvergence, uint16_t itemId, uint8_t itemTier, uint16_t donorItemId);
+    void sendForgeConverter(uint8_t actionType);
     void sendForgeBrowseHistoryRequest(uint16_t page);
 
     // imbuing related

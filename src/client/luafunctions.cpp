@@ -360,6 +360,9 @@ void Client::registerLuaFunctions()
     g_lua.bindSingletonFunction("g_game", "preyAction", &Game::preyAction, &g_game);
     g_lua.bindSingletonFunction("g_game", "preyRequest", &Game::preyRequest, &g_game);
     g_lua.bindSingletonFunction("g_game", "forgeRequest", &Game::forgeRequest, &g_game);
+    g_lua.bindSingletonFunction("g_game", "sendForgeFusion", &Game::sendForgeFusion, &g_game);
+    g_lua.bindSingletonFunction("g_game", "sendForgeTransfer", &Game::sendForgeTransfer, &g_game);
+    g_lua.bindSingletonFunction("g_game", "sendForgeConverter", &Game::sendForgeConverter, &g_game);
     g_lua.bindSingletonFunction("g_game", "sendForgeBrowseHistoryRequest", &Game::sendForgeBrowseHistoryRequest, &g_game);
     g_lua.bindSingletonFunction("g_game", "applyImbuement", &Game::applyImbuement, &g_game);
     g_lua.bindSingletonFunction("g_game", "clearImbuement", &Game::clearImbuement, &g_game);

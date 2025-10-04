@@ -28,6 +28,7 @@ forgeController.fusionCoreSelections = {
     success = false,
     tier = false
 }
+forgeController.pendingDustLimitIncrease = nil
 
 local forgeButton
 
@@ -163,9 +164,14 @@ local function formatDustAmount(value)
     local maxDust = 100
 
     if forgeController then
-        maxDust = tonumber(forgeController.maxDustLevel)
-            or tonumber(forgeController.currentDustLevel)
-            or maxDust
+        local controllerLimit = forgeController.getDustLimit and forgeController:getDustLimit()
+        if controllerLimit and controllerLimit > 0 then
+            maxDust = controllerLimit
+        else
+            maxDust = tonumber(forgeController.maxDustLevel)
+                or tonumber(forgeController.currentDustLevel)
+                or maxDust
+        end
     end
 
     if not maxDust or maxDust <= 0 then
@@ -669,6 +675,37 @@ function forgeController:updateResourceBalances(resourceType)
     end
 end
 
+function forgeController:getDustLimit()
+    local current = tonumber(self.currentDustLevel) or 0
+    if current > 0 then
+        return current
+    end
+
+    local maximum = tonumber(self.maxDustLevel) or 0
+    if maximum > 0 then
+        return maximum
+    end
+
+    return 0
+end
+
+function forgeController:setDustLimit(newLimit)
+    newLimit = tonumber(newLimit) or 0
+    local dustCap = tonumber(self.maxDustCap) or 0
+    if dustCap > 0 then
+        newLimit = math.min(newLimit, dustCap)
+    end
+
+    self.currentDustLevel = newLimit
+    local maxDustLevel = tonumber(self.maxDustLevel) or 0
+    if newLimit > maxDustLevel then
+        self.maxDustLevel = newLimit
+    end
+
+    self:updateDustLevelLabel()
+    self:updateResourceBalances(forgeResourceTypes.dust)
+end
+
 function forgeController:updateDustLevelLabel(panel)
     panel = panel or (ui.panels and ui.panels['conversion'])
     if not panel or panel:isDestroyed() then
@@ -680,7 +717,7 @@ function forgeController:updateDustLevelLabel(panel)
         return
     end
 
-    local dustLevelValue = tonumber(self.currentDustLevel) or tonumber(self.maxDustLevel) or 0
+    local dustLevelValue = self:getDustLimit() or 0
     local displayedDustLevel = math.max(dustLevelValue - 75, 0)
     dustLevelLabel:setText(tostring(displayedDustLevel))
 
@@ -690,8 +727,33 @@ function forgeController:updateDustLevelLabel(panel)
     end
     local forgeIncreaseDustNextLevelLabel = panel:recursiveGetChildById('forgeIncreaseDustNextLevel')
     if forgeIncreaseDustNextLevelLabel and not forgeIncreaseDustNextLevelLabel:isDestroyed() then
-        forgeIncreaseDustNextLevelLabel:setText(("to %d"):format(dustLevelValue + 1))
+        local nextLevelValue = dustLevelValue + 1
+        local dustCap = tonumber(self.maxDustCap) or 0
+        if dustCap > 0 then
+            nextLevelValue = math.min(nextLevelValue, dustCap)
+        end
+        forgeIncreaseDustNextLevelLabel:setText(("to %d"):format(nextLevelValue))
     end
+end
+
+function forgeController:onDustBalanceChange(newBalance, oldBalance)
+    if not self.pendingDustLimitIncrease then
+        return
+    end
+
+    local pending = self.pendingDustLimitIncrease
+    if not pending.oldBalance or pending.oldBalance ~= oldBalance then
+        self.pendingDustLimitIncrease = nil
+        return
+    end
+
+    local expectedBalance = math.max(oldBalance - (pending.cost or 0), 0)
+    if newBalance <= expectedBalance then
+        local nextLimit = (self:getDustLimit() or 0) + 1
+        self:setDustLimit(nextLimit)
+    end
+
+    self.pendingDustLimitIncrease = nil
 end
 
 function forgeController:updateFusionCoreButtons()
@@ -889,6 +951,10 @@ function forgeController:onConversion(conversionType)
         return
     end
 
+    if conversionType ~= forgeActions.INCREASELIMIT then
+        self.pendingDustLimitIncrease = nil
+    end
+
     local player = g_game.getLocalPlayer()
     if conversionType == forgeActions.DUST2SLIVER then
         local dustBalance = player:getResourceBalance(forgeResourceTypes.dust) or 0
@@ -910,11 +976,16 @@ function forgeController:onConversion(conversionType)
     if conversionType == forgeActions.INCREASELIMIT then
         local dustBalance = player:getResourceBalance(forgeResourceTypes.dust) or 0
         local maxDustLevel = tonumber(self.currentDustLevel) or tonumber(self.maxDustLevel) or 0
-        local currentNecessaryDust = maxDustLevel - 75
+        local currentNecessaryDust = math.max(maxDustLevel - 75, 0)
 
         if dustBalance < currentNecessaryDust then
             return
         end
+
+        self.pendingDustLimitIncrease = {
+            oldBalance = dustBalance,
+            cost = currentNecessaryDust
+        }
         g_game.forgeRequest(conversionType)
         return
     end
@@ -999,9 +1070,12 @@ function forgeController:onInit()
     end
 
     self:registerEvents(g_game, {
-        onResourcesBalanceChange = function(_, _, resourceType)
+        onResourcesBalanceChange = function(_, value, oldBalance, resourceType)
             if forgeResourceConfig[resourceType] then
                 self:updateResourceBalances(resourceType)
+            end
+            if resourceType == forgeResourceTypes.dust then
+                self:onDustBalanceChange(value, oldBalance)
             end
         end
     })
@@ -1270,6 +1344,7 @@ function forgeController:setInitialValues(openData)
         self.currentDustLevel = self.maxDustLevel
     end
 
+    self.pendingDustLimitIncrease = nil
     forgeController:updateDustLevelLabel()
 end
 

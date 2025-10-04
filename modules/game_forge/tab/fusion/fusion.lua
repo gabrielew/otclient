@@ -10,6 +10,27 @@ local FusionTab = {}
 
 local controllerState = setmetatable({}, { __mode = 'k' })
 
+local DEFAULT_SUCCESS_RATE = '50%'
+local DEFAULT_TIER_LOSS = '100%'
+local DEFAULT_SUCCESS_SELECTED = '65%'
+local DEFAULT_TIER_SELECTED = '50%'
+
+local function updateControllerText(controller, propertyName, value)
+    if not controller or not propertyName then
+        return
+    end
+
+    if value == nil then
+        value = ''
+    elseif type(value) ~= 'string' then
+        value = tostring(value)
+    end
+
+    if controller[propertyName] ~= value then
+        controller[propertyName] = value
+    end
+end
+
 local function ensureSelections(controller)
     if type(controller.fusionCoreSelections) ~= 'table' then
         controller.fusionCoreSelections = {
@@ -34,6 +55,19 @@ function FusionTab.registerDependencies(controller, dependencies)
     local state = getState(controller)
     dependencies = dependencies or {}
     state.resourceTypes = dependencies.resourceTypes or state.resourceTypes
+
+    controller.fusionSelectedItemCounterText = controller.fusionSelectedItemCounterText or '0 / 1'
+    controller.fusionPriceDisplay = controller.fusionPriceDisplay or '???'
+    controller.fusionSuccessRateValue = controller.fusionSuccessRateValue or DEFAULT_SUCCESS_RATE
+    controller.fusionTierLossValue = controller.fusionTierLossValue or DEFAULT_TIER_LOSS
+    controller.fusionDustRequirementText = controller.fusionDustRequirementText
+        or tostring((controller.openData and tonumber(controller.openData.convergenceDustFusion))
+        or tonumber(controller.convergenceDustFusion) or 0)
+
+    state.successRateBaseText = controller.fusionSuccessRateValue or state.successRateBaseText or DEFAULT_SUCCESS_RATE
+    state.tierLossBaseText = controller.fusionTierLossValue or state.tierLossBaseText or DEFAULT_TIER_LOSS
+    state.successRateSelectedText = state.successRateSelectedText or DEFAULT_SUCCESS_SELECTED
+    state.tierLossSelectedText = state.tierLossSelectedText or DEFAULT_TIER_SELECTED
 end
 
 function FusionTab.resetCoreSelections(controller)
@@ -172,18 +206,6 @@ local function resolveContext(controller)
             or context.panel:recursiveGetChildById('fusionReduceButton')
     end
 
-    if context.resultArea and (not context.successRateLabel or context.successRateLabel:isDestroyed()) then
-        context.successRateLabel = context.panel.fusionSuccessRateValue
-            or context.resultArea.fusionSuccessRateValue
-            or context.panel:recursiveGetChildById('fusionSuccessRateValue')
-    end
-
-    if context.resultArea and (not context.tierLossLabel or context.tierLossLabel:isDestroyed()) then
-        context.tierLossLabel = context.panel.fusionTierLossValue
-            or context.resultArea.fusionTierLossValue
-            or context.panel:recursiveGetChildById('fusionTierLossValue')
-    end
-
     if context.convergenceSection and (not context.convergenceItemsPanel or context.convergenceItemsPanel:isDestroyed()) then
         local convergenceGrid = context.convergenceSection.fusionConvergenceGrid
             or (context.resultArea and context.resultArea.fusionConvergenceGrid)
@@ -194,6 +216,16 @@ local function resolveContext(controller)
         local labels = getChildrenByStyleName(context.convergenceSection, 'forge-full-width-label')
         context.dustAmountLabel = labels[1]
     end
+
+    updateControllerText(controller, 'fusionSelectedItemCounterText',
+        controller.fusionSelectedItemCounterText or '0 / 1')
+    updateControllerText(controller, 'fusionPriceDisplay', controller.fusionPriceDisplay or '???')
+    updateControllerText(controller, 'fusionSuccessRateValue', controller.fusionSuccessRateValue or DEFAULT_SUCCESS_RATE)
+    updateControllerText(controller, 'fusionTierLossValue', controller.fusionTierLossValue or DEFAULT_TIER_LOSS)
+
+    local defaultDustRequirement = (controller.openData and tonumber(controller.openData.convergenceDustFusion))
+        or tonumber(controller.convergenceDustFusion) or 0
+    updateControllerText(controller, 'fusionDustRequirementText', defaultDustRequirement)
 
     return context
 end
@@ -226,6 +258,8 @@ function FusionTab.updateFusionCoreButtons(controller)
         return
     end
 
+    local state = getState(controller)
+
     local successButton = context.successCoreButton
     if not successButton or successButton:isDestroyed() then
         successButton = context.panel and context.panel:recursiveGetChildById('fusionImproveButton')
@@ -238,80 +272,10 @@ function FusionTab.updateFusionCoreButtons(controller)
         context.tierCoreButton = tierButton
     end
 
-    local successRateLabel = context.successRateLabel
-    if not successRateLabel or successRateLabel:isDestroyed() then
-        successRateLabel = context.panel and context.panel:recursiveGetChildById('fusionSuccessRateValue')
-        context.successRateLabel = successRateLabel
-    end
-
-    local tierLossLabel = context.tierLossLabel
-    if not tierLossLabel or tierLossLabel:isDestroyed() then
-        tierLossLabel = context.panel and context.panel:recursiveGetChildById('fusionTierLossValue')
-        context.tierLossLabel = tierLossLabel
-    end
-
-    local lastSuccessSelection = context.lastSuccessSelection and true or false
-    local lastTierSelection = context.lastTierSelection and true or false
-
-    local function resolveBaseText(currentBase, label, defaultText, isSelected, wasSelected)
-        if not label or label:isDestroyed() then
-            return currentBase or defaultText
-        end
-
-        if not isSelected then
-            if not wasSelected then
-                local labelText = label:getText()
-                if labelText and labelText ~= '' then
-                    currentBase = labelText
-                end
-            end
-
-            if currentBase and currentBase ~= '' then
-                return currentBase
-            end
-
-            return defaultText
-        end
-
-        if currentBase and currentBase ~= '' then
-            return currentBase
-        end
-
-        local labelText = label:getText()
-        if labelText and labelText ~= '' then
-            return labelText
-        end
-
-        return defaultText
-    end
-
-    local function updateLabel(label, text)
-        if not label or label:isDestroyed() then
-            return
-        end
-
-        if label:getText() ~= text then
-            label:setText(text)
-        end
-    end
-
-    if not successButton and not tierButton then
-        local successBaseText = resolveBaseText(context.successRateBaseText, successRateLabel, '50%', false,
-            lastSuccessSelection)
-        local tierBaseText = resolveBaseText(context.tierLossBaseText, tierLossLabel, '100%', false, lastTierSelection)
-        context.successRateBaseText = successBaseText
-        context.tierLossBaseText = tierBaseText
-        updateLabel(successRateLabel, successBaseText)
-        updateLabel(tierLossLabel, tierBaseText)
-        context.lastSuccessSelection = false
-        context.lastTierSelection = false
-        return
-    end
-
     local selections = ensureSelections(controller)
 
     local player = g_game.getLocalPlayer()
-    local resourceTypes = getState(controller).resourceTypes or {}
+    local resourceTypes = state.resourceTypes or {}
     local coreType = resourceTypes.cores
     local coreBalance = 0
     if player and coreType then
@@ -332,29 +296,22 @@ function FusionTab.updateFusionCoreButtons(controller)
         end
     end
 
-    local successSelectedText = context.successRateSelectedText or '65%'
-    local tierSelectedText = context.tierLossSelectedText or '50%'
-
-    if coreBalance <= 0 then
-        selections.success = false
-        selections.tier = false
-        setButtonState(successButton, false, false)
-        setButtonState(tierButton, false, false)
-        local successBaseText = resolveBaseText(context.successRateBaseText, successRateLabel, '50%', false,
-            lastSuccessSelection)
-        local tierBaseText = resolveBaseText(context.tierLossBaseText, tierLossLabel, '100%', false, lastTierSelection)
-        context.successRateBaseText = successBaseText
-        context.tierLossBaseText = tierBaseText
-        updateLabel(successRateLabel, successBaseText)
-        updateLabel(tierLossLabel, tierBaseText)
-        return
-    end
-
     local selectedSuccess = selections.success and true or false
     local selectedTier = selections.tier and true or false
 
+    if coreBalance <= 0 then
+        if selectedSuccess then
+            selections.success = false
+            selectedSuccess = false
+        end
+        if selectedTier then
+            selections.tier = false
+            selectedTier = false
+        end
+    end
+
     local selectedCount = (selectedSuccess and 1 or 0) + (selectedTier and 1 or 0)
-    if selectedCount > coreBalance then
+    if coreBalance > 0 and selectedCount > coreBalance then
         if selectedTier then
             selectedTier = false
             selections.tier = false
@@ -369,8 +326,8 @@ function FusionTab.updateFusionCoreButtons(controller)
 
     local hasAvailableCore = coreBalance > selectedCount
 
-    local successEnabled = selectedSuccess or hasAvailableCore
-    local tierEnabled = selectedTier or hasAvailableCore
+    local successEnabled = coreBalance > 0 and (selectedSuccess or hasAvailableCore)
+    local tierEnabled = coreBalance > 0 and (selectedTier or hasAvailableCore)
 
     if coreBalance == 1 then
         if selectedSuccess and not selectedTier then
@@ -383,18 +340,35 @@ function FusionTab.updateFusionCoreButtons(controller)
     setButtonState(successButton, selectedSuccess, successEnabled)
     setButtonState(tierButton, selectedTier, tierEnabled)
 
-    local successBaseText = resolveBaseText(context.successRateBaseText, successRateLabel, '50%', selectedSuccess,
-        lastSuccessSelection)
-    local tierBaseText = resolveBaseText(context.tierLossBaseText, tierLossLabel, '100%', selectedTier, lastTierSelection)
+    local successSelectedText = state.successRateSelectedText or DEFAULT_SUCCESS_SELECTED
+    local tierSelectedText = state.tierLossSelectedText or DEFAULT_TIER_SELECTED
 
-    context.successRateBaseText = successBaseText
-    context.tierLossBaseText = tierBaseText
+    local function resolveDisplay(currentValue, selectedText, defaultText, isSelected, storedBase)
+        local base = storedBase
+        if currentValue and currentValue ~= '' and currentValue ~= selectedText then
+            base = currentValue
+        end
+        if not base or base == '' then
+            base = defaultText
+        end
+        if isSelected then
+            return selectedText, base
+        end
+        return base, base
+    end
 
-    updateLabel(successRateLabel, selectedSuccess and successSelectedText or successBaseText)
-    updateLabel(tierLossLabel, selectedTier and tierSelectedText or tierBaseText)
+    local successDisplay, successBase = resolveDisplay(controller.fusionSuccessRateValue,
+        successSelectedText, DEFAULT_SUCCESS_RATE, selectedSuccess, state.successRateBaseText)
+    local tierDisplay, tierBase = resolveDisplay(controller.fusionTierLossValue, tierSelectedText,
+        DEFAULT_TIER_LOSS, selectedTier, state.tierLossBaseText)
 
-    context.lastSuccessSelection = selectedSuccess
-    context.lastTierSelection = selectedTier
+    state.successRateBaseText = successBase
+    state.tierLossBaseText = tierBase
+    state.lastSuccessSelection = selectedSuccess
+    state.lastTierSelection = selectedTier
+
+    updateControllerText(controller, 'fusionSuccessRateValue', successDisplay)
+    updateControllerText(controller, 'fusionTierLossValue', tierDisplay)
 end
 
 function FusionTab.onToggleFusionCore(controller, coreType)
@@ -458,18 +432,6 @@ function FusionTab.onToggleFusionCore(controller, coreType)
     FusionTab.updateFusionCoreButtons(controller)
 end
 
-local function updateFusionResultCostLabel(prices, itemPtr, tier)
-    if not prices or not itemPtr or not tier then
-        return
-    end
-
-    local price = resolveForgePrice(prices, itemPtr, tier)
-    local resultCostLabel = g_ui.getRootWidget():recursiveGetChildById('fusionResultCostLabel')
-    if resultCostLabel and not resultCostLabel:isDestroyed() then
-        resultCostLabel:setText(formatGoldAmount(price))
-    end
-end
-
 function FusionTab.configureConversionPanel(controller, selectedWidget)
     if not selectedWidget or not selectedWidget.itemPtr then
         return
@@ -510,7 +472,6 @@ function FusionTab.configureConversionPanel(controller, selectedWidget)
         g_logger.info(">> selectedItemIcon id: " ..
             itemPtr:getId() .. " tier: " .. itemTier .. " target tier: " .. itemTier + 1)
         ItemsDatabase.setTier(context.selectedItemIcon, selectedPreview)
-        updateFusionResultCostLabel(controller.fusionPrices, itemPtr, itemTier)
     end
 
     if context.targetItem then
@@ -525,10 +486,8 @@ function FusionTab.configureConversionPanel(controller, selectedWidget)
         context.selectedItemQuestion:setVisible(false)
     end
 
-    if context.selectedItemCounter then
-        local ownedCount = math.max(itemCount, 0)
-        context.selectedItemCounter:setText(string.format('%d / 1', ownedCount))
-    end
+    local ownedCount = math.max(itemCount, 0)
+    updateControllerText(controller, 'fusionSelectedItemCounterText', string.format('%d / 1', ownedCount))
 
     if context.fusionButtonItem then
         context.fusionButtonItem:setItemId(itemPtr:getId())
@@ -576,10 +535,11 @@ function FusionTab.configureConversionPanel(controller, selectedWidget)
         context.dustAmountLabel:setColor(hasEnoughDust and '$var-text-cip-color' or '#d33c3c')
     end
 
+    updateControllerText(controller, 'fusionDustRequirementText', dustRequirement)
     controller.fusionPrice = price
 
     if context.costLabel then
-        context.costLabel:setText(formatGoldAmount(price))
+        updateControllerText(controller, 'fusionPriceDisplay', formatGoldAmount(price))
         if player then
             local totalMoney = player:getTotalMoney() or 0
             context.costLabel:setColor(totalMoney >= price and '$var-text-cip-color' or '#d33c3c')
@@ -662,9 +622,7 @@ function FusionTab.resetConversionPanel(controller)
         context.selectedItemQuestion:setVisible(true)
     end
 
-    if context.selectedItemCounter then
-        context.selectedItemCounter:setText('0 / 1')
-    end
+    updateControllerText(controller, 'fusionSelectedItemCounterText', '0 / 1')
 
     if context.placeholder then
         context.placeholder:setVisible(true)
@@ -699,28 +657,17 @@ function FusionTab.resetConversionPanel(controller)
         context.dustAmountLabel:setColor('$var-text-cip-color')
     end
 
+    local resetDustRequirement = (controller.openData and tonumber(controller.openData.convergenceDustFusion))
+        or tonumber(controller.convergenceDustFusion) or 0
+    updateControllerText(controller, 'fusionDustRequirementText', resetDustRequirement)
+
     if context.costLabel then
-        context.costLabel:setText('???')
+        updateControllerText(controller, 'fusionPriceDisplay', '???')
         context.costLabel:setColor('$var-text-cip-color')
     end
 
-    local successSelectedText = context.successRateSelectedText or '65%'
-    local tierSelectedText = context.tierLossSelectedText or '50%'
-
-    if context.successRateLabel and not context.successRateLabel:isDestroyed() then
-        context.lastSuccessSelection = context.successRateLabel:getText() == successSelectedText
-    else
-        context.lastSuccessSelection = false
-    end
-
-    if context.tierLossLabel and not context.tierLossLabel:isDestroyed() then
-        context.lastTierSelection = context.tierLossLabel:getText() == tierSelectedText
-    else
-        context.lastTierSelection = false
-    end
-
-    context.successRateBaseText = nil
-    context.tierLossBaseText = nil
+    state.lastSuccessSelection = false
+    state.lastTierSelection = false
 
     FusionTab.resetCoreSelections(controller)
     FusionTab.updateFusionCoreButtons(controller)

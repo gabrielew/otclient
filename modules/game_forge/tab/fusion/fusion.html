@@ -67,8 +67,7 @@
             <label
               id="fusionSelectedItemCounter"
               class="forge-full-width-label"
-              text="0 / 1"
-            ></label>
+            >{{self.fusionSelectedItemCounterText}}</label>
           </div>
         </div>
 
@@ -81,7 +80,7 @@
             ></UIItem>
           </div>
           <div class="forge-counter">
-            <label class="forge-full-width-label" text="100"></label>
+            <label class="forge-full-width-label">{{self.fusionDustRequirementText}}</label>
             <img class="resource-icon" src="images/icon-currency-dust" />
           </div>
         </div>
@@ -89,7 +88,7 @@
         <table class="fusion-stats">
           <tr>
             <td text="Success Rate:"></td>
-            <td id="fusionSuccessRateValue" text="50%"></td>
+            <td id="fusionSuccessRateValue">{{self.fusionSuccessRateValue}}</td>
           </tr>
           <tr>
             <td>
@@ -113,7 +112,7 @@
           </tr>
           <tr>
             <td text="Tier Loss:"></td>
-            <td id="fusionTierLossValue" text="100%"></td>
+            <td id="fusionTierLossValue">{{self.fusionTierLossValue}}</td>
           </tr>
           <tr>
             <td>
@@ -154,7 +153,7 @@
             <UIItem class="forge-item-icon" style="item-id: 37160"></UIItem>
           </div>
           <div class="forge-counter">
-            <label class="forge-full-width-label" text="130"></label>
+            <label class="forge-full-width-label">{{self.fusionDustRequirementText}}</label>
           </div>
         </div>
       </div>
@@ -180,8 +179,7 @@
           <label
             id="fusionResultCostLabel"
             class="forge-full-width-label"
-            text="???"
-          ></label>
+          >{{self.fusionPriceDisplay}}</label>
           <img class="resource-icon" src="/images/game/prey/prey_gold" />
         </div>
       </div>

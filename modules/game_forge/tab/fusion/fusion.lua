@@ -98,56 +98,41 @@ local function resolveContext(controller)
 
     local context = state.context
     if not context or context.panel ~= panel or panel:isDestroyed() then
-        local resultArea = panel.test or panel:recursiveGetChildById('test')
+        local resultArea = panel.test
         local selectionPanel = panel.fusionSelectionArea
-            or panel:recursiveGetChildById('fusionSelectionArea')
         local convergenceSection = panel.fusionConvergenceSection
             or (resultArea and resultArea.fusionConvergenceSection)
-            or panel:recursiveGetChildById('fusionConvergenceSection')
 
         context = {
             panel = panel,
             resultArea = resultArea,
             selectionPanel = selectionPanel,
-            targetItem = panel.fusionTargetItemPreview
-                or panel:recursiveGetChildById('fusionTargetItemPreview'),
-            selectedItemIcon = panel.fusionSelectedItemIcon
-                or panel:recursiveGetChildById('fusionSelectedItemIcon'),
-            selectedItemQuestion = panel.fusionSelectedItemQuestion
-                or panel:recursiveGetChildById('fusionSelectedItemQuestion'),
-            selectedItemCounter = panel.fusionSelectedItemCounter
-                or panel:recursiveGetChildById('fusionSelectedItemCounter'),
-            placeholder = (resultArea and (resultArea.fusionResultPlaceholder
-                or resultArea:recursiveGetChildById('fusionResultPlaceholder')))
-                or panel:recursiveGetChildById('fusionResultPlaceholder'),
+            targetItem = panel.fusionTargetItemPreview,
+            selectedItemIcon = panel.fusionSelectedItemIcon,
+            selectedItemQuestion = panel.fusionSelectedItemQuestion,
+            selectedItemCounter = panel.fusionSelectedItemCounter,
+            placeholder = (resultArea and resultArea.fusionResultPlaceholder)
+                or panel.fusionResultPlaceholder,
             convergenceSection = convergenceSection,
             fusionButton = panel.fusionActionButton
-                or (resultArea and resultArea.fusionActionButton)
-                or panel:recursiveGetChildById('fusionActionButton'),
-            fusionButtonItem = panel.fusionResultItemFrom
-                or panel:recursiveGetChildById('fusionResultItemFrom'),
-            fusionButtonItemTo = panel.fusionResultItemTo
-                or panel:recursiveGetChildById('fusionResultItemTo'),
+                or (resultArea and resultArea.fusionActionButton),
+            fusionButtonItem = panel.fusionResultItemFrom,
+            fusionButtonItemTo = panel.fusionResultItemTo,
             convergenceItemsPanel = nil,
             dustAmountLabel = panel.fusionConvergenceDustLabel
-                or (convergenceSection and convergenceSection.fusionConvergenceDustLabel)
-                or panel:recursiveGetChildById('fusionConvergenceDustLabel'),
+                or (convergenceSection and convergenceSection.fusionConvergenceDustLabel),
             costLabel = panel.fusionResultCostLabel
-                or (resultArea and resultArea.fusionResultCostLabel)
-                or panel:recursiveGetChildById('fusionResultCostLabel'),
+                or (resultArea and resultArea.fusionResultCostLabel),
             successCoreButton = panel.fusionImproveButton
-                or (resultArea and resultArea.fusionImproveButton)
-                or panel:recursiveGetChildById('fusionImproveButton'),
+                or (resultArea and resultArea.fusionImproveButton),
             tierCoreButton = panel.fusionReduceButton
                 or (resultArea and resultArea.fusionReduceButton)
-                or panel:recursiveGetChildById('fusionReduceButton')
         }
         state.context = context
     end
 
     if not context.selectionPanel or context.selectionPanel:isDestroyed() then
         context.selectionPanel = panel.fusionSelectionArea
-            or panel:recursiveGetChildById('fusionSelectionArea')
         context.selectionItemsPanel = nil
     end
 
@@ -156,14 +141,12 @@ local function resolveContext(controller)
     end
 
     if not context.resultArea then
-        context.resultArea = panel.test or panel:recursiveGetChildById('test')
+        context.resultArea = panel.test
     end
 
     if context.selectionPanel and (not context.selectionItemsPanel or context.selectionItemsPanel:isDestroyed()) then
-        local selectionGrid = context.selectionPanel.fusionSelectionGrid
+        local selectionGrid = (context.selectionPanel and context.selectionPanel.fusionSelectionGrid)
             or panel.fusionSelectionGrid
-            or context.selectionPanel:recursiveGetChildById('fusionSelectionGrid')
-            or panel:recursiveGetChildById('fusionSelectionGrid')
         if selectionGrid then
             context.selectionItemsPanel = resolveScrollContents(selectionGrid)
         end
@@ -175,12 +158,10 @@ local function resolveContext(controller)
 
     if not context.targetItem then
         context.targetItem = panel.fusionTargetItemPreview
-            or panel:recursiveGetChildById('fusionTargetItemPreview')
     end
 
     if (not context.selectedItemIcon or context.selectedItemIcon:isDestroyed()) then
         context.selectedItemIcon = panel.fusionSelectedItemIcon
-            or panel:recursiveGetChildById('fusionSelectedItemIcon')
     end
 
     if context.selectedItemIcon then
@@ -192,19 +173,16 @@ local function resolveContext(controller)
     end
 
     if not context.placeholder then
-        context.placeholder = (context.resultArea and (context.resultArea.fusionResultPlaceholder
-            or context.resultArea:recursiveGetChildById('fusionResultPlaceholder')))
-            or panel:recursiveGetChildById('fusionResultPlaceholder')
+        context.placeholder = (context.resultArea and context.resultArea.fusionResultPlaceholder)
+            or panel.fusionResultPlaceholder
     end
 
     if not context.selectedItemQuestion or context.selectedItemQuestion:isDestroyed() then
         context.selectedItemQuestion = panel.fusionSelectedItemQuestion
-            or panel:recursiveGetChildById('fusionSelectedItemQuestion')
     end
 
     if not context.selectedItemCounter or context.selectedItemCounter:isDestroyed() then
         context.selectedItemCounter = panel.fusionSelectedItemCounter
-            or panel:recursiveGetChildById('fusionSelectedItemCounter')
     end
 
     if context.fusionButton and context.fusionButton:isDestroyed() then
@@ -214,7 +192,6 @@ local function resolveContext(controller)
     if not context.fusionButton then
         context.fusionButton = panel.fusionActionButton
             or (context.resultArea and context.resultArea.fusionActionButton)
-            or panel:recursiveGetChildById('fusionActionButton')
     end
 
     if context.fusionButtonItem and context.fusionButtonItem:isDestroyed() then
@@ -224,7 +201,6 @@ local function resolveContext(controller)
     if not context.fusionButtonItem then
         context.fusionButtonItem = panel.fusionResultItemFrom
             or (context.fusionButton and context.fusionButton.fusionResultItemFrom)
-            or panel:recursiveGetChildById('fusionResultItemFrom')
     end
 
     if context.fusionButtonItemTo and context.fusionButtonItemTo:isDestroyed() then
@@ -234,7 +210,6 @@ local function resolveContext(controller)
     if not context.fusionButtonItemTo then
         context.fusionButtonItemTo = panel.fusionResultItemTo
             or (context.fusionButton and context.fusionButton.fusionResultItemTo)
-            or panel:recursiveGetChildById('fusionResultItemTo')
     end
 
     if context.costLabel and context.costLabel:isDestroyed() then
@@ -244,7 +219,6 @@ local function resolveContext(controller)
     if not context.costLabel then
         context.costLabel = panel.fusionResultCostLabel
             or (context.resultArea and context.resultArea.fusionResultCostLabel)
-            or panel:recursiveGetChildById('fusionResultCostLabel')
     end
 
     if context.successCoreButton and context.successCoreButton:isDestroyed() then
@@ -254,7 +228,6 @@ local function resolveContext(controller)
     if not context.successCoreButton then
         context.successCoreButton = panel.fusionImproveButton
             or (context.resultArea and context.resultArea.fusionImproveButton)
-            or panel:recursiveGetChildById('fusionImproveButton')
     end
 
     if context.tierCoreButton and context.tierCoreButton:isDestroyed() then
@@ -264,7 +237,6 @@ local function resolveContext(controller)
     if not context.tierCoreButton then
         context.tierCoreButton = panel.fusionReduceButton
             or (context.resultArea and context.resultArea.fusionReduceButton)
-            or panel:recursiveGetChildById('fusionReduceButton')
     end
 
     if context.convergenceSection and context.convergenceSection:isDestroyed() then
@@ -274,7 +246,6 @@ local function resolveContext(controller)
     if not context.convergenceSection then
         context.convergenceSection = panel.fusionConvergenceSection
             or (context.resultArea and context.resultArea.fusionConvergenceSection)
-            or panel:recursiveGetChildById('fusionConvergenceSection')
     end
 
     if context.convergenceItemsPanel and context.convergenceItemsPanel:isDestroyed() then
@@ -283,10 +254,8 @@ local function resolveContext(controller)
 
     if context.convergenceSection and not context.convergenceItemsPanel then
         local convergenceGrid = context.convergenceSection.fusionConvergenceGrid
-            or context.convergenceSection:recursiveGetChildById('fusionConvergenceGrid')
             or panel.fusionConvergenceGrid
             or (context.resultArea and context.resultArea.fusionConvergenceGrid)
-            or panel:recursiveGetChildById('fusionConvergenceGrid')
         if convergenceGrid then
             context.convergenceItemsPanel = resolveScrollContents(convergenceGrid)
         end
@@ -299,7 +268,6 @@ local function resolveContext(controller)
     if not context.dustAmountLabel then
         context.dustAmountLabel = panel.fusionConvergenceDustLabel
             or (context.convergenceSection and context.convergenceSection.fusionConvergenceDustLabel)
-            or panel:recursiveGetChildById('fusionConvergenceDustLabel')
     end
 
     updateControllerText(controller, 'fusionSelectedItemCounterText',
@@ -347,13 +315,13 @@ function FusionTab.updateFusionCoreButtons(controller)
 
     local successButton = context.successCoreButton
     if not successButton or successButton:isDestroyed() then
-        successButton = context.panel and context.panel:recursiveGetChildById('fusionImproveButton')
+        successButton = context.panel and context.panel.fusionImproveButton
         context.successCoreButton = successButton
     end
 
     local tierButton = context.tierCoreButton
     if not tierButton or tierButton:isDestroyed() then
-        tierButton = context.panel and context.panel:recursiveGetChildById('fusionReduceButton')
+        tierButton = context.panel and context.panel.fusionReduceButton
         context.tierCoreButton = tierButton
     end
 
@@ -474,14 +442,13 @@ function FusionTab.onToggleFusionCore(controller, coreType)
     if coreType == 'success' then
         button = context.successCoreButton
         if not button or button:isDestroyed() then
-            context.successCoreButton = context.panel and context.panel:recursiveGetChildById('fusionImproveButton') or
-                nil
+            context.successCoreButton = context.panel and context.panel.fusionImproveButton or nil
             button = context.successCoreButton
         end
     else
         button = context.tierCoreButton
         if not button or button:isDestroyed() then
-            context.tierCoreButton = context.panel and context.panel:recursiveGetChildById('fusionReduceButton') or nil
+            context.tierCoreButton = context.panel and context.panel.fusionReduceButton or nil
             button = context.tierCoreButton
         end
     end
@@ -530,10 +497,8 @@ function FusionTab.configureConversionPanel(controller, selectedWidget)
 
     if context.convergenceSection and (not context.convergenceItemsPanel or context.convergenceItemsPanel:isDestroyed()) then
         local convergenceGrid = context.convergenceSection.fusionConvergenceGrid
-            or context.convergenceSection:recursiveGetChildById('fusionConvergenceGrid')
             or (context.resultArea and context.resultArea.fusionConvergenceGrid)
             or (context.panel and context.panel.fusionConvergenceGrid)
-            or (context.panel and context.panel:recursiveGetChildById('fusionConvergenceGrid'))
         if convergenceGrid then
             context.convergenceItemsPanel = resolveScrollContents(convergenceGrid)
         end
@@ -771,9 +736,7 @@ function FusionTab.updateFusionItems(controller, fusionData)
 
     if context.selectionPanel and (not context.selectionItemsPanel or context.selectionItemsPanel:isDestroyed()) then
         local selectionGrid = context.selectionPanel.fusionSelectionGrid
-            or context.selectionPanel:recursiveGetChildById('fusionSelectionGrid')
             or (context.panel and context.panel.fusionSelectionGrid)
-            or (context.panel and context.panel:recursiveGetChildById('fusionSelectionGrid'))
         if selectionGrid then
             context.selectionItemsPanel = resolveScrollContents(selectionGrid)
         end

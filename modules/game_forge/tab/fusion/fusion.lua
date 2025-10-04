@@ -10,6 +10,41 @@ local FusionTab = {}
 
 local controllerState = setmetatable({}, { __mode = 'k' })
 
+local function resolveTargetItemWidget(panel, currentWidget)
+    if currentWidget and not currentWidget:isDestroyed() and currentWidget.setItem then
+        return currentWidget
+    end
+
+    if not panel or panel:isDestroyed() then
+        return nil
+    end
+
+    local targetWidget = panel.fusionTargetItemPreview or panel:recursiveGetChildById('fusionTargetItemPreview')
+    if targetWidget and targetWidget.setItem then
+        return targetWidget
+    end
+
+    local targetSlot = panel.fusionTargetSlot or panel:recursiveGetChildById('fusionTargetSlot')
+        or getFirstChildByStyleName(panel, 'fusion-target-slot')
+    if targetSlot and targetSlot.setItem then
+        return targetSlot
+    end
+
+    if targetSlot then
+        local slotItem = getFirstChildByStyleName(targetSlot, 'fusion-slot-item')
+        if slotItem and slotItem.setItem then
+            return slotItem
+        end
+    end
+
+    local slotItem = getFirstChildByStyleName(panel, 'fusion-slot-item')
+    if slotItem and slotItem.setItem then
+        return slotItem
+    end
+
+    return targetWidget
+end
+
 local function ensureSelections(controller)
     if type(controller.fusionCoreSelections) ~= 'table' then
         controller.fusionCoreSelections = {
@@ -72,9 +107,7 @@ local function resolveContext(controller)
             or (resultArea and resultArea.fusionConvergenceSection)
             or getFirstChildByStyleName(resultArea, 'fusion-convergence-section')
 
-        local targetItem = panel.fusionTargetItemPreview
-            or panel:recursiveGetChildById('fusionTargetItemPreview')
-            or getFirstChildByStyleName(panel, 'fusion-slot-item')
+        local targetItem = resolveTargetItemWidget(panel)
 
         context = {
             panel = panel,
@@ -113,15 +146,7 @@ local function resolveContext(controller)
         context.selectionItemsPanel = resolveScrollContents(selectionGrid)
     end
 
-    if context.targetItem and context.targetItem:isDestroyed() then
-        context.targetItem = nil
-    end
-
-    if not context.targetItem then
-        context.targetItem = panel.fusionTargetItemPreview
-            or panel:recursiveGetChildById('fusionTargetItemPreview')
-            or getFirstChildByStyleName(panel, 'fusion-slot-item')
-    end
+    context.targetItem = resolveTargetItemWidget(panel, context.targetItem)
 
     if not context.selectedItemIcon or context.selectedItemIcon:isDestroyed() then
         context.selectedItemIcon = panel.fusionSelectedItemIcon
@@ -490,13 +515,15 @@ function FusionTab.configureConversionPanel(controller, selectedWidget)
     controller.fusionItem = itemPtr
     controller.fusionItemCount = itemCount
 
-    if context.targetItem then
+    local targetItemWidget = resolveTargetItemWidget(context.panel, context.targetItem)
+    context.targetItem = targetItemWidget
+    if targetItemWidget and targetItemWidget.setItem then
         local targetPreview = Item.create(itemPtr:getId(), 1)
         targetPreview:setTier(itemTier + 1)
         g_logger.info(">>> id: " .. itemPtr:getId() .. " tier: " .. itemTier .. " target tier: " .. itemTier + 1)
-        context.targetItem:setItem(targetPreview)
-        context.targetItem:setItemCount(1)
-        ItemsDatabase.setTier(context.targetItem, targetPreview)
+        targetItemWidget:setItem(targetPreview)
+        targetItemWidget:setItemCount(1)
+        ItemsDatabase.setTier(targetItemWidget, targetPreview)
     end
 
     if context.selectedItemIcon then
@@ -634,7 +661,8 @@ function FusionTab.resetConversionPanel(controller)
     controller.fusionItemCount = nil
     controller.fusionSelectedItem = nil
 
-    if context.targetItem then
+    context.targetItem = resolveTargetItemWidget(context.panel, context.targetItem)
+    if context.targetItem and context.targetItem.setItemId then
         context.targetItem:setItemId(0)
         context.targetItem:setItemCount(0)
         ItemsDatabase.setTier(context.targetItem, 0)

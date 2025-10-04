@@ -640,6 +640,37 @@ function forgeController:updateFusionCoreButtons()
         end
     end
 
+    local function normalizeColorValue(colorValue)
+        if not colorValue then
+            return nil
+        end
+
+        local valueType = type(colorValue)
+        if valueType ~= 'string' then
+            local ok, converted = pcall(colortostring, colorValue)
+            if ok and type(converted) == 'string' then
+                colorValue = converted
+            else
+                colorValue = nil
+            end
+        end
+
+        if type(colorValue) == 'string' then
+            local normalized = colorValue:lower()
+            if normalized == '#ffffff' or normalized == '#ffffffff' or normalized == 'white' then
+                return nil
+            end
+
+            if #normalized == 9 then
+                return normalized:sub(1, 7)
+            end
+
+            return normalized
+        end
+
+        return nil
+    end
+
     local function applyLabelSelection(label, selected, baseColorField)
         if not label or label:isDestroyed() then
             context[baseColorField] = nil
@@ -651,28 +682,18 @@ function forgeController:updateFusionCoreButtons()
         end
 
         local baseColor = context[baseColorField]
-        if type(baseColor) == 'string' then
-            local normalized = baseColor:lower()
-            if normalized == '#ffffff' or normalized == 'white' then
-                baseColor = FUSION_CORE_DEFAULT_COLOR
-                context[baseColorField] = baseColor
-            end
-        end
-        if not baseColor then
-            baseColor = label:getColor()
-            if type(baseColor) == 'string' then
-                local normalized = baseColor:lower()
-                if normalized == '#ffffff' or normalized == 'white' then
-                    baseColor = nil
-                end
-            end
-            if not baseColor or baseColor == '' then
-                baseColor = FUSION_CORE_DEFAULT_COLOR
-            end
+        local normalizedBase = normalizeColorValue(baseColor)
+        if normalizedBase then
+            baseColor = normalizedBase
             context[baseColorField] = baseColor
         end
 
-        local targetColor = selected and FUSION_CORE_ACTIVE_COLOR or baseColor
+        if not baseColor then
+            baseColor = normalizeColorValue(label:getColor()) or FUSION_CORE_DEFAULT_COLOR
+            context[baseColorField] = baseColor
+        end
+
+        local targetColor = selected and FUSION_CORE_ACTIVE_COLOR or (normalizeColorValue(baseColor) or FUSION_CORE_DEFAULT_COLOR)
         if targetColor and label:getColor() ~= targetColor then
             label:setColor(targetColor)
         end

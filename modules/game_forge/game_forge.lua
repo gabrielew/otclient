@@ -742,13 +742,24 @@ function forgeController:onDustBalanceChange(newBalance, oldBalance)
     end
 
     local pending = self.pendingDustLimitIncrease
-    if not pending.oldBalance or pending.oldBalance ~= oldBalance then
-        self.pendingDustLimitIncrease = nil
-        return
+    local expectedBalance = pending.expectedBalance
+
+    if expectedBalance == nil then
+        local referenceBalance = pending.oldBalance or oldBalance
+        if referenceBalance ~= nil then
+            expectedBalance = math.max(referenceBalance - (pending.cost or 0), 0)
+        end
     end
 
-    local expectedBalance = math.max(oldBalance - (pending.cost or 0), 0)
-    if newBalance <= expectedBalance then
+    local shouldIncreaseLimit = false
+
+    if expectedBalance ~= nil then
+        shouldIncreaseLimit = newBalance <= expectedBalance
+    elseif oldBalance ~= nil and pending.cost then
+        shouldIncreaseLimit = (oldBalance - newBalance) >= pending.cost
+    end
+
+    if shouldIncreaseLimit then
         local nextLimit = (self:getDustLimit() or 0) + 1
         self:setDustLimit(nextLimit)
     end
@@ -982,9 +993,12 @@ function forgeController:onConversion(conversionType)
             return
         end
 
+        local expectedBalance = math.max(dustBalance - currentNecessaryDust, 0)
+
         self.pendingDustLimitIncrease = {
             oldBalance = dustBalance,
-            cost = currentNecessaryDust
+            cost = currentNecessaryDust,
+            expectedBalance = expectedBalance
         }
         g_game.forgeRequest(conversionType)
         return

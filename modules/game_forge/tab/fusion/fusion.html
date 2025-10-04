@@ -47,6 +47,7 @@
       title="Further Items Needed For fusion"
     >
       <div
+        id="fusionResultPlaceholder"
         class="forge-result-placeholder"
         focusable="false"
         *visible="not self.modeFusion"
@@ -153,7 +154,10 @@
             <UIItem class="forge-item-icon" style="item-id: 37160"></UIItem>
           </div>
           <div class="forge-counter">
-            <label class="forge-full-width-label">{{self.fusionDustRequirementText}}</label>
+            <label
+              id="fusionConvergenceDustLabel"
+              class="forge-full-width-label"
+            >{{self.fusionDustRequirementText}}</label>
           </div>
         </div>
       </div>
@@ -163,13 +167,15 @@
         src="/images/arrows/icon-arrow-rightlarge"
       />
       <div class="fusion-result-summary">
-        <UIButton class="forge-action-button forge-action-button--large">
+        <UIButton id="fusionActionButton" class="forge-action-button forge-action-button--large">
           <UIItem
+            id="fusionResultItemFrom"
             class="forge-result-item forge-result-item-fusion"
             style="left: 20px; icon: /images/ui/icon-questionmark"
           ></UIItem>
           <img class="forge-action-arrow" src="/images/arrows/icon_3arrows" />
           <UIItem
+            id="fusionResultItemTo"
             class="forge-result-item forge-result-item-fusion"
             style="left: 0px; icon: /images/ui/icon-questionmark"
           ></UIItem>

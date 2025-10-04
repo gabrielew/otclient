@@ -1,8 +1,6 @@
 local helpers = require('modules.game_forge.game_forge_helpers')
 
 local resolveScrollContents = helpers.resolveScrollContents
-local getChildrenByStyleName = helpers.getChildrenByStyleName
-local getFirstChildByStyleName = helpers.getFirstChildByStyleName
 local resolveForgePrice = helpers.resolveForgePrice
 local formatGoldAmount = helpers.formatGoldAmount
 
@@ -101,50 +99,74 @@ local function resolveContext(controller)
     local context = state.context
     if not context or context.panel ~= panel or panel:isDestroyed() then
         local resultArea = panel.test or panel:recursiveGetChildById('test')
-        local selectionPanel = panel.fusionSelectionArea or getFirstChildByStyleName(panel, 'fusion-selection-area')
+        local selectionPanel = panel.fusionSelectionArea
+            or panel:recursiveGetChildById('fusionSelectionArea')
         local convergenceSection = panel.fusionConvergenceSection
             or (resultArea and resultArea.fusionConvergenceSection)
-            or getFirstChildByStyleName(resultArea, 'fusion-convergence-section')
-
-        local targetItem = panel.fusionTargetItemPreview
-            or panel:recursiveGetChildById('fusionTargetItemPreview')
-            or getFirstChildByStyleName(panel, 'fusion-slot-item')
+            or panel:recursiveGetChildById('fusionConvergenceSection')
 
         context = {
             panel = panel,
+            resultArea = resultArea,
             selectionPanel = selectionPanel,
-            targetItem = targetItem,
+            targetItem = panel.fusionTargetItemPreview
+                or panel:recursiveGetChildById('fusionTargetItemPreview'),
             selectedItemIcon = panel.fusionSelectedItemIcon
                 or panel:recursiveGetChildById('fusionSelectedItemIcon'),
             selectedItemQuestion = panel.fusionSelectedItemQuestion
                 or panel:recursiveGetChildById('fusionSelectedItemQuestion'),
             selectedItemCounter = panel.fusionSelectedItemCounter
                 or panel:recursiveGetChildById('fusionSelectedItemCounter'),
-            resultArea = resultArea,
-            placeholder = getFirstChildByStyleName(resultArea, 'forge-result-placeholder'),
+            placeholder = (resultArea and (resultArea.fusionResultPlaceholder
+                or resultArea:recursiveGetChildById('fusionResultPlaceholder')))
+                or panel:recursiveGetChildById('fusionResultPlaceholder'),
             convergenceSection = convergenceSection,
-            fusionButton = nil,
-            fusionButtonItem = nil,
-            fusionButtonItemTo = nil,
+            fusionButton = panel.fusionActionButton
+                or (resultArea and resultArea.fusionActionButton)
+                or panel:recursiveGetChildById('fusionActionButton'),
+            fusionButtonItem = panel.fusionResultItemFrom
+                or panel:recursiveGetChildById('fusionResultItemFrom'),
+            fusionButtonItemTo = panel.fusionResultItemTo
+                or panel:recursiveGetChildById('fusionResultItemTo'),
             convergenceItemsPanel = nil,
-            dustAmountLabel = nil,
-            costLabel = nil
+            dustAmountLabel = panel.fusionConvergenceDustLabel
+                or (convergenceSection and convergenceSection.fusionConvergenceDustLabel)
+                or panel:recursiveGetChildById('fusionConvergenceDustLabel'),
+            costLabel = panel.fusionResultCostLabel
+                or (resultArea and resultArea.fusionResultCostLabel)
+                or panel:recursiveGetChildById('fusionResultCostLabel'),
+            successCoreButton = panel.fusionImproveButton
+                or (resultArea and resultArea.fusionImproveButton)
+                or panel:recursiveGetChildById('fusionImproveButton'),
+            tierCoreButton = panel.fusionReduceButton
+                or (resultArea and resultArea.fusionReduceButton)
+                or panel:recursiveGetChildById('fusionReduceButton')
         }
         state.context = context
     end
 
     if not context.selectionPanel or context.selectionPanel:isDestroyed() then
-        context.selectionPanel = panel.fusionSelectionArea or getFirstChildByStyleName(panel, 'fusion-selection-area')
+        context.selectionPanel = panel.fusionSelectionArea
+            or panel:recursiveGetChildById('fusionSelectionArea')
         context.selectionItemsPanel = nil
     end
 
+    if context.resultArea and context.resultArea:isDestroyed() then
+        context.resultArea = nil
+    end
+
+    if not context.resultArea then
+        context.resultArea = panel.test or panel:recursiveGetChildById('test')
+    end
+
     if context.selectionPanel and (not context.selectionItemsPanel or context.selectionItemsPanel:isDestroyed()) then
-        local selectionGrid = context.selectionPanel.fusionSelectionGrid or panel.fusionSelectionGrid
-        if not selectionGrid then
-            local selectionGrids = getChildrenByStyleName(context.selectionPanel, 'forge-slot-grid')
-            selectionGrid = selectionGrids[1]
+        local selectionGrid = context.selectionPanel.fusionSelectionGrid
+            or panel.fusionSelectionGrid
+            or context.selectionPanel:recursiveGetChildById('fusionSelectionGrid')
+            or panel:recursiveGetChildById('fusionSelectionGrid')
+        if selectionGrid then
+            context.selectionItemsPanel = resolveScrollContents(selectionGrid)
         end
-        context.selectionItemsPanel = resolveScrollContents(selectionGrid)
     end
 
     if context.targetItem and context.targetItem:isDestroyed() then
@@ -154,16 +176,25 @@ local function resolveContext(controller)
     if not context.targetItem then
         context.targetItem = panel.fusionTargetItemPreview
             or panel:recursiveGetChildById('fusionTargetItemPreview')
-            or getFirstChildByStyleName(panel, 'fusion-slot-item')
     end
 
-    if not context.selectedItemIcon or context.selectedItemIcon:isDestroyed() then
+    if (not context.selectedItemIcon or context.selectedItemIcon:isDestroyed()) then
         context.selectedItemIcon = panel.fusionSelectedItemIcon
             or panel:recursiveGetChildById('fusionSelectedItemIcon')
     end
 
     if context.selectedItemIcon then
         context.selectedItemIcon:setShowCount(true)
+    end
+
+    if context.placeholder and context.placeholder:isDestroyed() then
+        context.placeholder = nil
+    end
+
+    if not context.placeholder then
+        context.placeholder = (context.resultArea and (context.resultArea.fusionResultPlaceholder
+            or context.resultArea:recursiveGetChildById('fusionResultPlaceholder')))
+            or panel:recursiveGetChildById('fusionResultPlaceholder')
     end
 
     if not context.selectedItemQuestion or context.selectedItemQuestion:isDestroyed() then
@@ -176,45 +207,99 @@ local function resolveContext(controller)
             or panel:recursiveGetChildById('fusionSelectedItemCounter')
     end
 
-    if context.resultArea and (not context.fusionButton or context.fusionButton:isDestroyed()) then
-        local actionButton = getFirstChildByStyleName(context.resultArea, 'forge-action-button')
-        if actionButton then
-            context.fusionButton = actionButton
-            local resultItems = getChildrenByStyleName(actionButton, 'forge-result-item')
-            context.fusionButtonItem = resultItems[1]
-            context.fusionButtonItemTo = resultItems[2]
-        end
+    if context.fusionButton and context.fusionButton:isDestroyed() then
+        context.fusionButton = nil
     end
 
-    if context.resultArea and (not context.costLabel or context.costLabel:isDestroyed()) then
-        local costContainer = getFirstChildByStyleName(context.resultArea, 'fusion-result-cost')
-        if costContainer then
-            local labels = getChildrenByStyleName(costContainer, 'forge-full-width-label')
-            context.costLabel = labels[1]
-        end
+    if not context.fusionButton then
+        context.fusionButton = panel.fusionActionButton
+            or (context.resultArea and context.resultArea.fusionActionButton)
+            or panel:recursiveGetChildById('fusionActionButton')
     end
 
-    if context.resultArea and (not context.successCoreButton or context.successCoreButton:isDestroyed()) then
-        context.successCoreButton = context.panel.fusionImproveButton
-            or context.resultArea.fusionImproveButton
-            or context.panel:recursiveGetChildById('fusionImproveButton')
+    if context.fusionButtonItem and context.fusionButtonItem:isDestroyed() then
+        context.fusionButtonItem = nil
     end
 
-    if context.resultArea and (not context.tierCoreButton or context.tierCoreButton:isDestroyed()) then
-        context.tierCoreButton = context.panel.fusionReduceButton
-            or context.resultArea.fusionReduceButton
-            or context.panel:recursiveGetChildById('fusionReduceButton')
+    if not context.fusionButtonItem then
+        context.fusionButtonItem = panel.fusionResultItemFrom
+            or (context.fusionButton and context.fusionButton.fusionResultItemFrom)
+            or panel:recursiveGetChildById('fusionResultItemFrom')
     end
 
-    if context.convergenceSection and (not context.convergenceItemsPanel or context.convergenceItemsPanel:isDestroyed()) then
+    if context.fusionButtonItemTo and context.fusionButtonItemTo:isDestroyed() then
+        context.fusionButtonItemTo = nil
+    end
+
+    if not context.fusionButtonItemTo then
+        context.fusionButtonItemTo = panel.fusionResultItemTo
+            or (context.fusionButton and context.fusionButton.fusionResultItemTo)
+            or panel:recursiveGetChildById('fusionResultItemTo')
+    end
+
+    if context.costLabel and context.costLabel:isDestroyed() then
+        context.costLabel = nil
+    end
+
+    if not context.costLabel then
+        context.costLabel = panel.fusionResultCostLabel
+            or (context.resultArea and context.resultArea.fusionResultCostLabel)
+            or panel:recursiveGetChildById('fusionResultCostLabel')
+    end
+
+    if context.successCoreButton and context.successCoreButton:isDestroyed() then
+        context.successCoreButton = nil
+    end
+
+    if not context.successCoreButton then
+        context.successCoreButton = panel.fusionImproveButton
+            or (context.resultArea and context.resultArea.fusionImproveButton)
+            or panel:recursiveGetChildById('fusionImproveButton')
+    end
+
+    if context.tierCoreButton and context.tierCoreButton:isDestroyed() then
+        context.tierCoreButton = nil
+    end
+
+    if not context.tierCoreButton then
+        context.tierCoreButton = panel.fusionReduceButton
+            or (context.resultArea and context.resultArea.fusionReduceButton)
+            or panel:recursiveGetChildById('fusionReduceButton')
+    end
+
+    if context.convergenceSection and context.convergenceSection:isDestroyed() then
+        context.convergenceSection = nil
+    end
+
+    if not context.convergenceSection then
+        context.convergenceSection = panel.fusionConvergenceSection
+            or (context.resultArea and context.resultArea.fusionConvergenceSection)
+            or panel:recursiveGetChildById('fusionConvergenceSection')
+    end
+
+    if context.convergenceItemsPanel and context.convergenceItemsPanel:isDestroyed() then
+        context.convergenceItemsPanel = nil
+    end
+
+    if context.convergenceSection and not context.convergenceItemsPanel then
         local convergenceGrid = context.convergenceSection.fusionConvergenceGrid
+            or context.convergenceSection:recursiveGetChildById('fusionConvergenceGrid')
+            or panel.fusionConvergenceGrid
             or (context.resultArea and context.resultArea.fusionConvergenceGrid)
-        if not convergenceGrid then
-            convergenceGrid = getFirstChildByStyleName(context.convergenceSection, 'forge-slot-grid')
+            or panel:recursiveGetChildById('fusionConvergenceGrid')
+        if convergenceGrid then
+            context.convergenceItemsPanel = resolveScrollContents(convergenceGrid)
         end
-        context.convergenceItemsPanel = resolveScrollContents(convergenceGrid)
-        local labels = getChildrenByStyleName(context.convergenceSection, 'forge-full-width-label')
-        context.dustAmountLabel = labels[1]
+    end
+
+    if context.dustAmountLabel and context.dustAmountLabel:isDestroyed() then
+        context.dustAmountLabel = nil
+    end
+
+    if not context.dustAmountLabel then
+        context.dustAmountLabel = panel.fusionConvergenceDustLabel
+            or (context.convergenceSection and context.convergenceSection.fusionConvergenceDustLabel)
+            or panel:recursiveGetChildById('fusionConvergenceDustLabel')
     end
 
     updateControllerText(controller, 'fusionSelectedItemCounterText',
@@ -444,9 +529,14 @@ function FusionTab.configureConversionPanel(controller, selectedWidget)
     end
 
     if context.convergenceSection and (not context.convergenceItemsPanel or context.convergenceItemsPanel:isDestroyed()) then
-        context.convergenceItemsPanel = resolveScrollContents(
-            getFirstChildByStyleName(context.convergenceSection, 'forge-slot-grid')
-        )
+        local convergenceGrid = context.convergenceSection.fusionConvergenceGrid
+            or context.convergenceSection:recursiveGetChildById('fusionConvergenceGrid')
+            or (context.resultArea and context.resultArea.fusionConvergenceGrid)
+            or (context.panel and context.panel.fusionConvergenceGrid)
+            or (context.panel and context.panel:recursiveGetChildById('fusionConvergenceGrid'))
+        if convergenceGrid then
+            context.convergenceItemsPanel = resolveScrollContents(convergenceGrid)
+        end
     end
 
     local itemPtr = selectedWidget.itemPtr
@@ -555,7 +645,6 @@ function FusionTab.configureConversionPanel(controller, selectedWidget)
                     if type(fusionInfo) == 'table' and fusionInfo.id then
                         local widget = g_ui.createWidget('UICheckBox', context.convergenceItemsPanel)
                         if widget then
-                            widget:setText('')
                             widget:setFocusable(true)
                             widget:setHeight(36)
                             widget:setWidth(36)
@@ -681,8 +770,13 @@ function FusionTab.updateFusionItems(controller, fusionData)
     end
 
     if context.selectionPanel and (not context.selectionItemsPanel or context.selectionItemsPanel:isDestroyed()) then
-        local selectionGrids = getChildrenByStyleName(context.selectionPanel, 'forge-slot-grid')
-        context.selectionItemsPanel = resolveScrollContents(selectionGrids[1])
+        local selectionGrid = context.selectionPanel.fusionSelectionGrid
+            or context.selectionPanel:recursiveGetChildById('fusionSelectionGrid')
+            or (context.panel and context.panel.fusionSelectionGrid)
+            or (context.panel and context.panel:recursiveGetChildById('fusionSelectionGrid'))
+        if selectionGrid then
+            context.selectionItemsPanel = resolveScrollContents(selectionGrid)
+        end
     end
 
     FusionTab.resetConversionPanel(controller)
@@ -738,7 +832,6 @@ function FusionTab.updateFusionItems(controller, fusionData)
             return
         end
 
-        widget:setText('')
         widget:setFocusable(true)
         widget:setSize('36 36')
         widget:setBorderWidth(0)

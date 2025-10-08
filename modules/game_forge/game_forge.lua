@@ -167,6 +167,7 @@ local baseSelectedFusionItem = {
 }
 forgeController.selectedFusionItem = cloneValue(baseSelectedFusionItem)
 forgeController.selectedFusionItemTarget = cloneValue(baseSelectedFusionItem)
+forgeController.fusionResultWindow = nil
 
 local function resetInfo()
     forgeController.fusionPrice = "???"
@@ -186,6 +187,48 @@ end
 
 function forgeController:close()
     hide()
+end
+
+function forgeController:showFusionResultModal(sourceItemId, targetItemId)
+    if self.fusionResultWindow and not self.fusionResultWindow:isDestroyed() then
+        self.fusionResultWindow:destroy()
+    end
+
+    local modal = g_ui.displayUI('game_forge/otui/fusion_result_modal')
+    if not modal then
+        return
+    end
+
+    self.fusionResultWindow = modal
+
+    modal.onDestroy = function()
+        if self.fusionResultWindow == modal then
+            self.fusionResultWindow = nil
+        end
+    end
+
+    local leftItemWidget = modal:recursiveGetChildById('leftItem')
+    if leftItemWidget then
+        leftItemWidget:setItemId(sourceItemId and sourceItemId > 0 and sourceItemId or 0)
+    end
+
+    local rightItemWidget = modal:recursiveGetChildById('rightItem')
+    if rightItemWidget then
+        rightItemWidget:setItemId(targetItemId and targetItemId > 0 and targetItemId or 0)
+    end
+
+    local leftLabel = modal:recursiveGetChildById('leftItemIdLabel')
+    if leftLabel then
+        leftLabel:setText(sourceItemId and sourceItemId > 0 and tostring(sourceItemId) or '')
+    end
+
+    local rightLabel = modal:recursiveGetChildById('rightItemIdLabel')
+    if rightLabel then
+        rightLabel:setText(targetItemId and targetItemId > 0 and tostring(targetItemId) or '')
+    end
+
+    modal:raise()
+    modal:focus()
 end
 
 local function toggle(self)
@@ -909,6 +952,9 @@ function forgeController:onTryFusion(isTransfer)
     local actionType = isTransfer and forgeActions.TRANSFER or forgeActions.FUSION
     local isConvergence = self.fusionConvergence or self.transferConvergence
 
+    local sourceItemId = tonumber(self.selectedFusionItem.id) or -1
+    local targetItemId = tonumber(self.selectedFusionItemTarget.id) or -1
+
     g_game.forgeRequest(actionType, isConvergence,
         self.selectedFusionItem.id,
         self.selectedFusionItem.tier,
@@ -918,6 +964,7 @@ function forgeController:onTryFusion(isTransfer)
     )
 
     self:close()
+    self:showFusionResultModal(sourceItemId, targetItemId)
 end
 
 function forgeData(config)

@@ -1,0 +1,100 @@
+FusionResultModal < UIWindow
+  id: fusionResultModal
+  size: 320 160
+  text: tr('Fusion Result')
+  modal: true
+  resizable: false
+  draggable: true
+  @onEscape: self:destroy()
+  anchors.centerIn: parent
+  padding: 12
+  layout:
+    type: verticalBox
+    align: center
+    spacing: 12
+
+  UIWidget
+    id: itemsPanel
+    size: 0 72
+    layout:
+      type: horizontalBox
+      align: center
+      spacing: 12
+    focusable: false
+
+    UIWidget
+      size: 72 72
+      layout: anchor
+      focusable: false
+      UIItem
+        id: leftItem
+        anchors.fill: parent
+        virtual: true
+
+    UIWidget
+      id: arrowsPanel
+      layout:
+        type: horizontalBox
+        align: center
+        spacing: 4
+      focusable: false
+      margin-left: 4
+      margin-right: 4
+
+      UIWidget
+        size: 24 24
+        image-source: /game_forge/images/arrows/icon-arrow-rightlarge-filled
+        image-size: 24 24
+        focusable: false
+
+      UIWidget
+        size: 24 24
+        image-source: /game_forge/images/arrows/icon-arrow-rightlarge-filled
+        image-size: 24 24
+        focusable: false
+
+      UIWidget
+        size: 24 24
+        image-source: /game_forge/images/arrows/icon-arrow-rightlarge-filled
+        image-size: 24 24
+        focusable: false
+
+    UIWidget
+      size: 72 72
+      layout: anchor
+      focusable: false
+      UIItem
+        id: rightItem
+        anchors.fill: parent
+        virtual: true
+
+  UIWidget
+    id: idsPanel
+    size: 0 16
+    layout:
+      type: horizontalBox
+      align: center
+      spacing: 12
+    focusable: false
+
+    Label
+      id: leftItemIdLabel
+      text-align: center
+      width: 72
+
+    UIWidget
+      width: 80
+      height: 16
+      focusable: false
+
+    Label
+      id: rightItemIdLabel
+      text-align: center
+      width: 72
+
+  UIButton
+    id: closeButton
+    width: 90
+    !text: tr('Close')
+    anchors.horizontalCenter: parent.horizontalCenter
+    @onClick: self:getParent():destroy()

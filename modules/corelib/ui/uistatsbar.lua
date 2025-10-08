@@ -140,8 +140,21 @@ function UIStatsBar:setValue(value, total)
         else
             self.bar:setImageSource('/images/bars/' .. self.statsOrientation .. '_health_progressbar_' .. self.statsSize .. '_4')
         end
-    elseif self.statsType == 'mana' then
-        self.bar:setImageSource('/images/bars/' .. self.statsOrientation .. '_mana_progressbar_' .. self.statsSize)
+    elseif self.statsType == 'mana' or self.statsType == 'manaShield' then
+        local textureType = self.statsType
+        if self.statsType == 'manaShield' then
+            textureType = 'manashield'
+        end
+
+        local imagePath = '/images/bars/' .. self.statsOrientation .. '_' .. textureType .. '_progressbar_' .. self.statsSize
+        if self.statsType == 'manaShield' then
+            local hasShieldResource = g_resources.fileExists(imagePath) or g_resources.fileExists(imagePath .. '.png')
+            if not hasShieldResource then
+                imagePath = '/images/bars/' .. self.statsOrientation .. '_mana_progressbar_' .. self.statsSize
+            end
+        end
+
+        self.bar:setImageSource(imagePath)
     elseif self.statsType == 'experience' then
         self.bar:setImageSource('/images/bars/' .. self.statsOrientation .. '_experience_progressbar_' .. self.statsSize)
     elseif self.statsType == 'skill' then

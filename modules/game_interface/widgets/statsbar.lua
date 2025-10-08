@@ -297,10 +297,10 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
 
     ensureManaQuickInfo(bar)
 
-    local mana = player:getMana()
-    local maxMana = player:getMaxMana()
-    local manaShield = player:getManaShield()
-    local maxManaShield = player:getMaxManaShield()
+    local mana = player:getMana() or 0
+    local maxMana = player:getMaxMana() or 0
+    local manaShield = player:getManaShield() or 0
+    local maxManaShield = player:getMaxManaShield() or 0
 
     if bar.health then
         bar.health:setValue(player:getHealth(), player:getMaxHealth())
@@ -310,13 +310,10 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
         bar.mana:setValue(mana, maxMana)
 
         if bar.mana.manaInfoLabel then
-            local manaText = string.format('%s/%s', formatStatValue(mana), formatStatValue(maxMana))
+            local manaText = string.format('%s / %s', formatStatValue(mana), formatStatValue(maxMana))
+            local manaShieldText = string.format('%s / %s', formatStatValue(manaShield), formatStatValue(maxManaShield))
 
-            if maxManaShield > 0 then
-                manaText = string.format('%s (%s/%s)', manaText, formatStatValue(manaShield), formatStatValue(maxManaShield))
-            end
-
-            bar.mana.manaInfoLabel:setText(manaText)
+            bar.mana.manaInfoLabel:setText(string.format('%s (%s)', manaText, manaShieldText))
             bar.mana.manaInfoLabel:setVisible(true)
         end
 

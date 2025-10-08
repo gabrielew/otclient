@@ -194,7 +194,7 @@ function forgeController:showFusionResultModal(sourceItemId, targetItemId)
         self.fusionResultWindow:destroy()
     end
 
-    local modal = g_ui.displayUI('game_forge/otui/fusion_result_modal')
+    local modal = g_ui.displayUI('otui/fusion_result_modal')
     if not modal then
         return
     end

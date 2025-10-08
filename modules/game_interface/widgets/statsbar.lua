@@ -238,8 +238,26 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
         return
     end
 
-    bar.health:setValue(player:getHealth(), player:getMaxHealth())
-    bar.mana:setValue(player:getMana(), player:getMaxMana())
+    if bar.health then
+        bar.health:setValue(player:getHealth(), player:getMaxHealth())
+    end
+
+    if bar.mana then
+        bar.mana:setValue(player:getMana(), player:getMaxMana())
+    end
+
+    if bar.manaShield then
+        local manaShield = player:getManaShield()
+        local maxManaShield = player:getMaxManaShield()
+
+        if maxManaShield > 0 then
+            bar.manaShield:setVisible(true)
+            bar.manaShield:setValue(manaShield, maxManaShield)
+        else
+            bar.manaShield:setValue(0, 1)
+            bar.manaShield:setVisible(false)
+        end
+    end
 end
 
 local function loadIcon(bitChanged, content, topmenu)
@@ -378,6 +396,7 @@ function constructStatsBar(dimension, placement)
         statsBar[dimensionOnPlacement]:setPhantom(false)
         statsBar[dimensionOnPlacement].health = statsBar[dimensionOnPlacement]:getChildById('health')
         statsBar[dimensionOnPlacement].mana = statsBar[dimensionOnPlacement]:getChildById('mana')
+        statsBar[dimensionOnPlacement].manaShield = statsBar[dimensionOnPlacement]:getChildById('manaShield')
         statsBar[dimensionOnPlacement].skills = statsBar[dimensionOnPlacement]:getChildById('skills')
 
     reloadSkillsTab(statsBar[dimensionOnPlacement].skills, statsBar[dimensionOnPlacement])
@@ -600,6 +619,7 @@ function StatsBar.init()
         onLevelChange = StatsBar.reloadCurrentStatsBarDeepInfo,
         onHealthChange = StatsBar.reloadCurrentStatsBarQuickInfo,
         onManaChange = StatsBar.reloadCurrentStatsBarQuickInfo,
+        onManaShieldChange = StatsBar.reloadCurrentStatsBarQuickInfo,
         onMagicLevelChange = StatsBar.reloadCurrentStatsBarDeepInfo,
         onBaseMagicLevelChange = StatsBar.reloadCurrentStatsBarDeepInfo,
         onSkillChange = StatsBar.reloadCurrentStatsBarDeepInfo,

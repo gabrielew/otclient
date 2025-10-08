@@ -3,6 +3,15 @@ local statsBarBottom
 
 local statsBars = {}
 local statsBarDeepInfo = {}
+local statsBarHtmlContexts = {}
+
+local SKILL_WIDGET_TEMPLATE = [[
+  <uiwidget class="statsbar-skill %s">
+    <label data-role="level" class="statsbar-skill__level" text="99999"></label>
+    <uiwidget data-role="icon" class="statsbar-skill__icon"></uiwidget>
+    <uistatsbar data-role="bar" class="statsbar-skill__bar" statsbar-size="tiny" statsbar-orientation="horizontal" statsbar-text="false"></uistatsbar>
+  </uiwidget>
+]]
 
 -- If you want to add more placements/dimensions, you'll need to add them here.
 -- This is used in getStatsBarMenuOptions(), createStatsBarWidgets(), 
@@ -69,6 +78,24 @@ function getConfigurations()
     return configs
 end
 
+local function createSkillWidget(skills, className)
+    local htmlId = skills and skills:getHtmlId()
+    if not htmlId then
+        return nil
+    end
+
+    local widget = g_html.createWidgetFromHTML(string.format(SKILL_WIDGET_TEMPLATE, className), skills, htmlId)
+    if not widget then
+        return nil
+    end
+
+    widget.level = widget:querySelector('[data-role="level"]')
+    widget.icon = widget:querySelector('[data-role="icon"]')
+    widget.bar = widget:querySelector('[data-role="bar"]')
+
+    return widget
+end
+
 local function reloadSkillsTab(skills, parent)
     -- This method might need some refactoring if you want to add side stats bars.
     local player = g_game.getLocalPlayer()
@@ -98,20 +125,30 @@ local function reloadSkillsTab(skills, parent)
     local lastPlacement = 'left'
     for i = 1, #tuples do
         local skillTuple = tuples[i]
-        local widget = g_ui.createWidget('TopStatsSkillElement', skills)
-        widget:setId('statsbar_skill_' .. skillTuple.key)
-        widget:addAnchor(AnchorTop, 'parent', AnchorTop)
-        if lastPlacement == 'left' then
-            widget:setMarginTop(lines * skillsLineHeight)
+
+        local isFullWidth = skillTuple.placement == 'center' or (i == #tuples and lastPlacement == 'left')
+        local className
+        if isFullWidth then
+            className = 'statsbar-skill--full'
+        elseif lastPlacement == 'left' then
+            className = 'statsbar-skill--half-left'
         else
-            widget:setMarginTop((lines - 1) * skillsLineHeight)
+            className = 'statsbar-skill--half-right'
         end
-        widget.level = widget:getChildById('level')
-        widget.icon = widget:getChildById('icon')
-        widget.bar = widget:getChildById('bar')
+
+        local widget = createSkillWidget(skills, className)
+        if not widget or not widget.level or not widget.icon or not widget.bar then
+            if widget then
+                widget:destroy()
+            end
+            return
+        end
+
+        widget:setId('statsbar_skill_' .. skillTuple.key)
 
         widget.icon:setImageSource(skillTuple.icon)
         widget.icon:setTooltip(skillTuple.name)
+        widget.icon:setImageSize(tosize('9 9'))
 
         widget.bar.statsGrade = 4
         widget.bar.statsGradeColor = '#070707ff'
@@ -124,18 +161,13 @@ local function reloadSkillsTab(skills, parent)
             widget.bar.statsType = 'skill'
         end
 
-        if skillTuple.placement == 'center' or (i == #tuples and lastPlacement == 'left') then
-            widget:addAnchor(AnchorLeft, 'parent', AnchorLeft)
-            widget:addAnchor(AnchorRight, 'parent', AnchorRight)
+        if isFullWidth then
             lines = lines + 1
+            lastPlacement = 'left'
         elseif lastPlacement == 'left' then
-            widget:addAnchor(AnchorLeft, 'parent', AnchorLeft)
-            widget:addAnchor(AnchorRight, 'parent', AnchorHorizontalCenter)
             lines = lines + 1
             lastPlacement = 'right'
-        elseif lastPlacement == 'right' then
-            widget:addAnchor(AnchorRight, 'parent', AnchorRight)
-            widget:addAnchor(AnchorLeft, 'parent', AnchorHorizontalCenter)
+        else
             lastPlacement = 'left'
         end
 
@@ -560,6 +592,31 @@ function StatsBar.OnGameStart()
     modules.game_healthcircle.setStatsBarOption()
 end
 
+local function loadStatsBarContext(parent)
+    if not parent then
+        return nil
+    end
+
+    local htmlId = g_html.load('game_interface', 'widgets/statsbar.html', parent)
+    if not htmlId or htmlId == 0 then
+        return nil
+    end
+
+    local widget = g_html.getRootWidget(htmlId)
+    if not widget then
+        g_html.destroy(htmlId)
+        return nil
+    end
+
+    widget:setFocusable(false)
+
+    return {
+        container = parent,
+        widget = widget,
+        htmlId = htmlId
+    }
+end
+
 function createStatsBarWidgets(statsBar)
     -- This method will create the widgets based on the statsBar, statsBarsPlacements and statsBarsDimensions tables.
     local widget = statsBar
@@ -574,26 +631,33 @@ function createStatsBarWidgets(statsBar)
 end
 
 function StatsBar.init()
-    statsBarTop = modules.game_interface.getGameTopStatsBar()
-    statsBarBottom = modules.game_interface.getGameBottomStatsBar()
+    StatsBar.destroyAllBars()
+
+    local topContainer = modules.game_interface.getGameTopStatsBar()
+    local bottomContainer = modules.game_interface.getGameBottomStatsBar()
+
+    if not topContainer or not bottomContainer then
+        return
+    end
+
+    statsBarHtmlContexts.top = loadStatsBarContext(topContainer)
+    statsBarHtmlContexts.bottom = loadStatsBarContext(bottomContainer)
+
+    if not statsBarHtmlContexts.top or not statsBarHtmlContexts.bottom then
+        StatsBar.destroyAllBars()
+        return
+    end
+
+    statsBarHtmlContexts.top.widget = createStatsBarWidgets(statsBarHtmlContexts.top.widget)
+    statsBarHtmlContexts.bottom.widget = createStatsBarWidgets(statsBarHtmlContexts.bottom.widget)
+
+    statsBarTop = statsBarHtmlContexts.top.widget
+    statsBarBottom = statsBarHtmlContexts.bottom.widget
 
     statsBars = {
         statsBarTop = statsBarTop,
         statsBarBottom = statsBarBottom
     }
-
-    if not statsBarTop then
-        return
-    end
-
-    if not statsBarBottom then
-        return
-    end
-
-    -- Create widgets based on statsBars table.
-    for _, statBar in pairs(statsBars) do
-        statBar = createStatsBarWidgets(statBar)
-    end
 
     statsBarDeepInfo = {
         onExperienceChange = StatsBar.reloadCurrentStatsBarDeepInfo,
@@ -651,11 +715,19 @@ function StatsBar.destroyAllIcons()
 end
 
 function StatsBar.destroyAllBars()
-    -- This iterates between the tables: statsBars
-    -- And destroy all bars based on these tables.
-    for _, bar in pairs(statsBars) do
-        bar:destroy()
+    -- Destroy loaded HTML contexts and clear references.
+    for key, context in pairs(statsBarHtmlContexts) do
+        if context.htmlId then
+            g_html.destroy(context.htmlId)
+        elseif context.widget and not context.widget:isDestroyed() then
+            context.widget:destroy()
+        end
+        statsBarHtmlContexts[key] = nil
     end
+
+    statsBars = {}
+    statsBarTop = nil
+    statsBarBottom = nil
 end
 
 function StatsBar.terminate()

@@ -1,0 +1,238 @@
+<style>
+  .statsbar-root {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .statsbar-variant {
+    position: relative;
+    width: 100%;
+    background-image: url('/images/ui/background');
+    background-repeat: repeat;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+    padding: 4px 8px 6px;
+    box-sizing: border-box;
+    display: none;
+  }
+
+  .statsbar-variant[visible="true"] {
+    display: block;
+  }
+
+  .statsbar-variant.statsbar--large,
+  .statsbar-variant.statsbar--parallel,
+  .statsbar-variant.statsbar--default {
+    height: 35px;
+  }
+
+  .statsbar-variant.statsbar--compact {
+    height: 20px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  .statsbar-variant .statsbar-bars {
+    display: grid;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .statsbar-variant .statsbar-icons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .statsbar-variant .statsbar-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 6px;
+    width: 100%;
+  }
+
+  .statsbar-variant.statsbar--parallel .statsbar-skills,
+  .statsbar-variant.statsbar--default .statsbar-skills {
+    margin-top: 5px;
+  }
+
+  .statsbar-variant.statsbar--compact .statsbar-skills {
+    margin-top: 4px;
+  }
+
+  .statsbar-bar {
+    width: 100%;
+  }
+
+  .statsbar--large.statsbar--top .statsbar-bars {
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    column-gap: 14px;
+    padding: 3px 7px 0 7px;
+  }
+
+  .statsbar--large.statsbar--bottom .statsbar-bars {
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    column-gap: 14px;
+    padding: 7px 7px 0 7px;
+  }
+
+  .statsbar--large .statsbar-icons {
+    width: 75px;
+    height: 27px;
+  }
+
+  .statsbar--parallel .statsbar-bars {
+    grid-template-columns: 1fr;
+    row-gap: 5px;
+    padding: 5px 12px 0 12px;
+  }
+
+  .statsbar--parallel.statsbar--bottom .statsbar-bars {
+    padding-top: 8px;
+  }
+
+  .statsbar--parallel .statsbar-icons,
+  .statsbar--default .statsbar-icons {
+    width: 103px;
+    height: 14px;
+    margin: 5px auto 0 auto;
+  }
+
+  .statsbar--default .statsbar-bars {
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 10px;
+    padding: 5px 12px 0 12px;
+  }
+
+  .statsbar--default.statsbar--bottom .statsbar-bars {
+    padding-top: 8px;
+  }
+
+  .statsbar--compact .statsbar-bars {
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    column-gap: 14px;
+    padding: 4px 12px 0 12px;
+  }
+
+  .statsbar--compact .statsbar-icons {
+    width: 103px;
+    height: 14px;
+  }
+
+  .statsbar-skill {
+    display: flex;
+    align-items: center;
+    height: 20px;
+    gap: 7px;
+  }
+
+  .statsbar-skill__level {
+    width: 48px;
+    text-align: right;
+    color: #c0c0c0ff;
+  }
+
+  .statsbar-skill__icon {
+    width: 9px;
+    height: 9px;
+  }
+
+  .statsbar-skill__bar {
+    flex: 1;
+    height: 7px;
+    margin-left: 5px;
+  }
+
+  .statsbar-skill--full {
+    width: 100%;
+  }
+
+  .statsbar-skill--half-left,
+  .statsbar-skill--half-right {
+    width: calc(50% - 8px);
+  }
+
+  .statsbar-skill--half-right {
+    margin-left: auto;
+  }
+</style>
+<html>
+  <uiwidget class="statsbar-root" anchor="parent">
+    <uiwidget id="largeOnTop" class="statsbar-variant statsbar--large statsbar--top" visible="false" phantom="true" height="35">
+      <div class="statsbar-bars">
+        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="large" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="large" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+      </div>
+      <div id="skills" class="statsbar-skills"></div>
+    </uiwidget>
+
+    <uiwidget id="parallelOnTop" class="statsbar-variant statsbar--parallel statsbar--top" visible="false" phantom="true" height="35">
+      <div class="statsbar-bars">
+        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+      </div>
+      <div id="skills" class="statsbar-skills"></div>
+      <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+    </uiwidget>
+
+    <uiwidget id="defaultOnTop" class="statsbar-variant statsbar--default statsbar--top" visible="false" phantom="true" height="35">
+      <div class="statsbar-bars">
+        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+      </div>
+      <div id="skills" class="statsbar-skills"></div>
+      <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+    </uiwidget>
+
+    <uiwidget id="compactOnTop" class="statsbar-variant statsbar--compact statsbar--top" visible="false" phantom="true" height="20">
+      <div class="statsbar-bars">
+        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+      </div>
+      <div id="skills" class="statsbar-skills"></div>
+    </uiwidget>
+
+    <uiwidget id="largeOnBottom" class="statsbar-variant statsbar--large statsbar--bottom" visible="false" phantom="true" height="35">
+      <div class="statsbar-bars">
+        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="large" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="large" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+      </div>
+      <div id="skills" class="statsbar-skills"></div>
+    </uiwidget>
+
+    <uiwidget id="parallelOnBottom" class="statsbar-variant statsbar--parallel statsbar--bottom" visible="false" phantom="true" height="35">
+      <div class="statsbar-bars">
+        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+      </div>
+      <div id="skills" class="statsbar-skills"></div>
+      <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+    </uiwidget>
+
+    <uiwidget id="defaultOnBottom" class="statsbar-variant statsbar--default statsbar--bottom" visible="false" phantom="true" height="35">
+      <div class="statsbar-bars">
+        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+      </div>
+      <div id="skills" class="statsbar-skills"></div>
+      <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+    </uiwidget>
+
+    <uiwidget id="compactOnBottom" class="statsbar-variant statsbar--compact statsbar--bottom" visible="false" phantom="true" height="20">
+      <div class="statsbar-bars">
+        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+      </div>
+      <div id="skills" class="statsbar-skills"></div>
+    </uiwidget>
+  </uiwidget>
+</html>

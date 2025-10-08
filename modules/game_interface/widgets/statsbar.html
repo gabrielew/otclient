@@ -10,7 +10,7 @@
     width: 100%;
     background-image: url('/images/ui/background');
     background-repeat: repeat;
-    border: 1px solid rgba(0, 0, 0, 0.35);
+    border: 1px #00000059;
     padding: 4px 8px 6px;
     box-sizing: border-box;
     display: none;
@@ -165,74 +165,74 @@
   <uiwidget class="statsbar-root" anchor="parent">
     <uiwidget id="largeOnTop" class="statsbar-variant statsbar--large statsbar--top" visible="false" phantom="true" height="35">
       <div class="statsbar-bars">
-        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="large" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
-        <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
-        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="large" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar data-role="health" class="statsbar-bar" statsbar-type="health" statsbar-size="large" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <div data-role="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+        <uistatsbar data-role="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="large" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
       </div>
-      <div id="skills" class="statsbar-skills"></div>
+      <div data-role="skills" class="statsbar-skills"></div>
     </uiwidget>
 
     <uiwidget id="parallelOnTop" class="statsbar-variant statsbar--parallel statsbar--top" visible="false" phantom="true" height="35">
       <div class="statsbar-bars">
-        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
-        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar data-role="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar data-role="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
       </div>
-      <div id="skills" class="statsbar-skills"></div>
-      <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+      <div data-role="skills" class="statsbar-skills"></div>
+      <div data-role="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
     </uiwidget>
 
     <uiwidget id="defaultOnTop" class="statsbar-variant statsbar--default statsbar--top" visible="false" phantom="true" height="35">
       <div class="statsbar-bars">
-        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
-        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar data-role="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar data-role="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
       </div>
-      <div id="skills" class="statsbar-skills"></div>
-      <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+      <div data-role="skills" class="statsbar-skills"></div>
+      <div data-role="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
     </uiwidget>
 
     <uiwidget id="compactOnTop" class="statsbar-variant statsbar--compact statsbar--top" visible="false" phantom="true" height="20">
       <div class="statsbar-bars">
-        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
-        <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
-        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar data-role="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <div data-role="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+        <uistatsbar data-role="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
       </div>
-      <div id="skills" class="statsbar-skills"></div>
+      <div data-role="skills" class="statsbar-skills"></div>
     </uiwidget>
 
     <uiwidget id="largeOnBottom" class="statsbar-variant statsbar--large statsbar--bottom" visible="false" phantom="true" height="35">
       <div class="statsbar-bars">
-        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="large" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
-        <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
-        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="large" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar data-role="health" class="statsbar-bar" statsbar-type="health" statsbar-size="large" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <div data-role="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+        <uistatsbar data-role="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="large" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
       </div>
-      <div id="skills" class="statsbar-skills"></div>
+      <div data-role="skills" class="statsbar-skills"></div>
     </uiwidget>
 
     <uiwidget id="parallelOnBottom" class="statsbar-variant statsbar--parallel statsbar--bottom" visible="false" phantom="true" height="35">
       <div class="statsbar-bars">
-        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
-        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar data-role="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar data-role="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
       </div>
-      <div id="skills" class="statsbar-skills"></div>
-      <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+      <div data-role="skills" class="statsbar-skills"></div>
+      <div data-role="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
     </uiwidget>
 
     <uiwidget id="defaultOnBottom" class="statsbar-variant statsbar--default statsbar--bottom" visible="false" phantom="true" height="35">
       <div class="statsbar-bars">
-        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
-        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar data-role="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar data-role="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
       </div>
-      <div id="skills" class="statsbar-skills"></div>
-      <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+      <div data-role="skills" class="statsbar-skills"></div>
+      <div data-role="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
     </uiwidget>
 
     <uiwidget id="compactOnBottom" class="statsbar-variant statsbar--compact statsbar--bottom" visible="false" phantom="true" height="20">
       <div class="statsbar-bars">
-        <uistatsbar id="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
-        <div id="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
-        <uistatsbar id="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <uistatsbar data-role="health" class="statsbar-bar" statsbar-type="health" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
+        <div data-role="icons" class="statsbar-icons" image-source="/images/ui/containerslot" image-border="3" layout="type: horizontalBox"></div>
+        <uistatsbar data-role="mana" class="statsbar-bar" statsbar-type="mana" statsbar-size="small" statsbar-orientation="horizontal" statsbar-text="true"></uistatsbar>
       </div>
-      <div id="skills" class="statsbar-skills"></div>
+      <div data-role="skills" class="statsbar-skills"></div>
     </uiwidget>
   </uiwidget>
 </html>

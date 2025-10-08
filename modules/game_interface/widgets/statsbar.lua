@@ -5,6 +5,17 @@ local statsBars = {}
 local statsBarDeepInfo = {}
 local statsBarHtmlContexts = {}
 
+local function assignVariantElements(variant)
+    if not variant then
+        return
+    end
+
+    variant.health = variant:querySelector('[data-role="health"]')
+    variant.mana = variant:querySelector('[data-role="mana"]')
+    variant.skills = variant:querySelector('[data-role="skills"]')
+    variant.icons = variant:querySelector('[data-role="icons"]')
+end
+
 local SKILL_WIDGET_TEMPLATE = [[
   <uiwidget class="statsbar-skill %s">
     <label data-role="level" class="statsbar-skill__level" text="99999"></label>
@@ -403,20 +414,20 @@ function constructStatsBar(dimension, placement)
     local dimensionOnPlacement = dimensionString:gsub("^%u", string.lower) .. "On" .. placement:gsub("^%l", string.upper)
     local statsBar = statsBars["statsBar" .. placement:gsub("^%l", string.upper)]
 
-    if statsBar[dimensionOnPlacement] then
+    local variant = statsBar[dimensionOnPlacement]
+    assignVariantElements(variant)
+
+    if variant and variant.health and variant.mana and variant.skills then
         statsBar:setHeight(statsBarsDimensions[dimension].height)
-        statsBar[dimensionOnPlacement]:setHeight(statsBarsDimensions[dimension].height)
-        statsBar[dimensionOnPlacement]:show()
-        statsBar[dimensionOnPlacement]:setPhantom(false)
-        statsBar[dimensionOnPlacement].health = statsBar[dimensionOnPlacement]:getChildById('health')
-        statsBar[dimensionOnPlacement].mana = statsBar[dimensionOnPlacement]:getChildById('mana')
-        statsBar[dimensionOnPlacement].skills = statsBar[dimensionOnPlacement]:getChildById('skills')
+        variant:setHeight(statsBarsDimensions[dimension].height)
+        variant:show()
+        variant:setPhantom(false)
 
-    reloadSkillsTab(statsBar[dimensionOnPlacement].skills, statsBar[dimensionOnPlacement])
-    StatsBar.reloadCurrentStatsBarQuickInfo()
+        reloadSkillsTab(variant.skills, variant)
+        StatsBar.reloadCurrentStatsBarQuickInfo()
 
-    modules.game_healthcircle.setStatsBarOption()
-    else 
+        modules.game_healthcircle.setStatsBarOption()
+    else
         print("No stats bar found for:", dimensionOnPlacement .. " on constructStatsBar()")
     end
 end
@@ -621,10 +632,11 @@ function createStatsBarWidgets(statsBar)
     -- This method will create the widgets based on the statsBar, statsBarsPlacements and statsBarsDimensions tables.
     local widget = statsBar
     for _, placement in ipairs(statsBarsPlacements) do
-      for dimension, _ in pairs(statsBarsDimensions) do
-        local elementName = tostring(dimension):gsub("^%u", string.lower) .. "On" .. placement
-        widget[elementName] = statsBar:getChildById(elementName)
-      end
+        for dimension, _ in pairs(statsBarsDimensions) do
+            local elementName = tostring(dimension):gsub("^%u", string.lower) .. "On" .. placement
+            widget[elementName] = statsBar:getChildById(elementName)
+            assignVariantElements(widget[elementName])
+        end
     end
     widget.onMousePress = onStatsMousePress
     return widget
@@ -686,11 +698,16 @@ function StatsBar.hideAll()
         for _, placement in pairs(statsBarsPlacements) do
             for dimension, _ in pairs(statsBarsDimensions) do
                 local key = tostring(dimension):lower() .. "On" .. placement
-                if bar[key] and bar[key].skills then
-                    bar[key].skills:destroyChildren()
-                    bar[key].skills:setHeight(0)
-                    bar[key]:setHeight(0)
-                    bar[key]:hide()
+                local variant = bar[key]
+                if variant and variant.skills then
+                    variant.skills:destroyChildren()
+                    variant.skills:setHeight(0)
+                end
+
+                if variant then
+                    variant:setHeight(0)
+                    variant:hide()
+                    variant:setPhantom(true)
                 end
             end
         end
@@ -705,8 +722,9 @@ function StatsBar.destroyAllIcons()
         for _, placement in pairs(statsBarsPlacements) do
             for dimension, _ in pairs(statsBarsDimensions) do
                 local key = tostring(dimension):lower() .. "On" .. placement
-                if bar[key] and bar[key].skills then
-                    bar[key].icons:destroyChildren()
+                local variant = bar[key]
+                if variant and variant.icons then
+                    variant.icons:destroyChildren()
                 end
             end
         end

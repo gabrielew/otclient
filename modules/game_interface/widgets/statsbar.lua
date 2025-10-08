@@ -4,6 +4,63 @@ local statsBarBottom
 local statsBars = {}
 local statsBarDeepInfo = {}
 
+local function formatStatValue(value)
+    if type(comma_value) == 'function' then
+        return comma_value(value)
+    end
+
+    return tostring(value)
+end
+
+local function ensureManaQuickInfo(bar)
+    if not bar or not bar.mana then
+        return
+    end
+
+    local manaBar = bar.mana
+
+    manaBar.showText = false
+    if manaBar.text then
+        manaBar.text:setVisible(false)
+    end
+
+    if not manaBar.manaInfoLabel or manaBar.manaInfoLabel:isDestroyed() then
+        local label = g_ui.createWidget('Label', manaBar)
+        label:setId('manaInfoLabel')
+        label:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+        label:addAnchor(AnchorRight, 'parent', AnchorRight)
+        label:addAnchor(AnchorVerticalCenter, 'parent', AnchorVerticalCenter)
+        label:setMarginLeft(2)
+        label:setMarginRight(14)
+        label:setTextAlign(AlignCenter)
+        label:setColor('#ffffffff')
+        label:setFont('verdana-10px')
+        label:setPhantom(true)
+        manaBar.manaInfoLabel = label
+    end
+
+    if not manaBar.manaShieldIcon or manaBar.manaShieldIcon:isDestroyed() then
+        local icon = g_ui.createWidget('ConditionWidget', manaBar)
+        icon:setId('manaShieldQuickInfoIcon')
+        icon:addAnchor(AnchorVerticalCenter, 'parent', AnchorVerticalCenter)
+        icon:addAnchor(AnchorRight, 'parent', AnchorRight)
+        icon:setMarginRight(2)
+        icon:setPhantom(true)
+        icon:setVisible(false)
+
+        local shieldIcon = Icons[PlayerStates.ManaShield]
+        if shieldIcon then
+            icon:setImageSource('/images/game/states/player-state-flags')
+            icon:setImageClip(((shieldIcon.clip - 1) * 9) .. ' 0 9 9')
+            icon:setTooltip(shieldIcon.tooltip)
+        end
+
+        icon:setImageSize(tosize('9 9'))
+
+        manaBar.manaShieldIcon = icon
+    end
+end
+
 -- If you want to add more placements/dimensions, you'll need to add them here.
 -- This is used in getStatsBarMenuOptions(), createStatsBarWidgets(), 
 --                         hideAll() and destroyAllIcons() functions.
@@ -238,24 +295,48 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
         return
     end
 
+    ensureManaQuickInfo(bar)
+
+    local mana = player:getMana()
+    local maxMana = player:getMaxMana()
+    local manaShield = player:getManaShield()
+    local maxManaShield = player:getMaxManaShield()
+
     if bar.health then
         bar.health:setValue(player:getHealth(), player:getMaxHealth())
     end
 
     if bar.mana then
-        bar.mana:setValue(player:getMana(), player:getMaxMana())
+        bar.mana:setValue(mana, maxMana)
+
+        if bar.mana.manaInfoLabel then
+            local manaText = string.format('%s/%s', formatStatValue(mana), formatStatValue(maxMana))
+
+            if maxManaShield > 0 then
+                manaText = string.format('%s (%s/%s)', manaText, formatStatValue(manaShield), formatStatValue(maxManaShield))
+            end
+
+            bar.mana.manaInfoLabel:setText(manaText)
+            bar.mana.manaInfoLabel:setVisible(true)
+        end
+
+        if bar.mana.manaShieldIcon then
+            bar.mana.manaShieldIcon:setVisible(maxManaShield > 0)
+        end
     end
 
     if bar.manaShield then
-        local manaShield = player:getManaShield()
-        local maxManaShield = player:getMaxManaShield()
-
         if maxManaShield > 0 then
             bar.manaShield:setVisible(true)
             bar.manaShield:setValue(manaShield, maxManaShield)
         else
             bar.manaShield:setValue(0, 1)
             bar.manaShield:setVisible(false)
+        end
+
+        bar.manaShield.showText = false
+        if bar.manaShield.text then
+            bar.manaShield.text:setVisible(false)
         end
     end
 end
@@ -399,11 +480,11 @@ function constructStatsBar(dimension, placement)
         statsBar[dimensionOnPlacement].manaShield = statsBar[dimensionOnPlacement]:getChildById('manaShield')
         statsBar[dimensionOnPlacement].skills = statsBar[dimensionOnPlacement]:getChildById('skills')
 
-    reloadSkillsTab(statsBar[dimensionOnPlacement].skills, statsBar[dimensionOnPlacement])
-    StatsBar.reloadCurrentStatsBarQuickInfo()
+        reloadSkillsTab(statsBar[dimensionOnPlacement].skills, statsBar[dimensionOnPlacement])
+        StatsBar.reloadCurrentStatsBarQuickInfo()
 
-    modules.game_healthcircle.setStatsBarOption()
-    else 
+        modules.game_healthcircle.setStatsBarOption()
+    else
         print("No stats bar found for:", dimensionOnPlacement .. " on constructStatsBar()")
     end
 end

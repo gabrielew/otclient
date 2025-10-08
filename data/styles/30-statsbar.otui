@@ -352,7 +352,7 @@ TopStatsBarLargeOnTop < UIWidget
     !statsbar-type: 'mana'
     !statsbar-size: 'large'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     margin-right: 15
     margin-left: 7
 
@@ -365,7 +365,7 @@ TopStatsBarLargeOnTop < UIWidget
     !statsbar-type: 'manaShield'
     !statsbar-size: 'large'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     margin-right: 15
     margin-left: 7
 
@@ -405,7 +405,7 @@ TopStatsBarParallelOnTop < UIWidget
     !statsbar-type: 'mana'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     margin-top: 5
     height: 7
 
@@ -417,7 +417,7 @@ TopStatsBarParallelOnTop < UIWidget
     !statsbar-type: 'manaShield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     height: 7
 
   Panel
@@ -465,7 +465,7 @@ TopStatsBarDefaultOnTop < UIWidget
     !statsbar-type: 'mana'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     margin-right: 12
     margin-left: 5
     margin-top: 5
@@ -479,7 +479,7 @@ TopStatsBarDefaultOnTop < UIWidget
     !statsbar-type: 'manaShield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     height: 7
 
   Panel
@@ -538,7 +538,7 @@ TopStatsBarCompactOnTop < UIWidget
     !statsbar-type: 'mana'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     margin-right: 15
     margin-left: 7
 
@@ -551,7 +551,7 @@ TopStatsBarCompactOnTop < UIWidget
     !statsbar-type: 'manaShield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     margin-right: 15
     margin-left: 7
 
@@ -972,7 +972,7 @@ TopStatsBarLargeOnBottom < UIWidget
     !statsbar-type: 'mana'
     !statsbar-size: 'large'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     margin-left: 7
     margin-right: 7
     margin-top: 0
@@ -986,7 +986,7 @@ TopStatsBarLargeOnBottom < UIWidget
     !statsbar-type: 'manaShield'
     !statsbar-size: 'large'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     margin-left: 7
     margin-right: 7
 
@@ -1025,7 +1025,7 @@ TopStatsBarParallelOnBottom < UIWidget
     !statsbar-type: 'mana'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     margin-top: 8
     height: 7
 
@@ -1037,7 +1037,7 @@ TopStatsBarParallelOnBottom < UIWidget
     !statsbar-type: 'manaShield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     height: 7
 
   Panel
@@ -1084,7 +1084,7 @@ TopStatsBarDefaultOnBottom < UIWidget
     !statsbar-type: 'mana'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     margin-left: 7
     margin-right: 7
     margin-top: 8
@@ -1098,7 +1098,7 @@ TopStatsBarDefaultOnBottom < UIWidget
     !statsbar-type: 'manaShield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     height: 7
 
   Panel
@@ -1156,7 +1156,7 @@ TopStatsBarCompactOnBottom < UIWidget
     !statsbar-type: 'mana'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     margin-left: 7
     margin-right: 7
 
@@ -1169,7 +1169,7 @@ TopStatsBarCompactOnBottom < UIWidget
     !statsbar-type: 'manaShield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
-    statsbar-text: true
+    statsbar-text: false
     margin-left: 7
     margin-right: 7
 

@@ -1,3 +1,10 @@
+local Controller = rawget(_G, 'Controller') or require('modulelib/controller')
+local statsBarHtmlController = rawget(_G, '__statsBarHtmlController')
+if not statsBarHtmlController then
+    statsBarHtmlController = Controller:new()
+    rawset(_G, '__statsBarHtmlController', statsBarHtmlController)
+end
+
 local statsBarTop
 local statsBarBottom
 

@@ -105,12 +105,12 @@ function getConfigurations()
 end
 
 local function createSkillWidget(skills, className)
-    local htmlId = skills and skills:getHtmlId()
-    if not htmlId then
+    local htmlRootId = skills and skills:getHtmlRootId()
+    if not htmlRootId then
         return nil
     end
 
-    local widget = g_html.createWidgetFromHTML(string.format(SKILL_WIDGET_TEMPLATE, className), skills, htmlId)
+    local widget = g_html.createWidgetFromHTML(string.format(SKILL_WIDGET_TEMPLATE, className), skills, htmlRootId)
     if not widget then
         return nil
     end

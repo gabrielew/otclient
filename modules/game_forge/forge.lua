@@ -5,17 +5,34 @@ conversionMenu = nil
 historyMenu = nil
 resultWindow = nil
 
+local function appendOtuiExtension(path)
+  if path:sub(-5) == '.otui' then
+    return path
+  end
+  return path .. '.otui'
+end
+
 local function instantiateWidget(styleName, uiPath, parent, expectedId)
   local widget = g_ui.createWidget(styleName, parent)
   if widget then
     return widget
   end
 
-  g_logger.warning(string.format("Failed to create widget '%s' from style, attempting to load UI '%s'", styleName, uiPath))
+  local resolvedUiPath = uiPath
+  g_logger.warning(string.format("Failed to create widget '%s' from style, attempting to load UI '%s'", styleName, resolvedUiPath))
 
-  local fallbackRoot = g_ui.loadUI(uiPath, parent)
+  local fallbackRoot = g_ui.loadUI(resolvedUiPath, parent)
+
   if not fallbackRoot then
-    g_logger.error(string.format("Unable to load fallback UI '%s' for widget '%s'", uiPath, styleName))
+    resolvedUiPath = appendOtuiExtension(uiPath)
+    if resolvedUiPath ~= uiPath then
+      g_logger.warning(string.format("Retrying fallback load for widget '%s' using '%s'", styleName, resolvedUiPath))
+      fallbackRoot = g_ui.loadUI(resolvedUiPath, parent)
+    end
+  end
+
+  if not fallbackRoot then
+    g_logger.error(string.format("Unable to load fallback UI '%s' for widget '%s'", resolvedUiPath, styleName))
     return nil
   end
 

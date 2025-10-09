@@ -158,7 +158,7 @@ NewMainWindow
     image-source: /images/ui/progress
     image-border: 7
     Panel
-      image-source: images/icon-currency-sliver
+      image-source: /images/game/forge/ui/icon-currency-sliver
       anchors.right: parent.right
       anchors.top: parent.top
       margin-top: 5

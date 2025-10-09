@@ -80,7 +80,7 @@ ConvertionSliverWindow < WindowPanel
       color: #d33c3c
     Panel
       id: img
-      image-source: images/icon-currency-sliver
+      image-source: /images/game/forge/ui/icon-currency-sliver
       anchors.left: prev.right
       anchors.top: parent.top
       margin-top: 5
@@ -97,7 +97,7 @@ ItemConvertButton < UIButton
   image-source: /images/ui/bigger-button-grey-qt
   enabled: false
 
-Panel
+ConversionMenu < Panel
   id: conversionMenu
   anchors.fill: parent
   ConvertionWindow
@@ -152,7 +152,7 @@ Panel
       color: #ffffff
     Panel
       size: 9 9
-      image-source: images/icon-currency-sliver
+      image-source: /images/game/forge/ui/icon-currency-sliver
       anchors.left: prev.right
       anchors.top: prev.top
       margin-top: 3
@@ -336,5 +336,5 @@ Panel
     anchors.left: parent.left
     anchors.right: parent.right
     margin-top: 5
-    image-source: /images/ui/2pixel-up-frame-borderimage
+    image-source: /images/game/actionbar/2pixel-up-frame-borderimage
     image-border: 3

@@ -5,28 +5,63 @@ conversionMenu = nil
 historyMenu = nil
 resultWindow = nil
 
+local function instantiateWidget(styleName, uiPath, parent, expectedId)
+  local widget = g_ui.createWidget(styleName, parent)
+  if widget then
+    return widget
+  end
+
+  g_logger.warning(string.format("Failed to create widget '%s' from style, attempting to load UI '%s'", styleName, uiPath))
+
+  local fallbackRoot = g_ui.loadUI(uiPath, parent)
+  if not fallbackRoot then
+    g_logger.error(string.format("Unable to load fallback UI '%s' for widget '%s'", uiPath, styleName))
+    return nil
+  end
+
+  if not expectedId or fallbackRoot:getId() == expectedId then
+    return fallbackRoot
+  end
+
+  local resolved = fallbackRoot:recursiveGetChildById(expectedId)
+  if resolved then
+    return resolved
+  end
+
+  g_logger.error(string.format("Widget '%s' not found inside fallback UI '%s'", expectedId, uiPath))
+  return nil
+end
+
 selectedItemFusionRadio = nil
 selectedConvergenceFusionRadio = nil
 selectedItemFusionConvectionRadio = nil
 
 function init()
   g_ui.importStyle('styles/compat')
+  g_ui.importStyle('styles/fusion')
+  g_ui.importStyle('styles/transfer')
+  g_ui.importStyle('styles/conversion')
+  g_ui.importStyle('styles/history')
+  g_ui.importStyle('styles/result')
+
   forgeWindow = g_ui.displayUI('forge')
   mainPanel = forgeWindow:getChildById('contentPanel')
 
-  fusionMenu = g_ui.loadUI('styles/fusion', mainPanel)
+  fusionMenu = instantiateWidget('FusionMenu', 'styles/fusion', mainPanel, 'fusionMenu')
+  transferMenu = instantiateWidget('TransferMenu', 'styles/transfer', mainPanel, 'transferMenu')
+  conversionMenu = instantiateWidget('ConversionMenu', 'styles/conversion', mainPanel, 'conversionMenu')
+  historyMenu = instantiateWidget('HistoryMenu', 'styles/history', mainPanel, 'historyMenu')
+  resultWindow = instantiateWidget('ResultMainWindow', 'styles/result', g_ui.getRootWidget(), 'resultMainWindow')
+
+  if not fusionMenu or not transferMenu or not conversionMenu or not historyMenu or not resultWindow then
+    g_logger.error('Failed to initialize forge menus; aborting module setup')
+    return
+  end
+
   fusionMenu:hide()
-
-  transferMenu = g_ui.loadUI('styles/transfer', mainPanel)
   transferMenu:hide()
-
-  conversionMenu = g_ui.loadUI('styles/conversion', mainPanel)
   conversionMenu:hide()
-
-  historyMenu = g_ui.loadUI('styles/history', mainPanel)
   historyMenu:hide()
-
-  resultWindow = g_ui.displayUI('styles/result')
   resultWindow:hide()
 
   loadMenu('fusionMenu')

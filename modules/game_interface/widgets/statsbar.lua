@@ -4,6 +4,172 @@ local statsBarBottom
 local statsBars = {}
 local statsBarDeepInfo = {}
 
+local progressBasePath = '/images/game/topbar/progress/'
+
+local function getNormalizedTotal(current, total)
+    if total and total > 0 then
+        return total
+    end
+
+    if current and current > 0 then
+        return current
+    end
+
+    return 1
+end
+
+local function pushUniqueValue(list, value)
+    for _, candidate in ipairs(list) do
+        if candidate == value then
+            return
+        end
+    end
+
+    table.insert(list, value)
+end
+
+local function buildProgressImagePath(barType, manaWidget)
+    if not manaWidget then
+        return nil
+    end
+
+    local orientationSuffix = (manaWidget.statsOrientation == 'vertical') and '-vertical' or ''
+    local statsSize = manaWidget.statsSize and string.lower(manaWidget.statsSize) or nil
+    local sizeCandidates = {}
+
+    if statsSize then
+        pushUniqueValue(sizeCandidates, statsSize)
+    end
+    pushUniqueValue(sizeCandidates, 'large')
+    pushUniqueValue(sizeCandidates, 'small')
+
+    for _, candidate in ipairs(sizeCandidates) do
+        local imagePath = string.format('%s%s-progressbar-%s-100%s', progressBasePath, barType, candidate, orientationSuffix)
+        if g_resources and g_resources.fileExists(imagePath .. '.png') then
+            return imagePath
+        end
+    end
+
+    return nil
+end
+
+local function ensureManaShieldBar(manaWidget)
+    if not manaWidget then
+        return nil
+    end
+
+    if manaWidget.manaShieldBar and not manaWidget.manaShieldBar:isDestroyed() then
+        return manaWidget.manaShieldBar
+    end
+
+    local shieldBar = manaWidget:getChildById('manaShieldBar')
+    if not shieldBar then
+        shieldBar = g_ui.createWidget('UIWidget', manaWidget)
+        shieldBar:setId('manaShieldBar')
+        shieldBar:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+        shieldBar:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+        shieldBar:setMarginLeft(1)
+        shieldBar:setMarginBottom(1)
+        shieldBar:setImageRepeated(true)
+        shieldBar:setVisible(false)
+        shieldBar:lower()
+    end
+
+    manaWidget.manaShieldBar = shieldBar
+    return shieldBar
+end
+
+local function resetManaBarLayout(manaWidget)
+    if not manaWidget or not manaWidget.bar then
+        return
+    end
+
+    if manaWidget.manaShieldBar then
+        manaWidget.manaShieldBar:setVisible(false)
+    end
+
+    if manaWidget._defaultBarMarginBottom then
+        manaWidget.bar:setMarginBottom(manaWidget._defaultBarMarginBottom)
+    end
+end
+
+local function updateManaWidgetWithShield(manaWidget, mana, maxMana, manaShield, maxManaShield)
+    if not manaWidget then
+        return
+    end
+
+    local effectiveMaxMana = getNormalizedTotal(mana, maxMana)
+    manaWidget:setValue(mana, effectiveMaxMana)
+    local textMaxMana = (maxMana and maxMana > 0) and maxMana or effectiveMaxMana
+
+    local textWidget = manaWidget.text
+    if not textWidget then
+        return
+    end
+
+    local player = g_game.getLocalPlayer()
+    local hasMagicShield = player and player:useMagicShield()
+
+    if not hasMagicShield then
+        textWidget:setText(string.format("%d/%d", mana, textMaxMana))
+        resetManaBarLayout(manaWidget)
+        return
+    end
+
+    local manaBar = manaWidget.bar
+    if not manaBar then
+        textWidget:setText(string.format("%d/%d", mana, textMaxMana))
+        return
+    end
+
+    manaWidget._defaultBarMarginBottom = manaWidget._defaultBarMarginBottom or manaBar:getMarginBottom()
+
+    local effectiveMaxShield = getNormalizedTotal(manaShield, maxManaShield)
+
+    local manaImage = buildProgressImagePath('manashield', manaWidget)
+    local shieldImage = buildProgressImagePath('shieldmana', manaWidget)
+    if not manaImage or not shieldImage then
+        textWidget:setText(string.format("%d/%d (%d/%d@)", mana, textMaxMana, manaShield, effectiveMaxShield))
+        resetManaBarLayout(manaWidget)
+        return
+    end
+
+    manaBar:setImageSource(manaImage)
+
+    local shieldBar = ensureManaShieldBar(manaWidget)
+    if not shieldBar then
+        textWidget:setText(string.format("%d/%d (%d/%d@)", mana, textMaxMana, manaShield, maxManaShield))
+        return
+    end
+
+    local availableWidth = math.max(0, manaWidget:getWidth() - 2)
+    local availableHeight = math.max(0, manaWidget:getHeight() - 2)
+    local shieldTrackHeight = math.max(1, math.min(availableHeight, math.floor(availableHeight * 0.35)))
+
+    manaBar:setMarginBottom(manaWidget._defaultBarMarginBottom + shieldTrackHeight)
+
+    shieldBar:setVisible(true)
+    shieldBar:setHeight(shieldTrackHeight)
+    shieldBar:setWidth(availableWidth)
+    shieldBar:setImageSource(shieldImage)
+    shieldBar:setImageClip({
+        x = 0,
+        y = 0,
+        width = availableWidth,
+        height = shieldTrackHeight
+    })
+
+    local shieldPercent = math.max(0, math.min(1, (manaShield or 0) / effectiveMaxShield))
+    shieldBar:setImageRect({
+        x = 0,
+        y = 0,
+        width = math.floor(availableWidth * shieldPercent),
+        height = shieldTrackHeight
+    })
+
+    textWidget:setText(string.format("%d/%d (%d/%d@)", mana, textMaxMana, manaShield, effectiveMaxShield))
+end
+
 -- If you want to add more placements/dimensions, you'll need to add them here.
 -- This is used in getStatsBarMenuOptions(), createStatsBarWidgets(), 
 --                         hideAll() and destroyAllIcons() functions.
@@ -238,8 +404,17 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
         return
     end
 
-    bar.health:setValue(player:getHealth(), player:getMaxHealth())
-    bar.mana:setValue(player:getMana(), player:getMaxMana())
+    if bar.health then
+        local health = player:getHealth()
+        local maxHealth = player:getMaxHealth()
+        bar.health:setValue(health, getNormalizedTotal(health, maxHealth))
+    end
+
+    local mana = player:getMana()
+    local maxMana = player:getMaxMana()
+    local manaShield = player:getManaShield()
+    local maxManaShield = player:getMaxManaShield()
+    updateManaWidgetWithShield(bar.mana, mana, maxMana, manaShield, maxManaShield)
 end
 
 local function loadIcon(bitChanged, content, topmenu)
@@ -297,6 +472,10 @@ local function toggleIcon(bitChanged)
             icon = loadIcon(bitChanged, contentData.content, contentData.loadIconTransparent)
             icon:setParent(contentData.content)
         end
+    end
+
+    if bitChanged == PlayerStates.ManaShield or bitChanged == PlayerStates.NewManaShield then
+        StatsBar.reloadCurrentStatsBarQuickInfo()
     end
 end
 
@@ -600,6 +779,7 @@ function StatsBar.init()
         onLevelChange = StatsBar.reloadCurrentStatsBarDeepInfo,
         onHealthChange = StatsBar.reloadCurrentStatsBarQuickInfo,
         onManaChange = StatsBar.reloadCurrentStatsBarQuickInfo,
+        onManaShieldChange = StatsBar.reloadCurrentStatsBarQuickInfo,
         onMagicLevelChange = StatsBar.reloadCurrentStatsBarDeepInfo,
         onBaseMagicLevelChange = StatsBar.reloadCurrentStatsBarDeepInfo,
         onSkillChange = StatsBar.reloadCurrentStatsBarDeepInfo,

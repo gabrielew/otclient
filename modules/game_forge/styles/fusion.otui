@@ -5,7 +5,7 @@ TierItem < UIItem
     id: tierflags
     visible: false
     size: 18 16
-    image-source: /images/game/items/tiers-strip-big
+    image-source: /images/inventory/tiers-strip-big
     image-clip: 0 0 18 16
     anchors.top: parent.top
     anchors.right: parent.right
@@ -116,9 +116,9 @@ Panel
         id: convergenceCheckBox
         size: 12 12
         !text: tr('Convergence')
-        font: $var-cip-font
+        
         text-auto-resize: true
-        color: $var-text-cip-color
+        color: #ffffff
         text-offset: 14 -2
         anchors.bottom: parent.bottom
         anchors.left: parent.left
@@ -232,7 +232,7 @@ Panel
         margin-top: 4
         text-auto-resize: true
       Panel
-        image-source: /images/store/icon-currency-dust
+        image-source: images/icon-currency-dust
         anchors.left: prev.right
         anchors.top: parent.top
         margin-top: 7
@@ -240,7 +240,7 @@ Panel
     Label
       id: successRate
       !text: tr('Success Rate: ')
-      color: $var-text-cip-color
+      color: #ffffff
       anchors.top: parent.top
       anchors.left: prev.right
       width: 80
@@ -278,7 +278,7 @@ Panel
       image-source: /images/ui/progress
       image-border: 7
       Panel
-        image-source: /images/store/icon-currency-exaltedcore
+        image-source: images/icon-currency-exaltedcore
         anchors.right: parent.right
         anchors.top: parent.top
         margin-top: 5
@@ -295,7 +295,7 @@ Panel
 
     Label
       !text: tr('Tier Loss: ')
-      color: $var-text-cip-color
+      color: #ffffff
       anchors.top: prev.bottom
       anchors.left: dustCount.right
       width: 80
@@ -333,7 +333,7 @@ Panel
       image-source: /images/ui/progress
       image-border: 7
       Panel
-        image-source: /images/store/icon-currency-exaltedcore
+        image-source: images/icon-currency-exaltedcore
         anchors.right: parent.right
         anchors.top: parent.top
         margin-top: 5
@@ -405,7 +405,7 @@ Panel
           id: tierflags
           visible: false
           size: 9 8
-          image-source: /images/game/items/tiers-strip
+          image-source: /images/inventory/tiers-strip
           image-clip: 0 0 9 8
           anchors.top: parent.top
           anchors.right: parent.right
@@ -442,7 +442,7 @@ Panel
           id: tierflags
           visible: false
           size: 9 8
-          image-source: /images/game/items/tiers-strip
+          image-source: /images/inventory/tiers-strip
           image-clip: 0 0 9 8
           anchors.top: parent.top
           anchors.right: parent.right
@@ -481,7 +481,7 @@ Panel
         margin-top: 1
         text-auto-resize: true
         text-align: center
-        font: $var-cip-font-wheel
+        -wheel
         color: #d33c3c
 
   Panel
@@ -552,7 +552,7 @@ Panel
         image-source: /images/ui/progress
         image-border: 7
         Panel
-          image-source: /images/store/icon-currency-dust
+          image-source: images/icon-currency-dust
           anchors.right: parent.right
           anchors.top: parent.top
           margin-top: 8
@@ -622,7 +622,7 @@ Panel
             id: tierflags
             visible: false
             size: 9 8
-            image-source: /images/game/items/tiers-strip
+            image-source: /images/inventory/tiers-strip
             image-clip: 0 0 9 8
             anchors.top: parent.top
             anchors.right: parent.right
@@ -659,7 +659,7 @@ Panel
             id: tierflags
             visible: false
             size: 9 8
-            image-source: /images/game/items/tiers-strip
+            image-source: /images/inventory/tiers-strip
             image-clip: 0 0 9 8
             anchors.top: parent.top
             anchors.right: parent.right
@@ -697,7 +697,7 @@ Panel
           margin-top: 1
           text-auto-resize: true
           text-align: center
-          font: $var-cip-font-wheel
+          -wheel
           color: #d33c3c
 
   FlatLabel
@@ -710,5 +710,5 @@ Panel
     image-source: /images/ui/2pixel-up-frame-borderimage
     image-border: 3
     font: pVerdana Bold-11px
-    color: $var-text-cip-color
+    color: #ffffff
     text-offset: 4 0

@@ -60,8 +60,8 @@ Panel
     id: dateButton
     size: 149 16
     text: Date
-    color: $var-text-cip-color
-    font: $var-cip-font
+    color: #ffffff
+    
     text-offset: 1 -1
     text-align: leftCenter
     anchors.top: historyList.top
@@ -85,8 +85,8 @@ Panel
     id: actionButton
     size: 95 16
     text: Action
-    font: $var-cip-font
-    color: $var-text-cip-color
+    
+    color: #ffffff
     text-offset: 4 -1
     text-align: leftCenter
     anchors.top: historyList.top
@@ -110,8 +110,8 @@ Panel
     id: detailsButton
     size: 219 16
     text: Details
-    font: $var-cip-font
-    color: $var-text-cip-color
+    
+    color: #ffffff
     text-offset: 4 -1
     text-align: leftCenter
     anchors.top: historyList.top

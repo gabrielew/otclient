@@ -106,7 +106,7 @@ NewMainWindow
     image-source: /images/ui/progress
     image-border: 7
     Panel
-      image-source: /images/store/icon-goldcoin
+      image-source: /images/game/prey/prey_gold
       anchors.right: parent.right
       anchors.top: parent.top
       margin-top: 6
@@ -118,8 +118,8 @@ NewMainWindow
       anchors.right: prev.left
       margin-right: 5
       margin-top: 3
-      font: $var-cip-font
-      color: $var-text-cip-color
+      
+      color: #ffffff
       text-auto-resize: true
 
   Panel
@@ -132,7 +132,7 @@ NewMainWindow
     image-source: /images/ui/progress
     image-border: 7
     Panel
-      image-source: /images/store/icon-currency-dust
+      image-source: images/icon-currency-dust
       anchors.right: parent.right
       anchors.top: parent.top
       margin-top: 8
@@ -144,8 +144,8 @@ NewMainWindow
       anchors.right: prev.left
       margin-right: 5
       margin-top: 3
-      font: $var-cip-font
-      color: $var-text-cip-color
+      
+      color: #ffffff
       text-auto-resize: true
 
   Panel
@@ -158,7 +158,7 @@ NewMainWindow
     image-source: /images/ui/progress
     image-border: 7
     Panel
-      image-source: /images/store/icon-currency-sliver
+      image-source: images/icon-currency-sliver
       anchors.right: parent.right
       anchors.top: parent.top
       margin-top: 5
@@ -170,8 +170,8 @@ NewMainWindow
       anchors.right: prev.left
       margin-right: 5
       margin-top: 3
-      font: $var-cip-font
-      color: $var-text-cip-color
+      
+      color: #ffffff
       text-auto-resize: true
 
   Panel
@@ -184,7 +184,7 @@ NewMainWindow
     image-source: /images/ui/progress
     image-border: 7
     Panel
-      image-source: /images/store/icon-currency-exaltedcore
+      image-source: images/icon-currency-exaltedcore
       anchors.right: parent.right
       anchors.top: parent.top
       margin-top: 5
@@ -196,8 +196,8 @@ NewMainWindow
       anchors.right: prev.left
       margin-right: 5
       margin-top: 3
-      font: $var-cip-font
-      color: $var-text-cip-color
+      
+      color: #ffffff
       text-auto-resize: true
 
   Button

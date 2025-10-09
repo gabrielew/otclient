@@ -12,40 +12,41 @@ local function appendOtuiExtension(path)
   return path .. '.otui'
 end
 
-local function instantiateWidget(styleName, uiPath, parent, expectedId)
+local function tryImportStyle(uiPath)
+  if g_ui.importStyle(uiPath) then
+    return true
+  end
+
+  g_logger.warning(string.format("Failed to import styles from '%s'", uiPath))
+
+  local resolvedPath = appendOtuiExtension(uiPath)
+  if resolvedPath ~= uiPath then
+    g_logger.warning(string.format("Retrying style import using '%s'", resolvedPath))
+    if g_ui.importStyle(resolvedPath) then
+      return true
+    end
+  end
+
+  g_logger.error(string.format("Failed to import styles from '%s' even after retrying", uiPath))
+  return false
+end
+
+local function instantiateWidget(styleName, uiPath, parent)
   local widget = g_ui.createWidget(styleName, parent)
   if widget then
     return widget
   end
 
-  local resolvedUiPath = uiPath
-  g_logger.warning(string.format("Failed to create widget '%s' from style, attempting to load UI '%s'", styleName, resolvedUiPath))
+  g_logger.warning(string.format("Failed to create widget '%s' from style, attempting to re-import styles from '%s'", styleName, uiPath))
 
-  local fallbackRoot = g_ui.loadUI(resolvedUiPath, parent)
-
-  if not fallbackRoot then
-    resolvedUiPath = appendOtuiExtension(uiPath)
-    if resolvedUiPath ~= uiPath then
-      g_logger.warning(string.format("Retrying fallback load for widget '%s' using '%s'", styleName, resolvedUiPath))
-      fallbackRoot = g_ui.loadUI(resolvedUiPath, parent)
+  if tryImportStyle(uiPath) then
+    widget = g_ui.createWidget(styleName, parent)
+    if widget then
+      return widget
     end
   end
 
-  if not fallbackRoot then
-    g_logger.error(string.format("Unable to load fallback UI '%s' for widget '%s'", resolvedUiPath, styleName))
-    return nil
-  end
-
-  if not expectedId or fallbackRoot:getId() == expectedId then
-    return fallbackRoot
-  end
-
-  local resolved = fallbackRoot:recursiveGetChildById(expectedId)
-  if resolved then
-    return resolved
-  end
-
-  g_logger.error(string.format("Widget '%s' not found inside fallback UI '%s'", expectedId, uiPath))
+  g_logger.error(string.format("Unable to create widget '%s' even after re-importing styles", styleName))
   return nil
 end
 
@@ -54,21 +55,21 @@ selectedConvergenceFusionRadio = nil
 selectedItemFusionConvectionRadio = nil
 
 function init()
-  g_ui.importStyle('styles/compat')
-  g_ui.importStyle('styles/fusion')
-  g_ui.importStyle('styles/transfer')
-  g_ui.importStyle('styles/conversion')
-  g_ui.importStyle('styles/history')
-  g_ui.importStyle('styles/result')
+  tryImportStyle('styles/compat')
+  tryImportStyle('styles/fusion')
+  tryImportStyle('styles/transfer')
+  tryImportStyle('styles/conversion')
+  tryImportStyle('styles/history')
+  tryImportStyle('styles/result')
 
   forgeWindow = g_ui.displayUI('forge')
   mainPanel = forgeWindow:getChildById('contentPanel')
 
-  fusionMenu = instantiateWidget('FusionMenu', 'styles/fusion', mainPanel, 'fusionMenu')
-  transferMenu = instantiateWidget('TransferMenu', 'styles/transfer', mainPanel, 'transferMenu')
-  conversionMenu = instantiateWidget('ConversionMenu', 'styles/conversion', mainPanel, 'conversionMenu')
-  historyMenu = instantiateWidget('HistoryMenu', 'styles/history', mainPanel, 'historyMenu')
-  resultWindow = instantiateWidget('ResultMainWindow', 'styles/result', g_ui.getRootWidget(), 'resultMainWindow')
+  fusionMenu = instantiateWidget('FusionMenu', 'styles/fusion', mainPanel)
+  transferMenu = instantiateWidget('TransferMenu', 'styles/transfer', mainPanel)
+  conversionMenu = instantiateWidget('ConversionMenu', 'styles/conversion', mainPanel)
+  historyMenu = instantiateWidget('HistoryMenu', 'styles/history', mainPanel)
+  resultWindow = instantiateWidget('ResultMainWindow', 'styles/result', g_ui.getRootWidget())
 
   if not fusionMenu or not transferMenu or not conversionMenu or not historyMenu or not resultWindow then
     g_logger.error('Failed to initialize forge menus; aborting module setup')

@@ -1,0 +1,125 @@
+<link href="game_forge.css" />
+<html>
+  <window
+    id="forgeResultWindow"
+    class="forge-result-window"
+    title="Fusion Result"
+    focusable="true"
+    size="401 201"
+    anchors.horizontalCenter="parent.horizontalCenter"
+    onescape="self:onResultClose()"
+  >
+    <UIWidget
+      class="forge-result-header"
+      size="192 70"
+      anchors.top="parent.top"
+      anchors.horizontalCenter="parent.horizontalCenter"
+      margin-top="-85"
+      image-source="/images/ui/dragon-animated"
+    ></UIWidget>
+    <div id="forgeResultContent" class="forge-result-content">
+      <div id="fusionResultBody" class="forge-result-body">
+        <div class="forge-result-items">
+          <div class="forge-result-item-card" id="fusionResultTransfer">
+            <UIItem
+              id="fusionResultTransferItem"
+              class="forge-result-tier-item"
+              shader="item_print_white"
+            ></UIItem>
+            <img
+              id="fusionResultTransferTier"
+              class="forge-result-tier-flag"
+              src="/images/inventory/tiers-strip.png"
+              visible="false"
+            />
+            <label
+              id="fusionResultTransferTierValue"
+              class="forge-result-tier-value"
+              visible="false"
+            ></label>
+          </div>
+          <div class="forge-result-arrows" id="fusionResultArrowPanel">
+            <UIWidget
+              id="fusionResultArrow1"
+              class="forge-result-arrow"
+              image-source="/images/arrows/icon-arrow-rightlarge"
+            ></UIWidget>
+            <UIWidget
+              id="fusionResultArrow2"
+              class="forge-result-arrow"
+              image-source="/images/arrows/icon-arrow-rightlarge"
+            ></UIWidget>
+            <UIWidget
+              id="fusionResultArrow3"
+              class="forge-result-arrow"
+              image-source="/images/arrows/icon-arrow-rightlarge"
+            ></UIWidget>
+          </div>
+          <div class="forge-result-item-card" id="fusionResultRecv">
+            <UIItem
+              id="fusionResultRecvItem"
+              class="forge-result-tier-item"
+              shader="item_black_white"
+            ></UIItem>
+            <img
+              id="fusionResultRecvTier"
+              class="forge-result-tier-flag"
+              src="/images/inventory/tiers-strip.png"
+              visible="false"
+            />
+            <label
+              id="fusionResultRecvTierValue"
+              class="forge-result-tier-value"
+              visible="false"
+            ></label>
+          </div>
+        </div>
+        <label id="fusionResultLabel" class="forge-result-message"></label>
+        <hr class="separator HorizontalSeparator" />
+        <div class="forge-result-action-area">
+          <UIButton
+            id="fusionResultActionButton"
+            class="forge-action-button forge-result-action-button"
+            font="cipsoftFont"
+            text="Close"
+            onclick="self:onResultActionClicked()"
+          >
+            <UIWidget
+              id="fusionResultButtonOverlay"
+              class="forge-result-button-overlay"
+              image-source="/images/ui/ditherpattern"
+              image-border="3"
+            ></UIWidget>
+          </UIButton>
+        </div>
+      </div>
+      <div id="fusionBonusBody" class="forge-bonus-body" visible="false">
+        <div class="forge-bonus-item-wrapper">
+          <UIItem id="fusionBonusItem" class="forge-result-tier-item"></UIItem>
+          <img
+            id="fusionBonusTier"
+            class="forge-result-tier-flag"
+            src="/images/inventory/tiers-strip.png"
+            visible="false"
+          />
+          <label
+            id="fusionBonusTierValue"
+            class="forge-result-tier-value"
+            visible="false"
+          ></label>
+        </div>
+        <label id="fusionBonusLabel" class="forge-bonus-message"></label>
+        <hr class="separator HorizontalSeparator" />
+        <div class="forge-result-action-area">
+          <UIButton
+            id="fusionBonusCloseButton"
+            class="forge-action-button forge-result-action-button"
+            font="cipsoftFont"
+            text="Close"
+            onclick="self:onBonusCloseClicked()"
+          ></UIButton>
+        </div>
+      </div>
+    </div>
+  </window>
+</html>

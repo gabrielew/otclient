@@ -178,14 +178,14 @@ UIWidget
     focusable: false
     visible: false
 
-  TopStatsBar
+  UIWidget
     id: gameTopPanel
     anchors.left: gameLeftExtraPanel.right
     anchors.right: gameRightExtraPanel.left
     anchors.top: parent.top
     focusable: false
 
-  TopStatsBar
+  UIWidget
     id: gameBottomStatsBarPanel
     anchors.left: gameLeftExtraPanel.right
     anchors.right: gameRightExtraPanel.left

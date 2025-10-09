@@ -3,6 +3,71 @@ local statsBarBottom
 
 local statsBars = {}
 local statsBarDeepInfo = {}
+local statsBarHtmlContexts = {}
+
+local function resolveHtmlContextId(widget)
+    local current = widget
+    while current do
+        if current.__statsbarHtmlId and current.__statsbarHtmlId ~= 0 then
+            return current.__statsbarHtmlId
+        end
+        current = current:getParent()
+    end
+    return nil
+end
+
+local function attachHtmlContext(widget, htmlId)
+    if not widget then
+        return nil
+    end
+
+    local numericId = tonumber(htmlId)
+    if numericId and numericId ~= 0 then
+        widget.__statsbarHtmlId = numericId
+    end
+
+    return widget
+end
+
+local function assignVariantElements(variant, htmlId)
+    if not variant then
+        return
+    end
+
+    local resolvedHtmlId = tonumber(htmlId)
+    if not resolvedHtmlId or resolvedHtmlId == 0 then
+        resolvedHtmlId = resolveHtmlContextId(variant)
+    end
+
+    attachHtmlContext(variant, resolvedHtmlId)
+    htmlId = resolvedHtmlId
+
+    local function capture(role)
+        local widget = variant:getChildById(string.format('%s_%s', variant:getId(), role))
+        if widget then
+            attachHtmlContext(widget, htmlId)
+        end
+        return widget
+    end
+
+    variant.health = capture('health')
+    variant.mana = capture('mana')
+    variant.skills = capture('skills')
+    variant.icons = capture('icons')
+
+    attachHtmlContext(variant.health, htmlId)
+    attachHtmlContext(variant.mana, htmlId)
+    attachHtmlContext(variant.skills, htmlId)
+    attachHtmlContext(variant.icons, htmlId)
+end
+
+local SKILL_WIDGET_TEMPLATE = [[
+  <uiwidget class="statsbar-skill %s">
+    <label data-role="level" class="statsbar-skill__level" text="99999"></label>
+    <uiwidget data-role="icon" class="statsbar-skill__icon"></uiwidget>
+    <uistatsbar data-role="bar" class="statsbar-skill__bar" statsbar-size="tiny" statsbar-orientation="horizontal" statsbar-text="false"></uistatsbar>
+  </uiwidget>
+]]
 
 -- If you want to add more placements/dimensions, you'll need to add them here.
 -- This is used in getStatsBarMenuOptions(), createStatsBarWidgets(), 
@@ -69,6 +134,32 @@ function getConfigurations()
     return configs
 end
 
+local function createSkillWidget(skills, className)
+    if not skills then
+        return nil
+    end
+
+    local htmlContextId = tonumber(resolveHtmlContextId(skills))
+    if not htmlContextId then
+        return nil
+    end
+
+    local widget = g_html.createWidgetFromHTML(string.format(SKILL_WIDGET_TEMPLATE, className), skills, htmlContextId)
+    if not widget then
+        return nil
+    end
+
+    widget.level = widget:querySelector('[data-role="level"]')
+    widget.icon = widget:querySelector('[data-role="icon"]')
+    widget.bar = widget:querySelector('[data-role="bar"]')
+
+    if widget.bar and not widget.bar.setValue then
+        widget.bar = nil
+    end
+
+    return widget
+end
+
 local function reloadSkillsTab(skills, parent)
     -- This method might need some refactoring if you want to add side stats bars.
     local player = g_game.getLocalPlayer()
@@ -85,33 +176,45 @@ local function reloadSkillsTab(skills, parent)
     end
 
     local statsBar = StatsBar.getCurrentStatsBar()
-    if not statsBar then
+    if not statsBar or not skills then
         return
     end
 
     statsBar:setHeight(statsBar:getHeight() - skills:getHeight())
 
-    parent:setHeight(parent:getHeight() - (40 + skills:getHeight()))
+    if parent then
+        parent:setHeight(parent:getHeight() - (40 + skills:getHeight()))
+    end
     skills:setHeight(0)
     skills:destroyChildren()
     local lines = 0
     local lastPlacement = 'left'
     for i = 1, #tuples do
         local skillTuple = tuples[i]
-        local widget = g_ui.createWidget('TopStatsSkillElement', skills)
-        widget:setId('statsbar_skill_' .. skillTuple.key)
-        widget:addAnchor(AnchorTop, 'parent', AnchorTop)
-        if lastPlacement == 'left' then
-            widget:setMarginTop(lines * skillsLineHeight)
+
+        local isFullWidth = skillTuple.placement == 'center' or (i == #tuples and lastPlacement == 'left')
+        local className
+        if isFullWidth then
+            className = 'statsbar-skill--full'
+        elseif lastPlacement == 'left' then
+            className = 'statsbar-skill--half-left'
         else
-            widget:setMarginTop((lines - 1) * skillsLineHeight)
+            className = 'statsbar-skill--half-right'
         end
-        widget.level = widget:getChildById('level')
-        widget.icon = widget:getChildById('icon')
-        widget.bar = widget:getChildById('bar')
+
+        local widget = createSkillWidget(skills, className)
+        if not widget or not widget.level or not widget.icon or not widget.bar then
+            if widget then
+                widget:destroy()
+            end
+            return
+        end
+
+        widget:setId('statsbar_skill_' .. skillTuple.key)
 
         widget.icon:setImageSource(skillTuple.icon)
         widget.icon:setTooltip(skillTuple.name)
+        widget.icon:setImageSize(tosize('9 9'))
 
         widget.bar.statsGrade = 4
         widget.bar.statsGradeColor = '#070707ff'
@@ -124,18 +227,13 @@ local function reloadSkillsTab(skills, parent)
             widget.bar.statsType = 'skill'
         end
 
-        if skillTuple.placement == 'center' or (i == #tuples and lastPlacement == 'left') then
-            widget:addAnchor(AnchorLeft, 'parent', AnchorLeft)
-            widget:addAnchor(AnchorRight, 'parent', AnchorRight)
+        if isFullWidth then
             lines = lines + 1
+            lastPlacement = 'left'
         elseif lastPlacement == 'left' then
-            widget:addAnchor(AnchorLeft, 'parent', AnchorLeft)
-            widget:addAnchor(AnchorRight, 'parent', AnchorHorizontalCenter)
             lines = lines + 1
             lastPlacement = 'right'
-        elseif lastPlacement == 'right' then
-            widget:addAnchor(AnchorRight, 'parent', AnchorRight)
-            widget:addAnchor(AnchorLeft, 'parent', AnchorHorizontalCenter)
+        else
             lastPlacement = 'left'
         end
 
@@ -238,8 +336,12 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
         return
     end
 
-    bar.health:setValue(player:getHealth(), player:getMaxHealth())
-    bar.mana:setValue(player:getMana(), player:getMaxMana())
+    if bar.health and bar.health.setValue then
+        bar.health:setValue(player:getHealth(), player:getMaxHealth())
+    end
+    if bar.mana and bar.mana.setValue then
+        bar.mana:setValue(player:getMana(), player:getMaxMana())
+    end
 end
 
 local function loadIcon(bitChanged, content, topmenu)
@@ -350,15 +452,24 @@ function StatsBar.reloadCurrentStatsBarDeepInfo()
     for _, skillTuple in ipairs(skillsTuples) do
         local widget = bar:recursiveGetChildById('statsbar_skill_' .. skillTuple.key)
         if widget then
-            if skillTuple.key == 'experience' then
-                widget.level:setText(player:getLevel())
-                widget.bar:setValue(player:getLevelPercent(), 100)
-            elseif skillTuple.key == 'magic' then
-                widget.level:setText(player:getMagicLevel())
-                widget.bar:setValue(player:getMagicLevelPercent(), 100)
-            else
-                widget.level:setText(player:getSkillLevel(skillTuple.skill))
-                widget.bar:setValue(player:getSkillLevelPercent(skillTuple.skill), 100)
+            if widget.level then
+                if skillTuple.key == 'experience' then
+                    widget.level:setText(player:getLevel())
+                elseif skillTuple.key == 'magic' then
+                    widget.level:setText(player:getMagicLevel())
+                else
+                    widget.level:setText(player:getSkillLevel(skillTuple.skill))
+                end
+            end
+
+            if widget.bar and widget.bar.setValue then
+                if skillTuple.key == 'experience' then
+                    widget.bar:setValue(player:getLevelPercent(), 100)
+                elseif skillTuple.key == 'magic' then
+                    widget.bar:setValue(player:getMagicLevelPercent(), 100)
+                else
+                    widget.bar:setValue(player:getSkillLevelPercent(skillTuple.skill), 100)
+                end
             end
         end
     end
@@ -371,20 +482,20 @@ function constructStatsBar(dimension, placement)
     local dimensionOnPlacement = dimensionString:gsub("^%u", string.lower) .. "On" .. placement:gsub("^%l", string.upper)
     local statsBar = statsBars["statsBar" .. placement:gsub("^%l", string.upper)]
 
-    if statsBar[dimensionOnPlacement] then
+    local variant = statsBar[dimensionOnPlacement]
+    assignVariantElements(variant, variant and variant.__statsbarHtmlId)
+
+    if variant and variant.health and variant.mana and variant.skills then
         statsBar:setHeight(statsBarsDimensions[dimension].height)
-        statsBar[dimensionOnPlacement]:setHeight(statsBarsDimensions[dimension].height)
-        statsBar[dimensionOnPlacement]:show()
-        statsBar[dimensionOnPlacement]:setPhantom(false)
-        statsBar[dimensionOnPlacement].health = statsBar[dimensionOnPlacement]:getChildById('health')
-        statsBar[dimensionOnPlacement].mana = statsBar[dimensionOnPlacement]:getChildById('mana')
-        statsBar[dimensionOnPlacement].skills = statsBar[dimensionOnPlacement]:getChildById('skills')
+        variant:setHeight(statsBarsDimensions[dimension].height)
+        variant:show()
+        variant:setPhantom(false)
 
-    reloadSkillsTab(statsBar[dimensionOnPlacement].skills, statsBar[dimensionOnPlacement])
-    StatsBar.reloadCurrentStatsBarQuickInfo()
+        reloadSkillsTab(variant.skills, variant)
+        StatsBar.reloadCurrentStatsBarQuickInfo()
 
-    modules.game_healthcircle.setStatsBarOption()
-    else 
+        modules.game_healthcircle.setStatsBarOption()
+    else
         print("No stats bar found for:", dimensionOnPlacement .. " on constructStatsBar()")
     end
 end
@@ -560,40 +671,75 @@ function StatsBar.OnGameStart()
     modules.game_healthcircle.setStatsBarOption()
 end
 
-function createStatsBarWidgets(statsBar)
+local function loadStatsBarContext(parent)
+    if not parent then
+        return nil
+    end
+
+    local htmlId = g_html.load('game_interface', 'widgets/statsbar.html', parent)
+    if not htmlId or htmlId == 0 then
+        return nil
+    end
+
+    local widget = g_html.getRootWidget(htmlId)
+    if not widget then
+        g_html.destroy(htmlId)
+        return nil
+    end
+
+    widget:setFocusable(false)
+
+    return {
+        container = parent,
+        widget = widget,
+        htmlId = htmlId
+    }
+end
+
+function createStatsBarWidgets(statsBar, htmlId)
     -- This method will create the widgets based on the statsBar, statsBarsPlacements and statsBarsDimensions tables.
     local widget = statsBar
+    attachHtmlContext(widget, htmlId)
     for _, placement in ipairs(statsBarsPlacements) do
-      for dimension, _ in pairs(statsBarsDimensions) do
-        local elementName = tostring(dimension):gsub("^%u", string.lower) .. "On" .. placement
-        widget[elementName] = statsBar:getChildById(elementName)
-      end
+        for dimension, _ in pairs(statsBarsDimensions) do
+            local elementName = tostring(dimension):gsub("^%u", string.lower) .. "On" .. placement
+            local variant = statsBar:getChildById(elementName)
+            widget[elementName] = variant
+            assignVariantElements(variant, htmlId)
+        end
     end
     widget.onMousePress = onStatsMousePress
     return widget
 end
 
 function StatsBar.init()
-    statsBarTop = modules.game_interface.getGameTopStatsBar()
-    statsBarBottom = modules.game_interface.getGameBottomStatsBar()
+    StatsBar.destroyAllBars()
+
+    local topContainer = modules.game_interface.getGameTopStatsBar()
+    local bottomContainer = modules.game_interface.getGameBottomStatsBar()
+
+    if not topContainer or not bottomContainer then
+        return
+    end
+
+    statsBarHtmlContexts.top = loadStatsBarContext(topContainer)
+    statsBarHtmlContexts.bottom = loadStatsBarContext(bottomContainer)
+
+    if not statsBarHtmlContexts.top or not statsBarHtmlContexts.bottom then
+        StatsBar.destroyAllBars()
+        return
+    end
+
+    statsBarHtmlContexts.top.widget = createStatsBarWidgets(statsBarHtmlContexts.top.widget, statsBarHtmlContexts.top.htmlId)
+    statsBarHtmlContexts.bottom.widget = createStatsBarWidgets(statsBarHtmlContexts.bottom.widget, statsBarHtmlContexts.bottom.htmlId)
+
+    statsBarTop = statsBarHtmlContexts.top.widget
+    statsBarBottom = statsBarHtmlContexts.bottom.widget
 
     statsBars = {
         statsBarTop = statsBarTop,
         statsBarBottom = statsBarBottom
     }
-
-    if not statsBarTop then
-        return
-    end
-
-    if not statsBarBottom then
-        return
-    end
-
-    -- Create widgets based on statsBars table.
-    for _, statBar in pairs(statsBars) do
-        statBar = createStatsBarWidgets(statBar)
-    end
 
     statsBarDeepInfo = {
         onExperienceChange = StatsBar.reloadCurrentStatsBarDeepInfo,
@@ -622,11 +768,16 @@ function StatsBar.hideAll()
         for _, placement in pairs(statsBarsPlacements) do
             for dimension, _ in pairs(statsBarsDimensions) do
                 local key = tostring(dimension):lower() .. "On" .. placement
-                if bar[key] and bar[key].skills then
-                    bar[key].skills:destroyChildren()
-                    bar[key].skills:setHeight(0)
-                    bar[key]:setHeight(0)
-                    bar[key]:hide()
+                local variant = bar[key]
+                if variant and variant.skills then
+                    variant.skills:destroyChildren()
+                    variant.skills:setHeight(0)
+                end
+
+                if variant then
+                    variant:setHeight(0)
+                    variant:hide()
+                    variant:setPhantom(true)
                 end
             end
         end
@@ -641,8 +792,9 @@ function StatsBar.destroyAllIcons()
         for _, placement in pairs(statsBarsPlacements) do
             for dimension, _ in pairs(statsBarsDimensions) do
                 local key = tostring(dimension):lower() .. "On" .. placement
-                if bar[key] and bar[key].skills then
-                    bar[key].icons:destroyChildren()
+                local variant = bar[key]
+                if variant and variant.icons then
+                    variant.icons:destroyChildren()
                 end
             end
         end
@@ -651,11 +803,19 @@ function StatsBar.destroyAllIcons()
 end
 
 function StatsBar.destroyAllBars()
-    -- This iterates between the tables: statsBars
-    -- And destroy all bars based on these tables.
-    for _, bar in pairs(statsBars) do
-        bar:destroy()
+    -- Destroy loaded HTML contexts and clear references.
+    for key, context in pairs(statsBarHtmlContexts) do
+        if context.htmlId then
+            g_html.destroy(context.htmlId)
+        elseif context.widget and not context.widget:isDestroyed() then
+            context.widget:destroy()
+        end
+        statsBarHtmlContexts[key] = nil
     end
+
+    statsBars = {}
+    statsBarTop = nil
+    statsBarBottom = nil
 end
 
 function StatsBar.terminate()

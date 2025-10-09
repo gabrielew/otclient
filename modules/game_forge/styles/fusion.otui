@@ -707,7 +707,7 @@ FusionMenu < Panel
     size: 469 75
     margin-top: 5
     text-wrap: true
-    image-source: /images/ui/2pixel-up-frame-borderimage
+    image-source: /images/game/actionbar/2pixel-up-frame-borderimage
     image-border: 3
     font: pVerdana Bold-11px
     color: #ffffff

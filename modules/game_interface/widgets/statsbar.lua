@@ -1,10 +1,3 @@
-local Controller = rawget(_G, 'Controller') or require('modulelib/controller')
-local statsBarHtmlController = rawget(_G, '__statsBarHtmlController')
-if not statsBarHtmlController then
-    statsBarHtmlController = Controller:new()
-    rawset(_G, '__statsBarHtmlController', statsBarHtmlController)
-end
-
 local statsBarTop
 local statsBarBottom
 
@@ -12,15 +5,28 @@ local statsBars = {}
 local statsBarDeepInfo = {}
 local statsBarHtmlContexts = {}
 
-local function assignVariantElements(variant)
+local function attachHtmlContext(widget, htmlId)
+    if widget and htmlId and htmlId ~= 0 then
+        widget.__statsbarHtmlId = htmlId
+    end
+    return widget
+end
+
+local function assignVariantElements(variant, htmlId)
     if not variant then
         return
     end
 
+    if htmlId and htmlId ~= 0 then
+        variant.__statsbarHtmlId = htmlId
+    else
+        htmlId = variant.__statsbarHtmlId
+    end
+
     local function capture(role)
-        local widget = variant:querySelector(string.format('[data-role="%s"]', role))
+        local widget = variant:getChildById(string.format('%s_%s', variant:getId(), role))
         if widget then
-            widget:setId(string.format('%s_%s', variant:getId(), role))
+            attachHtmlContext(widget, htmlId)
         end
         return widget
     end
@@ -30,10 +36,11 @@ local function assignVariantElements(variant)
     variant.skills = capture('skills')
     variant.icons = capture('icons')
 
-    if variant.icons then
-        variant.icons:setImageBorder(3)
-        variant.icons:setImageSource('/images/ui/containerslot')
-    end
+    attachHtmlContext(variant, htmlId)
+    attachHtmlContext(variant.health, htmlId)
+    attachHtmlContext(variant.mana, htmlId)
+    attachHtmlContext(variant.skills, htmlId)
+    attachHtmlContext(variant.icons, htmlId)
 end
 
 local SKILL_WIDGET_TEMPLATE = [[
@@ -109,14 +116,28 @@ function getConfigurations()
     return configs
 end
 
+local function resolveHtmlContextId(widget)
+    local current = widget
+    while current do
+        if current.__statsbarHtmlId and current.__statsbarHtmlId ~= 0 then
+            return current.__statsbarHtmlId
+        end
+        current = current:getParent()
+    end
+    return nil
+end
+
 local function createSkillWidget(skills, className)
-    local htmlRootId = skills and skills:getHtmlRootId()
-    htmlRootId = tonumber(htmlRootId)
-    if not htmlRootId or htmlRootId == 0 then
+    if not skills then
         return nil
     end
 
-    local widget = g_html.createWidgetFromHTML(string.format(SKILL_WIDGET_TEMPLATE, className), skills, htmlRootId)
+    local htmlContextId = resolveHtmlContextId(skills)
+    if not htmlContextId then
+        return nil
+    end
+
+    local widget = g_html.createWidgetFromHTML(string.format(SKILL_WIDGET_TEMPLATE, className), skills, htmlContextId)
     if not widget then
         return nil
     end
@@ -144,13 +165,15 @@ local function reloadSkillsTab(skills, parent)
     end
 
     local statsBar = StatsBar.getCurrentStatsBar()
-    if not statsBar then
+    if not statsBar or not skills then
         return
     end
 
     statsBar:setHeight(statsBar:getHeight() - skills:getHeight())
 
-    parent:setHeight(parent:getHeight() - (40 + skills:getHeight()))
+    if parent then
+        parent:setHeight(parent:getHeight() - (40 + skills:getHeight()))
+    end
     skills:setHeight(0)
     skills:destroyChildren()
     local lines = 0
@@ -302,8 +325,12 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
         return
     end
 
-    bar.health:setValue(player:getHealth(), player:getMaxHealth())
-    bar.mana:setValue(player:getMana(), player:getMaxMana())
+    if bar.health and bar.health.setValue then
+        bar.health:setValue(player:getHealth(), player:getMaxHealth())
+    end
+    if bar.mana and bar.mana.setValue then
+        bar.mana:setValue(player:getMana(), player:getMaxMana())
+    end
 end
 
 local function loadIcon(bitChanged, content, topmenu)
@@ -414,15 +441,24 @@ function StatsBar.reloadCurrentStatsBarDeepInfo()
     for _, skillTuple in ipairs(skillsTuples) do
         local widget = bar:recursiveGetChildById('statsbar_skill_' .. skillTuple.key)
         if widget then
-            if skillTuple.key == 'experience' then
-                widget.level:setText(player:getLevel())
-                widget.bar:setValue(player:getLevelPercent(), 100)
-            elseif skillTuple.key == 'magic' then
-                widget.level:setText(player:getMagicLevel())
-                widget.bar:setValue(player:getMagicLevelPercent(), 100)
-            else
-                widget.level:setText(player:getSkillLevel(skillTuple.skill))
-                widget.bar:setValue(player:getSkillLevelPercent(skillTuple.skill), 100)
+            if widget.level then
+                if skillTuple.key == 'experience' then
+                    widget.level:setText(player:getLevel())
+                elseif skillTuple.key == 'magic' then
+                    widget.level:setText(player:getMagicLevel())
+                else
+                    widget.level:setText(player:getSkillLevel(skillTuple.skill))
+                end
+            end
+
+            if widget.bar and widget.bar.setValue then
+                if skillTuple.key == 'experience' then
+                    widget.bar:setValue(player:getLevelPercent(), 100)
+                elseif skillTuple.key == 'magic' then
+                    widget.bar:setValue(player:getMagicLevelPercent(), 100)
+                else
+                    widget.bar:setValue(player:getSkillLevelPercent(skillTuple.skill), 100)
+                end
             end
         end
     end
@@ -436,7 +472,7 @@ function constructStatsBar(dimension, placement)
     local statsBar = statsBars["statsBar" .. placement:gsub("^%l", string.upper)]
 
     local variant = statsBar[dimensionOnPlacement]
-    assignVariantElements(variant)
+    assignVariantElements(variant, variant and variant.__statsbarHtmlId)
 
     if variant and variant.health and variant.mana and variant.skills then
         statsBar:setHeight(statsBarsDimensions[dimension].height)
@@ -649,14 +685,16 @@ local function loadStatsBarContext(parent)
     }
 end
 
-function createStatsBarWidgets(statsBar)
+function createStatsBarWidgets(statsBar, htmlId)
     -- This method will create the widgets based on the statsBar, statsBarsPlacements and statsBarsDimensions tables.
     local widget = statsBar
+    attachHtmlContext(widget, htmlId)
     for _, placement in ipairs(statsBarsPlacements) do
         for dimension, _ in pairs(statsBarsDimensions) do
             local elementName = tostring(dimension):gsub("^%u", string.lower) .. "On" .. placement
-            widget[elementName] = statsBar:getChildById(elementName)
-            assignVariantElements(widget[elementName])
+            local variant = statsBar:getChildById(elementName)
+            widget[elementName] = variant
+            assignVariantElements(variant, htmlId)
         end
     end
     widget.onMousePress = onStatsMousePress
@@ -681,8 +719,8 @@ function StatsBar.init()
         return
     end
 
-    statsBarHtmlContexts.top.widget = createStatsBarWidgets(statsBarHtmlContexts.top.widget)
-    statsBarHtmlContexts.bottom.widget = createStatsBarWidgets(statsBarHtmlContexts.bottom.widget)
+    statsBarHtmlContexts.top.widget = createStatsBarWidgets(statsBarHtmlContexts.top.widget, statsBarHtmlContexts.top.htmlId)
+    statsBarHtmlContexts.bottom.widget = createStatsBarWidgets(statsBarHtmlContexts.bottom.widget, statsBarHtmlContexts.bottom.htmlId)
 
     statsBarTop = statsBarHtmlContexts.top.widget
     statsBarBottom = statsBarHtmlContexts.bottom.widget

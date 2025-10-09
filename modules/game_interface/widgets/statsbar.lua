@@ -10,10 +10,18 @@ local function assignVariantElements(variant)
         return
     end
 
-    variant.health = variant:querySelector('[data-role="health"]')
-    variant.mana = variant:querySelector('[data-role="mana"]')
-    variant.skills = variant:querySelector('[data-role="skills"]')
-    variant.icons = variant:querySelector('[data-role="icons"]')
+    local function capture(role)
+        local widget = variant:querySelector(string.format('[data-role="%s"]', role))
+        if widget then
+            widget:setId(string.format('%s_%s', variant:getId(), role))
+        end
+        return widget
+    end
+
+    variant.health = capture('health')
+    variant.mana = capture('mana')
+    variant.skills = capture('skills')
+    variant.icons = capture('icons')
 end
 
 local SKILL_WIDGET_TEMPLATE = [[

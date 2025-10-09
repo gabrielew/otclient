@@ -1,0 +1,3 @@
+NewMainWindow < MainWindow
+
+NewResultMainWindow < MainWindow

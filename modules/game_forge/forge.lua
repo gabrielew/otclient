@@ -10,6 +10,7 @@ selectedConvergenceFusionRadio = nil
 selectedItemFusionConvectionRadio = nil
 
 function init()
+  g_ui.importStyle('styles/compat')
   forgeWindow = g_ui.displayUI('forge')
   mainPanel = forgeWindow:getChildById('contentPanel')
 

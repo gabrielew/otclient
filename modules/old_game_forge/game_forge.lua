@@ -37,6 +37,19 @@ local forgeActions = {
     INCREASELIMIT = 4,
 }
 
+local RESULT_ARROW_STEPS = {
+    { 1 },
+    { 1, 2 },
+    { 2, 3 },
+    { 3 },
+    { 1, 2, 3 }
+}
+
+local RESULT_ARROW_DEFAULT = '/images/arrows/icon-arrow-rightlarge'
+local RESULT_ARROW_FILLED = '/images/arrows/icon-arrow-rightlarge-filled'
+local RESULT_SUCCESS_COLOR = '#44ad25'
+local RESULT_FAILURE_COLOR = '#d33c3c'
+
 local helpers = require('modules.game_forge.game_forge_helpers')
 local cloneValue = helpers.cloneValue
 local normalizeTierPriceEntries = helpers.normalizeTierPriceEntries
@@ -86,6 +99,14 @@ local function resetWindowTypes()
     for key in pairs(windowTypes) do
         windowTypes[key] = nil
     end
+end
+
+local function onForgeFusionEvent(_, ...)
+    forgeController:onForgeFusion(...)
+end
+
+local function onForgeTransferEvent(_, ...)
+    forgeController:onForgeTransfer(...)
 end
 
 local function show(self, skipRequest)
@@ -160,6 +181,10 @@ local baseSelectedFusionItem = {
 }
 forgeController.selectedFusionItem = cloneValue(baseSelectedFusionItem)
 forgeController.selectedFusionItemTarget = cloneValue(baseSelectedFusionItem)
+forgeController.resultWindow = nil
+forgeController.resultWidgets = nil
+forgeController.resultState = nil
+forgeController.resultAnimationEvents = {}
 
 local function resetInfo()
     forgeController.fusionPrice = "???"
@@ -208,6 +233,475 @@ function forgeController:hide()
     hide()
 end
 
+local function updateTierDisplay(widget, label, tier)
+    if not widget or widget:isDestroyed() then
+        return
+    end
+
+    tier = tonumber(tier) or 0
+    if tier <= 0 then
+        widget:setVisible(false)
+        if label and not label:isDestroyed() then
+            label:setVisible(false)
+        end
+        return
+    end
+
+    widget:setVisible(true)
+    widget:setImageClip(string.format('%d 0 18 16', (tier - 1) * 18))
+
+    if label and not label:isDestroyed() then
+        label:setVisible(true)
+        label:setText(tostring(tier))
+    end
+end
+
+function forgeController:setResultButtonState(enabled, text)
+    local widgets = self.resultWidgets
+    if not widgets or not widgets.actionButton or widgets.actionButton:isDestroyed() then
+        return
+    end
+
+    if text then
+        widgets.actionButton:setText(text)
+    end
+
+    widgets.actionButton:setEnabled(enabled)
+
+    if widgets.buttonOverlay and not widgets.buttonOverlay:isDestroyed() then
+        widgets.buttonOverlay:setVisible(not enabled)
+    end
+
+    if self.resultState then
+        self.resultState.animationFinished = enabled
+    end
+end
+
+function forgeController:updateResultArrows(step)
+    local widgets = self.resultWidgets
+    if not widgets then
+        return
+    end
+
+    local filled = {}
+    local indices = RESULT_ARROW_STEPS[step]
+    if indices then
+        for _, index in ipairs(indices) do
+            filled[index] = true
+        end
+    end
+
+    local arrows = {
+        widgets.arrow1,
+        widgets.arrow2,
+        widgets.arrow3
+    }
+
+    for index, arrow in ipairs(arrows) do
+        if arrow and not arrow:isDestroyed() then
+            arrow:setImageSource(filled[index] and RESULT_ARROW_FILLED or RESULT_ARROW_DEFAULT)
+        end
+    end
+end
+
+function forgeController:cancelResultAnimation()
+    for _, eventId in ipairs(self.resultAnimationEvents or {}) do
+        removeEvent(eventId)
+    end
+
+    self.resultAnimationEvents = {}
+end
+
+function forgeController:resetResultWidgets()
+    local widgets = self.resultWidgets
+    if not widgets then
+        return
+    end
+
+    if widgets.body and not widgets.body:isDestroyed() then
+        widgets.body:setVisible(true)
+    end
+    if widgets.bonus and not widgets.bonus:isDestroyed() then
+        widgets.bonus:setVisible(false)
+    end
+
+    if widgets.transferItem and not widgets.transferItem:isDestroyed() then
+        widgets.transferItem:setItemId(0)
+        widgets.transferItem:setItemShader('item_print_white')
+    end
+    updateTierDisplay(widgets.transferTier, widgets.transferTierValue, 0)
+
+    if widgets.recvItem and not widgets.recvItem:isDestroyed() then
+        widgets.recvItem:setItemId(0)
+        widgets.recvItem:setItemShader('item_black_white')
+    end
+    updateTierDisplay(widgets.recvTier, widgets.recvTierValue, 0)
+
+    if widgets.message and not widgets.message:isDestroyed() then
+        widgets.message:setText('')
+        widgets.message:setColor('#ffffff')
+    end
+
+    if widgets.bonusItem and not widgets.bonusItem:isDestroyed() then
+        widgets.bonusItem:setItemId(0)
+        widgets.bonusItem:setItemShader('')
+    end
+    updateTierDisplay(widgets.bonusTier, widgets.bonusTierValue, 0)
+
+    if widgets.bonusLabel and not widgets.bonusLabel:isDestroyed() then
+        widgets.bonusLabel:setText('')
+        widgets.bonusLabel:setColor('#ffffff')
+    end
+
+    self:setResultButtonState(false, tr('Close'))
+    self:updateResultArrows(0)
+end
+
+function forgeController:ensureResultWindow()
+    if self.resultWindow and not self.resultWindow:isDestroyed() then
+        return self.resultWindow
+    end
+
+    local template = io.content('modules/old_game_forge/fusion_result.html')
+    if not template then
+        g_logger.error('Fusion result template could not be loaded.')
+        return nil
+    end
+
+    local window = self:createWidgetFromHTML(template, g_ui.getRootWidget())
+    if not window then
+        g_logger.error('Unable to create fusion result window from template.')
+        return nil
+    end
+
+    self.resultWindow = window
+    self.resultWidgets = {
+        body = window.fusionResultBody,
+        bonus = window.fusionBonusBody,
+        transferItem = window.fusionResultTransferItem,
+        transferTier = window.fusionResultTransferTier,
+        transferTierValue = window.fusionResultTransferTierValue,
+        recvItem = window.fusionResultRecvItem,
+        recvTier = window.fusionResultRecvTier,
+        recvTierValue = window.fusionResultRecvTierValue,
+        message = window.fusionResultLabel,
+        actionButton = window.fusionResultActionButton,
+        buttonOverlay = window.fusionResultButtonOverlay,
+        arrow1 = window.fusionResultArrow1,
+        arrow2 = window.fusionResultArrow2,
+        arrow3 = window.fusionResultArrow3,
+        bonusItem = window.fusionBonusItem,
+        bonusTier = window.fusionBonusTier,
+        bonusTierValue = window.fusionBonusTierValue,
+        bonusLabel = window.fusionBonusLabel,
+        bonusClose = window.fusionBonusCloseButton
+    }
+
+    window:hide()
+    self:resetResultWidgets()
+
+    return window
+end
+
+function forgeController:showResultWindow(title)
+    local window = self:ensureResultWindow()
+    if not window then
+        return nil
+    end
+
+    window:setText(title or tr('Fusion Result'))
+    window:centerIn('parent')
+    window:show()
+    window:raise()
+    window:focus()
+
+    return window
+end
+
+function forgeController:startResultAnimation(onComplete)
+    self:cancelResultAnimation()
+    self:updateResultArrows(0)
+
+    local function run(step)
+        if not self.resultState or not self.resultWindow or self.resultWindow:isDestroyed() then
+            return
+        end
+
+        self:updateResultArrows(step)
+
+        if step >= #RESULT_ARROW_STEPS then
+            if onComplete then
+                onComplete()
+            end
+            return
+        end
+
+        local eventId = scheduleEvent(function()
+            run(step + 1)
+        end, 750)
+
+        table.insert(self.resultAnimationEvents, eventId)
+    end
+
+    local initialEvent = scheduleEvent(function()
+        run(1)
+    end, 750)
+
+    table.insert(self.resultAnimationEvents, initialEvent)
+end
+
+function forgeController:completeResultAnimation()
+    local widgets = self.resultWidgets
+    local state = self.resultState
+    if not widgets or not state then
+        return
+    end
+
+    if state.success then
+        if widgets.transferItem and not widgets.transferItem:isDestroyed() then
+            widgets.transferItem:setItemId(0)
+        end
+        if widgets.recvItem and not widgets.recvItem:isDestroyed() then
+            widgets.recvItem:setItemShader('')
+        end
+        updateTierDisplay(widgets.transferTier, widgets.transferTierValue, 0)
+        updateTierDisplay(widgets.recvTier, widgets.recvTierValue, state.targetTier)
+    else
+        if widgets.recvItem and not widgets.recvItem:isDestroyed() then
+            widgets.recvItem:setItemShader('item_red')
+            local removalEvent = scheduleEvent(function()
+                if widgets.recvItem and not widgets.recvItem:isDestroyed() then
+                    widgets.recvItem:setItemId(0)
+                    widgets.recvItem:setItemShader('')
+                end
+            end, 500)
+            table.insert(self.resultAnimationEvents, removalEvent)
+        end
+        updateTierDisplay(widgets.recvTier, widgets.recvTierValue, 0)
+    end
+
+    local attemptLabel = state.type == 'transfer' and tr('transfer') or tr('fusion')
+    local message = state.success
+        and tr('Your %s attempt was successful.'):format(attemptLabel)
+        or tr('Your %s attempt failed.'):format(attemptLabel)
+
+    local color = state.success and RESULT_SUCCESS_COLOR or RESULT_FAILURE_COLOR
+    if widgets.message and not widgets.message:isDestroyed() then
+        widgets.message:setText(message)
+        widgets.message:setColor(color)
+    end
+
+    local hasBonus = state.type == 'fusion' and state.resultType and state.resultType > 0
+    state.hasBonus = hasBonus
+    state.showingBonus = false
+
+    self:setResultButtonState(true, hasBonus and tr('Next') or tr('Close'))
+end
+
+function forgeController:openBonusResult()
+    local widgets = self.resultWidgets
+    local state = self.resultState
+    if not widgets or not state then
+        return
+    end
+
+    if widgets.body and not widgets.body:isDestroyed() then
+        widgets.body:setVisible(false)
+    end
+    if widgets.bonus and not widgets.bonus:isDestroyed() then
+        widgets.bonus:setVisible(true)
+    end
+
+    if widgets.bonusItem and not widgets.bonusItem:isDestroyed() then
+        widgets.bonusItem:setItemShader('')
+        widgets.bonusItem:setItemId(0)
+    end
+    updateTierDisplay(widgets.bonusTier, widgets.bonusTierValue, 0)
+
+    local message = ''
+    local resultType = state.resultType or 0
+
+    if resultType == 1 then
+        if widgets.bonusItem and not widgets.bonusItem:isDestroyed() then
+            widgets.bonusItem:setItemId(37160)
+        end
+        local dustAmount = state.convergence and (self.convergenceDustFusion or 0) or (self.normalDustFusion or 0)
+        message = tr('Near! The used %d where not consumed.'):format(dustAmount)
+    elseif resultType == 2 then
+        if widgets.bonusItem and not widgets.bonusItem:isDestroyed() then
+            widgets.bonusItem:setItemId(37110)
+        end
+        message = tr('Fantastic! The used %d where not consumed.'):format(state.count or 0)
+    elseif resultType == 3 then
+        if widgets.bonusItem and not widgets.bonusItem:isDestroyed() then
+            widgets.bonusItem:setItemId(3031)
+        end
+        local price = tonumber(state.price) or 0
+        message = tr('Awesome! The used %s where not consumed.'):format(formatGoldAmount(price))
+    elseif resultType == 4 then
+        if widgets.bonusItem and not widgets.bonusItem:isDestroyed() then
+            widgets.bonusItem:setItemId(state.itemResult or 0)
+        end
+        updateTierDisplay(widgets.bonusTier, widgets.bonusTierValue, state.tierResult)
+        message = tr('What luck! Your item only lost one tier instead of being consumed.')
+    else
+        message = ''
+    end
+
+    if widgets.bonusLabel and not widgets.bonusLabel:isDestroyed() then
+        widgets.bonusLabel:setText(message)
+        widgets.bonusLabel:setColor('#ffffff')
+    end
+
+    state.showingBonus = true
+end
+
+function forgeController:closeResultWindow()
+    self:cancelResultAnimation()
+
+    if self.resultWindow and not self.resultWindow:isDestroyed() then
+        self.resultWindow:hide()
+    end
+
+    self:resetResultWidgets()
+    self.resultState = nil
+
+    if g_game.isOnline() then
+        self:show(true)
+    end
+end
+
+function forgeController:onResultActionClicked()
+    local state = self.resultState
+    if not state or not state.animationFinished then
+        return
+    end
+
+    if state.hasBonus and not state.showingBonus then
+        self:openBonusResult()
+        return
+    end
+
+    self:closeResultWindow()
+end
+
+function forgeController:onBonusCloseClicked()
+    self:closeResultWindow()
+end
+
+function forgeController:onResultClose()
+    self:closeResultWindow()
+end
+
+function forgeController:destroyResultWindow()
+    self:cancelResultAnimation()
+
+    if self.resultWindow and not self.resultWindow:isDestroyed() then
+        self.resultWindow:destroy()
+    end
+
+    self.resultWindow = nil
+    self.resultWidgets = nil
+    self.resultState = nil
+    self.resultAnimationEvents = {}
+end
+
+function forgeController:onForgeFusion(convergence, success, otherItem, otherTier, itemId, tier, resultType, itemResult, tierResult, count)
+    local window = self:showResultWindow(tr('Fusion Result'))
+    if not window then
+        return
+    end
+
+    self.resultState = {
+        type = 'fusion',
+        convergence = convergence,
+        success = success,
+        donorItem = otherItem,
+        donorTier = otherTier,
+        itemId = itemId,
+        targetTier = tier,
+        resultType = resultType or 0,
+        itemResult = itemResult,
+        tierResult = tierResult,
+        count = count,
+        price = tonumber(self.rawFusionPrice) or 0,
+        animationFinished = false
+    }
+
+    self:resetResultWidgets()
+
+    local widgets = self.resultWidgets
+    if widgets.transferItem and not widgets.transferItem:isDestroyed() then
+        widgets.transferItem:setItemId(otherItem)
+        widgets.transferItem:setItemShader('item_print_white')
+    end
+    updateTierDisplay(widgets.transferTier, widgets.transferTierValue, 0)
+
+    if widgets.recvItem and not widgets.recvItem:isDestroyed() then
+        widgets.recvItem:setItemId(itemId)
+        widgets.recvItem:setItemShader('item_black_white')
+    end
+    updateTierDisplay(widgets.recvTier, widgets.recvTierValue, 0)
+
+    if widgets.message and not widgets.message:isDestroyed() then
+        widgets.message:setText('')
+        widgets.message:setColor('#ffffff')
+    end
+
+    self:setResultButtonState(false, tr('Close'))
+
+    self:startResultAnimation(function()
+        self:completeResultAnimation()
+    end)
+end
+
+function forgeController:onForgeTransfer(convergence, success, otherItem, otherTier, itemId, tier)
+    local window = self:showResultWindow(tr('Transfer Result'))
+    if not window then
+        return
+    end
+
+    self.resultState = {
+        type = 'transfer',
+        convergence = convergence,
+        success = success,
+        donorItem = otherItem,
+        donorTier = otherTier,
+        itemId = itemId,
+        targetTier = tier,
+        resultType = 0,
+        count = 0,
+        price = tonumber(self.rawFusionPrice) or 0,
+        animationFinished = false
+    }
+
+    self:resetResultWidgets()
+
+    local widgets = self.resultWidgets
+    if widgets.transferItem and not widgets.transferItem:isDestroyed() then
+        widgets.transferItem:setItemId(otherItem)
+        widgets.transferItem:setItemShader('item_print_white')
+    end
+    updateTierDisplay(widgets.transferTier, widgets.transferTierValue, otherTier)
+
+    if widgets.recvItem and not widgets.recvItem:isDestroyed() then
+        widgets.recvItem:setItemId(itemId)
+        widgets.recvItem:setItemShader('item_black_white')
+    end
+    updateTierDisplay(widgets.recvTier, widgets.recvTierValue, 0)
+
+    if widgets.message and not widgets.message:isDestroyed() then
+        widgets.message:setText('')
+        widgets.message:setColor('#ffffff')
+    end
+
+    self:setResultButtonState(false, tr('Close'))
+
+    self:startResultAnimation(function()
+        self:completeResultAnimation()
+    end)
+end
+
 local function updateStatusConfig(controller, config, player)
     local widget = resolveStatusWidget(controller, config)
     if not widget then
@@ -244,6 +738,8 @@ function forgeController:onInit()
     self:registerEvents(g_game, {
         onBrowseForgeHistory = onBrowseForgeHistory,
         forgeData = forgeData,
+        onForgeFusion = onForgeFusionEvent,
+        onForgeTransfer = onForgeTransferEvent,
     })
 
     if not forgeButton then
@@ -398,7 +894,11 @@ function forgeController:onTerminate()
     disconnect(g_game, {
         onBrowseForgeHistory = onBrowseForgeHistory,
         forgeData = forgeData,
+        onForgeFusion = onForgeFusionEvent,
+        onForgeTransfer = onForgeTransferEvent,
     })
+
+    self:destroyResultWindow()
 end
 
 function forgeController:onGameStart()
@@ -425,6 +925,13 @@ function forgeController:onGameEnd()
     if self.ui and self.ui:isVisible() then
         self.ui:hide()
     end
+
+    self:cancelResultAnimation()
+    if self.resultWindow and not self.resultWindow:isDestroyed() then
+        self.resultWindow:hide()
+    end
+    self:resetResultWidgets()
+    self.resultState = nil
 
     if forgeButton then
         forgeButton:setOn(false)

@@ -384,3 +384,122 @@
   left: 64px;
   top: 15px;
 }
+
+.forge-result-window {
+  size: 401 201;
+  color: grey;
+}
+
+.forge-result-header {
+  anchors.top: parent.top;
+  anchors.horizontalCenter: parent.horizontalCenter;
+  margin-top: -85px;
+}
+
+.forge-result-content {
+  size: 368 156;
+  anchors.fill: parent;
+  margin: 12px;
+  position: relative;
+}
+
+.forge-result-body,
+.forge-bonus-body {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.forge-result-items {
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.forge-result-item-card {
+  width: 65px;
+  height: 90px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.forge-result-tier-item {
+  size: 65 65;
+}
+
+.forge-result-tier-flag {
+  position: absolute;
+  right: -4px;
+  top: -2px;
+  size: 18 16;
+}
+
+.forge-result-tier-value {
+  position: absolute;
+  right: 2px;
+  top: 0px;
+  font-size: 10px;
+  text-align: right;
+}
+
+.forge-result-arrows {
+  width: 78px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.forge-result-arrow {
+  size: 14 25;
+}
+
+.forge-result-message,
+.forge-bonus-message {
+  margin-top: 20px;
+  text-align: center;
+  width: 100%;
+  color: #ffffff;
+  text-wrap: true;
+}
+
+.forge-result-action-area {
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
+  display: flex;
+  align-items: center;
+}
+
+.forge-result-action-button {
+  width: 80px;
+  height: 24px;
+}
+
+.forge-result-button-overlay {
+  anchors.fill: parent;
+}
+
+.forge-bonus-item-wrapper {
+  width: 65px;
+  height: 90px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.forge-bonus-body .forge-result-action-area {
+  justify-content: center;
+  width: 100%;
+}
+
+.forge-bonus-body .forge-result-action-button {
+  margin-left: auto;
+  margin-right: auto;
+}

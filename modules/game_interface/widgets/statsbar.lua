@@ -29,6 +29,11 @@ local function assignVariantElements(variant)
     variant.mana = capture('mana')
     variant.skills = capture('skills')
     variant.icons = capture('icons')
+
+    if variant.icons then
+        variant.icons:setImageBorder(3)
+        variant.icons:setImageSource('/images/ui/containerslot')
+    end
 end
 
 local SKILL_WIDGET_TEMPLATE = [[
@@ -106,7 +111,8 @@ end
 
 local function createSkillWidget(skills, className)
     local htmlRootId = skills and skills:getHtmlRootId()
-    if not htmlRootId then
+    htmlRootId = tonumber(htmlRootId)
+    if not htmlRootId or htmlRootId == 0 then
         return nil
     end
 

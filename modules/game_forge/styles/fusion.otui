@@ -232,7 +232,7 @@ Panel
         margin-top: 4
         text-auto-resize: true
       Panel
-        image-source: images/icon-currency-dust
+        image-source: /images/game/forge/ui/icon-currency-dust
         anchors.left: prev.right
         anchors.top: parent.top
         margin-top: 7
@@ -278,7 +278,7 @@ Panel
       image-source: /images/ui/progress
       image-border: 7
       Panel
-        image-source: images/icon-currency-exaltedcore
+        image-source: /images/game/forge/ui/icon-currency-exaltedcore
         anchors.right: parent.right
         anchors.top: parent.top
         margin-top: 5
@@ -333,7 +333,7 @@ Panel
       image-source: /images/ui/progress
       image-border: 7
       Panel
-        image-source: images/icon-currency-exaltedcore
+        image-source: /images/game/forge/ui/icon-currency-exaltedcore
         anchors.right: parent.right
         anchors.top: parent.top
         margin-top: 5
@@ -363,7 +363,7 @@ Panel
       margin-right: 7
       anchors.top: parent.top
       anchors.right: parent.right
-      image-source: /images/ui/bigger-button
+      image-source: /images/ui/bigger-button-grey-qt
       image-clip: 0 0 128 66
       enabled: false
 
@@ -552,7 +552,7 @@ Panel
         image-source: /images/ui/progress
         image-border: 7
         Panel
-          image-source: images/icon-currency-dust
+          image-source: /images/game/forge/ui/icon-currency-dust
           anchors.right: parent.right
           anchors.top: parent.top
           margin-top: 8
@@ -580,7 +580,7 @@ Panel
         size: 128 66
         anchors.top: parent.top
         anchors.right: parent.right
-        image-source: /images/ui/bigger-button
+        image-source: /images/ui/bigger-button-grey-qt
         enabled: false
         image-clip: 0 0 128 66
 

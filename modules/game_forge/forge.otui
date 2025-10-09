@@ -132,7 +132,7 @@ NewMainWindow
     image-source: /images/ui/progress
     image-border: 7
     Panel
-      image-source: images/icon-currency-dust
+      image-source: /images/game/forge/ui/icon-currency-dust
       anchors.right: parent.right
       anchors.top: parent.top
       margin-top: 8
@@ -184,7 +184,7 @@ NewMainWindow
     image-source: /images/ui/progress
     image-border: 7
     Panel
-      image-source: images/icon-currency-exaltedcore
+      image-source: /images/game/forge/ui/icon-currency-exaltedcore
       anchors.right: parent.right
       anchors.top: parent.top
       margin-top: 5

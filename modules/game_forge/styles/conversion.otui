@@ -33,7 +33,7 @@ ConvertionWindow < WindowPanel
       color: #d33c3c
     Panel
       id: img
-      image-source: images/icon-currency-dust
+      image-source: /images/game/forge/ui/icon-currency-dust
       anchors.left: prev.right
       anchors.top: parent.top
       margin-top: 7
@@ -94,7 +94,7 @@ ConvertionSliverWindow < WindowPanel
 
 ItemConvertButton < UIButton
   size: 83 66
-  image-source: /images/ui/bigger-button
+  image-source: /images/ui/bigger-button-grey-qt
   enabled: false
 
 Panel
@@ -211,7 +211,7 @@ Panel
       color: #ffffff
     Panel
       size: 9 9
-      image-source: images/icon-currency-exaltedcore
+      image-source: /images/game/forge/ui/icon-currency-exaltedcore
       anchors.left: prev.right
       anchors.top: prev.top
       margin-top: 3
@@ -308,7 +308,7 @@ Panel
     Panel
       id: img1
       size: 9 6
-      image-source: images/icon-currency-dust
+      image-source: /images/game/forge/ui/icon-currency-dust
       anchors.left: prev.right
       anchors.top: prev.top
       margin-left: 5
@@ -324,7 +324,7 @@ Panel
     Panel
       id: img2
       size: 9 6
-      image-source: images/icon-currency-dust
+      image-source: /images/game/forge/ui/icon-currency-dust
       anchors.left: prev.right
       anchors.top: prev.top
       margin-left: 5

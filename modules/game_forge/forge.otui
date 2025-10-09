@@ -1,4 +1,4 @@
-ForgeWindow < MainWindow
+NewMainWindow
   id: forgeWindow
   !text: tr('Exaltation Forge')
   anchors.horizontalCenter: parent.horizontalCenter

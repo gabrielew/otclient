@@ -101,7 +101,7 @@ ResultWindow < UIWindow
     anchors.right: parent.right
     margin-bottom: 10
 
-ForgeResultMainWindow < MainWindow
+NewResultMainWindow
   id: resultMainWindow
   size: 401 201
   anchors.horizontalCenter: parent.horizontalCenter

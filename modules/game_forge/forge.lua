@@ -11,22 +11,28 @@ selectedItemFusionConvectionRadio = nil
 
 function init()
   g_ui.importStyle('styles/compat')
+  g_ui.importStyle('styles/fusion')
+  g_ui.importStyle('styles/transfer')
+  g_ui.importStyle('styles/conversion')
+  g_ui.importStyle('styles/history')
+  g_ui.importStyle('styles/result')
+
   forgeWindow = g_ui.displayUI('forge')
   mainPanel = forgeWindow:getChildById('contentPanel')
 
-  fusionMenu = g_ui.loadUI('styles/fusion', mainPanel)
+  fusionMenu = g_ui.createWidget('FusionMenu', mainPanel)
   fusionMenu:hide()
 
-  transferMenu = g_ui.loadUI('styles/transfer', mainPanel)
+  transferMenu = g_ui.createWidget('TransferMenu', mainPanel)
   transferMenu:hide()
 
-  conversionMenu = g_ui.loadUI('styles/conversion', mainPanel)
+  conversionMenu = g_ui.createWidget('ConversionMenu', mainPanel)
   conversionMenu:hide()
 
-  historyMenu = g_ui.loadUI('styles/history', mainPanel)
+  historyMenu = g_ui.createWidget('HistoryMenu', mainPanel)
   historyMenu:hide()
 
-  resultWindow = g_ui.displayUI('styles/result')
+  resultWindow = g_ui.createWidget('ResultMainWindow', g_ui.getRootWidget())
   resultWindow:hide()
 
   loadMenu('fusionMenu')

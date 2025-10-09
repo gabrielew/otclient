@@ -39,7 +39,7 @@ FusionItemBox < UICheckBox
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
 
-Panel
+FusionMenu < Panel
   id: fusionMenu
   anchors.fill: parent
   Panel

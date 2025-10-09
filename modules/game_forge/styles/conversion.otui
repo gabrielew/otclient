@@ -97,7 +97,7 @@ ItemConvertButton < UIButton
   image-source: /images/ui/bigger-button-grey-qt
   enabled: false
 
-Panel
+ConversionMenu < Panel
   id: conversionMenu
   anchors.fill: parent
   ConvertionWindow

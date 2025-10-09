@@ -28,7 +28,7 @@ HistoryForgePanel < UIWidget
     text-wrap: true
     margin-top: 1
 
-Panel
+HistoryMenu < Panel
   id: historyMenu
   anchors.fill: parent
   TextList

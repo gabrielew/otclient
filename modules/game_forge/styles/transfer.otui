@@ -1,4 +1,4 @@
-Panel
+TransferMenu < Panel
   id: transferMenu
   anchors.fill: parent
   Panel

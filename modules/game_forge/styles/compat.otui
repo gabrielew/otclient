@@ -1,0 +1,5 @@
+NewMainWindow < MainWindow
+
+NewResultMainWindow < MainWindow
+
+WindowPanel < Panel

@@ -8,6 +8,14 @@ Item < UIItem
 
   $disabled:
     color: #646464
+  
+BigItem < UIItem
+  size: 66 66
+  padding: 1
+  image-source: /images/ui/item66
+  font: verdana-11px-rounded
+  border-color: white
+  color: white
 
   Label
     id: duration

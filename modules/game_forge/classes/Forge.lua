@@ -34,6 +34,9 @@ ForgeSystem.transferData = {}
 ForgeSystem.transferConvergenceData = {}
 ForgeSystem.maxPlayerDust = 100
 
+-- "$var-text-cip-color"
+local VAR_TEXT_CIP_COLOR = "white"
+
 function ForgeSystem.init(classPrice, transferMap, fusionPrices, transferPrices, baseMultipier, slivers, totalSlivers,
 						  dustCost, dustPrice, maxDust, dustFusion, convergenceDustFusion, dustTransfer,
 						  convergenceDustTransfer, success, improveRateSuccess, tierLoss)
@@ -271,7 +274,7 @@ local function ConfigureFusionConversionPanel(selectedWidget)
 
 	local dust = player:getResourceValue(ResourceForgeDust)
 	fusionMenu.converFusion.convergencePanel.dustCount.dustamount:setColor(dust >= ForgeSystem.convergenceDustFusion and
-		"$var-text-cip-color" or "#d33c3c")
+		VAR_TEXT_CIP_COLOR or "#d33c3c")
 
 	local classification = itemPtr:getClassification()
 	local price = ForgeSystem.fusionPrices[itemTier]
@@ -279,7 +282,7 @@ local function ConfigureFusionConversionPanel(selectedWidget)
 	local messageColor = {}
 	ForgeSystem.fusionPrice = price
 	setStringColor(messageColor, formatMoney(price, ","),
-		((player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice and "$var-text-cip-color" or "#d33c3c"))
+		((player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice and VAR_TEXT_CIP_COLOR or "#d33c3c"))
 	setStringColor(messageColor, " $", "#c0c0c0")
 	fusionMenu.converFusion.convergencePanel.moneyPanel.gold:setColoredText(messageColor)
 
@@ -303,7 +306,7 @@ local function ConfigureFusionPanel(selectedWidget)
 	fusionMenu.itemsFusion.itemPanel.item:setItemId(itemPtr:getId())
 	fusionMenu.itemsFusion.itemPanel.questionMark:setVisible(false)
 	fusionMenu.itemsFusion.itemCount.value:setText(itemCount .. " / 1")
-	fusionMenu.itemsFusion.itemCount.value:setColor(itemCount > 1 and "$var-text-cip-color" or "#d33c3c")
+	fusionMenu.itemsFusion.itemCount.value:setColor(itemCount > 1 and VAR_TEXT_CIP_COLOR or "#d33c3c")
 
 	fusionMenu.itemsFusion.fusionButton.item:setItemId(itemPtr:getId())
 	fusionMenu.itemsFusion.fusionButton.item.questionMark:setVisible(false)
@@ -316,7 +319,7 @@ local function ConfigureFusionPanel(selectedWidget)
 
 	local player = g_game.getLocalPlayer()
 	local dust = player:getResourceValue(ResourceForgeDust)
-	fusionMenu.itemsFusion.dustCount.dustamount:setColor(dust >= ForgeSystem.dustFusion and "$var-text-cip-color" or
+	fusionMenu.itemsFusion.dustCount.dustamount:setColor(dust >= ForgeSystem.dustFusion and VAR_TEXT_CIP_COLOR or
 		"#d33c3c")
 
 
@@ -331,7 +334,7 @@ local function ConfigureFusionPanel(selectedWidget)
 	ForgeSystem.fusionPrice = price
 	local messageColor = {}
 	setStringColor(messageColor, formatMoney(price, ","),
-		((player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice and "$var-text-cip-color" or "#d33c3c"))
+		((player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice and VAR_TEXT_CIP_COLOR or "#d33c3c"))
 	setStringColor(messageColor, " $", "#c0c0c0")
 	fusionMenu.itemsFusion.moneyPanel.gold:setColoredText(messageColor)
 
@@ -364,12 +367,12 @@ function ForgeSystem.checkFusionButtons()
 	if ForgeSystem.rateSuccessActive then
 		exaltedCore = exaltedCore - 1
 		fusionMenu.itemsFusion.improveRateSuccessButton:setEnabled(true)
-		fusionMenu.itemsFusion.improveRateSuccessPanel.exaltedcoreamount:setColor("$var-text-cip-color")
+		fusionMenu.itemsFusion.improveRateSuccessPanel.exaltedcoreamount:setColor(VAR_TEXT_CIP_COLOR)
 	end
 	if ForgeSystem.tierLossActive then
 		exaltedCore = exaltedCore - 1
 		fusionMenu.itemsFusion.tierLossButton:setEnabled(true)
-		fusionMenu.itemsFusion.tierLossPanel.exaltedcoreamount:setColor("$var-text-cip-color")
+		fusionMenu.itemsFusion.tierLossPanel.exaltedcoreamount:setColor(VAR_TEXT_CIP_COLOR)
 	end
 
 	if exaltedCore < 1 then
@@ -384,11 +387,11 @@ function ForgeSystem.checkFusionButtons()
 	else
 		if not ForgeSystem.rateSuccessActive then
 			fusionMenu.itemsFusion.improveRateSuccessButton:setEnabled(true)
-			fusionMenu.itemsFusion.improveRateSuccessPanel.exaltedcoreamount:setColor("$var-text-cip-color")
+			fusionMenu.itemsFusion.improveRateSuccessPanel.exaltedcoreamount:setColor(VAR_TEXT_CIP_COLOR)
 		end
 		if not ForgeSystem.tierLossActive then
 			fusionMenu.itemsFusion.tierLossButton:setEnabled(true)
-			fusionMenu.itemsFusion.tierLossPanel.exaltedcoreamount:setColor("$var-text-cip-color")
+			fusionMenu.itemsFusion.tierLossPanel.exaltedcoreamount:setColor(VAR_TEXT_CIP_COLOR)
 		end
 	end
 end
@@ -748,7 +751,7 @@ local function ConfigureTransferPanel(selectedWidget)
 	transferMenu.itemsFusion.itemPanel.item:setItemId(itemPtr:getId())
 	transferMenu.itemsFusion.itemPanel.item.questionMark:setVisible(false)
 	transferMenu.itemsFusion.itemCount.value:setText(itemCount .. " / 1")
-	transferMenu.itemsFusion.itemCount.value:setColor("$var-text-cip-color")
+	transferMenu.itemsFusion.itemCount.value:setColor(VAR_TEXT_CIP_COLOR)
 
 	transferMenu.itemsFusion.itemPanel.item:setItemId(itemPtr:getId())
 	if itemTier > 0 then
@@ -760,13 +763,13 @@ local function ConfigureTransferPanel(selectedWidget)
 
 	local player = g_game.getLocalPlayer()
 	local dust = player:getResourceValue(ResourceForgeDust)
-	transferMenu.itemsFusion.dustCount.dustamount:setColor((dust >= ForgeSystem.dustTransfer and "$var-text-cip-color" or "#d33c3c"))
+	transferMenu.itemsFusion.dustCount.dustamount:setColor((dust >= ForgeSystem.dustTransfer and VAR_TEXT_CIP_COLOR or "#d33c3c"))
 	forgeWindow.dustPanel.dust:setText(dust .. '/' .. ForgeSystem.maxPlayerDust)
 
 	local exaltedCoreCount = ForgeSystem.transferMap[itemTier - 1] or 1
 	transferMenu.itemsFusion.exaltedCount.amount:setText(exaltedCoreCount)
 	local exaltedCore = player:getResourceValue(ResourceForgeExaltedCore)
-	transferMenu.itemsFusion.exaltedCount.amount:setColor((exaltedCore >= exaltedCoreCount and "$var-text-cip-color" or "#d33c3c"))
+	transferMenu.itemsFusion.exaltedCount.amount:setColor((exaltedCore >= exaltedCoreCount and VAR_TEXT_CIP_COLOR or "#d33c3c"))
 
 	ForgeSystem.exaltedCoreCount = exaltedCoreCount
 
@@ -782,7 +785,7 @@ local function ConfigureTransferPanel(selectedWidget)
 	local messageColor = {}
 	setStringColor(messageColor, formatMoney(price, ","),
 		(player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice and
-		"$var-text-cip-color" or "#d33c3c")
+		VAR_TEXT_CIP_COLOR or "#d33c3c")
 	setStringColor(messageColor, " $", "#c0c0c0")
 	transferMenu.itemsFusion.moneyPanel.gold:setColoredText(messageColor)
 
@@ -830,7 +833,7 @@ local function ConfigureTransferConvergencePanel(selectedWidget)
 	transferMenu.converFusion.itemPanel.item:setItemId(itemPtr:getId())
 	transferMenu.converFusion.itemPanel.item.questionMark:setVisible(false)
 	transferMenu.converFusion.itemCount.value:setText(itemCount .. " / 1")
-	transferMenu.converFusion.itemCount.value:setColor("$var-text-cip-color")
+	transferMenu.converFusion.itemCount.value:setColor(VAR_TEXT_CIP_COLOR)
 
 	transferMenu.converFusion.itemPanel.item:setItemId(itemPtr:getId())
 	if itemTier > 0 then
@@ -842,13 +845,13 @@ local function ConfigureTransferConvergencePanel(selectedWidget)
 
 	local player = g_game.getLocalPlayer()
 	local dust = player:getResourceValue(ResourceForgeDust)
-	transferMenu.converFusion.dustCount.dustamount:setColor((dust >= ForgeSystem.convergenceDustTransfer and "$var-text-cip-color" or "#d33c3c"))
+	transferMenu.converFusion.dustCount.dustamount:setColor((dust >= ForgeSystem.convergenceDustTransfer and VAR_TEXT_CIP_COLOR or "#d33c3c"))
 	forgeWindow.dustPanel.dust:setText(dust .. '/' .. ForgeSystem.maxPlayerDust)
 
 	local exaltedCoreCount = ForgeSystem.transferMap[itemTier]
 	transferMenu.converFusion.exaltedCount.amount:setText(exaltedCoreCount)
 	local exaltedCore = player:getResourceValue(ResourceForgeExaltedCore)
-	transferMenu.converFusion.exaltedCount.amount:setColor((exaltedCore >= exaltedCoreCount and "$var-text-cip-color" or "#d33c3c"))
+	transferMenu.converFusion.exaltedCount.amount:setColor((exaltedCore >= exaltedCoreCount and VAR_TEXT_CIP_COLOR or "#d33c3c"))
 
 	ForgeSystem.exaltedCoreCount = exaltedCoreCount
 
@@ -863,7 +866,7 @@ local function ConfigureTransferConvergencePanel(selectedWidget)
 	local messageColor = {}
 	setStringColor(messageColor, formatMoney(price, ","),
 		(player:getResourceValue(ResourceBank) + player:getResourceValue(ResourceInventary)) >= ForgeSystem.fusionPrice and
-		"$var-text-cip-color" or "#d33c3c")
+		VAR_TEXT_CIP_COLOR or "#d33c3c")
 	setStringColor(messageColor, " $", "#c0c0c0")
 	transferMenu.converFusion.moneyPanel.gold:setColoredText(messageColor)
 
@@ -984,13 +987,13 @@ function ForgeSystemEventFusionColor(transfer, success, otherItem, otherTier, it
 		-- message
 		local message = {}
 		setStringColor(message, "Your " .. (transfer and "transfer" or "fusion") .. " attempt was ",
-			"$var-text-cip-color-grey")
+			"grey")
 		if not success then
 			setStringColor(message, "failed", "#d33c3c")
 		else
-			setStringColor(message, "successful", "$var-text-cip-color-green")
+			setStringColor(message, "successful", "green")
 		end
-		setStringColor(message, ".", "$var-text-cip-color-grey")
+		setStringColor(message, ".", "grey")
 
 		resultWindowPanel.resultLabel:setColoredText(message)
 
@@ -1092,14 +1095,14 @@ function ForgeSystem.updateConversion()
 	local dust = player:getResourceValue(ResourceForgeDust)
 
 	local price1 = ForgeSystem.slivers * ForgeSystem.baseMultipier
-	conversionMenu.windowConvertDust.itemCount.amount:setColor(dust >= price1 and "$var-text-cip-color" or "#d33c3c")
+	conversionMenu.windowConvertDust.itemCount.amount:setColor(dust >= price1 and VAR_TEXT_CIP_COLOR or "#d33c3c")
 
 	conversionMenu.windowConvertDust.dustButton:setEnabled(dust >= price1)
 	conversionMenu.windowConvertDust.dustButton.locked:setVisible(dust < price1)
 
 	conversionMenu.windowConvertSlivers.itemCount.amount:setText(ForgeSystem.totalSlivers)
 	conversionMenu.windowConvertSlivers.itemCount.amount:setColor(player:getResourceValue(ResourceForgeSlivers) >=
-		ForgeSystem.totalSlivers and "$var-text-cip-color" or "#d33c3c")
+		ForgeSystem.totalSlivers and VAR_TEXT_CIP_COLOR or "#d33c3c")
 	conversionMenu.windowConvertSlivers.sliverButton:setEnabled(player:getResourceValue(ResourceForgeSlivers) >=
 		ForgeSystem.totalSlivers)
 	conversionMenu.windowConvertSlivers.sliverButton.locked:setVisible(player:getResourceValue(ResourceForgeSlivers) <
@@ -1107,7 +1110,7 @@ function ForgeSystem.updateConversion()
 
 	local totalDustRequired = (100 - ForgeSystem.dustCost) + (ForgeSystem.maxPlayerDust - 100)
 	conversionMenu.windowIncreaseDustLimit.itemCount.amount:setText(totalDustRequired)
-	conversionMenu.windowIncreaseDustLimit.itemCount.amount:setColor(dust >= totalDustRequired and "$var-text-cip-color" or
+	conversionMenu.windowIncreaseDustLimit.itemCount.amount:setColor(dust >= totalDustRequired and VAR_TEXT_CIP_COLOR or
 		"#d33c3c")
 	conversionMenu.windowIncreaseDustLimit.currentDust:setText(ForgeSystem.maxPlayerDust)
 	conversionMenu.windowIncreaseDustLimit.nextDust:setText('to ' ..
@@ -1146,22 +1149,22 @@ function ForgeSystem.onForgeHistory(history)
 		end
 		widget:setBackgroundColor(backgroundColor)
 		widget.date:setText(os.date("%Y-%m-%d, %X", info[1]))
-		widget.date:setColor("$var-text-cip-color")
+		widget.date:setColor(VAR_TEXT_CIP_COLOR)
 		local actionText
 		local actionColor
 		if info[2] == 0 then
 			actionText = 'Fusion'
-			actionColor = "$var-text-cip-color"
+			actionColor = VAR_TEXT_CIP_COLOR
 		elseif info[2] == 1 then
 			actionText = 'Transfer'
-			actionColor = "$var-text-cip-color"
+			actionColor = VAR_TEXT_CIP_COLOR
 		else
 			actionText = 'Conversion'
-			actionColor = "$var-text-cip-color-blue"
+			actionColor = "blue"
 		end
 		widget.action:setText(actionText)
 		widget.action:setColor(actionColor)
 		widget.details:setText(info[3])
-		widget.details:setColor("$var-text-cip-color")
+		widget.details:setColor(VAR_TEXT_CIP_COLOR)
 	end
 end

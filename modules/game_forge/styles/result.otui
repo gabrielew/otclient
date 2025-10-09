@@ -11,8 +11,8 @@ BonusWindow < UIWindow
     anchors.top: prev.bottom
     anchors.horizontalCenter: parent.horizontalCenter
     !text: tr("What luck! Your item only lost one tier instead of being\n                                     consumed.")
-    font: $var-cip-font
-    color: $var-text-cip-color
+    
+    color: #ffffff
     text-auto-resize: true
     margin-top: 10
   Button
@@ -76,8 +76,8 @@ ResultWindow < UIWindow
     anchors.top: prev.bottom
     anchors.horizontalCenter: parent.horizontalCenter
     !text: tr("Your fusion attempt was successful.")
-    font: $var-cip-font
-    color: $var-text-cip-color
+    
+    color: #ffffff
     text-auto-resize: true
     margin-top: 29
   Button
@@ -101,13 +101,13 @@ ResultWindow < UIWindow
     anchors.right: parent.right
     margin-bottom: 10
 
-NewMainWindow
+ResultMainWindow < NewResultMainWindow
   id: resultMainWindow
   size: 401 201
   anchors.horizontalCenter: parent.horizontalCenter
   !text: tr('Fusion Result')
-  font: $var-cip-font
-  color: $var-text-cip-color-grey
+  
+  color: grey
   UIWidget
     size: 192 70
     anchors.top: parent.top

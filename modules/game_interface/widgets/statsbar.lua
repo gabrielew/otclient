@@ -5,10 +5,27 @@ local statsBars = {}
 local statsBarDeepInfo = {}
 local statsBarHtmlContexts = {}
 
-local function attachHtmlContext(widget, htmlId)
-    if widget and htmlId and htmlId ~= 0 then
-        widget.__statsbarHtmlId = htmlId
+local function resolveHtmlContextId(widget)
+    local current = widget
+    while current do
+        if current.__statsbarHtmlId and current.__statsbarHtmlId ~= 0 then
+            return current.__statsbarHtmlId
+        end
+        current = current:getParent()
     end
+    return nil
+end
+
+local function attachHtmlContext(widget, htmlId)
+    if not widget then
+        return nil
+    end
+
+    local numericId = tonumber(htmlId)
+    if numericId and numericId ~= 0 then
+        widget.__statsbarHtmlId = numericId
+    end
+
     return widget
 end
 
@@ -17,11 +34,13 @@ local function assignVariantElements(variant, htmlId)
         return
     end
 
-    if htmlId and htmlId ~= 0 then
-        variant.__statsbarHtmlId = htmlId
-    else
-        htmlId = variant.__statsbarHtmlId
+    local resolvedHtmlId = tonumber(htmlId)
+    if not resolvedHtmlId or resolvedHtmlId == 0 then
+        resolvedHtmlId = resolveHtmlContextId(variant)
     end
+
+    attachHtmlContext(variant, resolvedHtmlId)
+    htmlId = resolvedHtmlId
 
     local function capture(role)
         local widget = variant:getChildById(string.format('%s_%s', variant:getId(), role))
@@ -36,7 +55,6 @@ local function assignVariantElements(variant, htmlId)
     variant.skills = capture('skills')
     variant.icons = capture('icons')
 
-    attachHtmlContext(variant, htmlId)
     attachHtmlContext(variant.health, htmlId)
     attachHtmlContext(variant.mana, htmlId)
     attachHtmlContext(variant.skills, htmlId)
@@ -116,23 +134,12 @@ function getConfigurations()
     return configs
 end
 
-local function resolveHtmlContextId(widget)
-    local current = widget
-    while current do
-        if current.__statsbarHtmlId and current.__statsbarHtmlId ~= 0 then
-            return current.__statsbarHtmlId
-        end
-        current = current:getParent()
-    end
-    return nil
-end
-
 local function createSkillWidget(skills, className)
     if not skills then
         return nil
     end
 
-    local htmlContextId = resolveHtmlContextId(skills)
+    local htmlContextId = tonumber(resolveHtmlContextId(skills))
     if not htmlContextId then
         return nil
     end
@@ -145,6 +152,10 @@ local function createSkillWidget(skills, className)
     widget.level = widget:querySelector('[data-role="level"]')
     widget.icon = widget:querySelector('[data-role="icon"]')
     widget.bar = widget:querySelector('[data-role="bar"]')
+
+    if widget.bar and not widget.bar.setValue then
+        widget.bar = nil
+    end
 
     return widget
 end

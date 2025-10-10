@@ -8,12 +8,20 @@ local enterGameButton
 local clientBox
 local protocolLogin
 local motdEnabled = true
+local authenticatorTokenBox
 
 -- private functions
 local function onError(protocol, message, errorCode)
     if loadBox then
         loadBox:destroy()
         loadBox = nil
+    end
+
+    if authenticatorTokenBox then
+        if not authenticatorTokenBox:isDestroyed() then
+            authenticatorTokenBox:destroy()
+        end
+        authenticatorTokenBox = nil
     end
 
     if not errorCode then
@@ -109,6 +117,87 @@ local function onUpdateNeeded(protocol, signature)
         connect(errorBox, {
             onOk = EnterGame.show
         })
+    end
+end
+
+local function showAuthenticatorTokenPrompt(protocol, requestType)
+    if loadBox then
+        loadBox:destroy()
+        loadBox = nil
+    end
+
+    EnterGame.show()
+
+    if authenticatorTokenBox then
+        if not authenticatorTokenBox:isDestroyed() then
+            authenticatorTokenBox:destroy()
+        end
+        authenticatorTokenBox = nil
+    end
+
+    local authenticatorTokenTextEdit = enterGame and enterGame:getChildById('authenticatorTokenTextEdit')
+    local authenticatorTokenLabel = enterGame and enterGame:getChildById('authenticatorTokenLabel')
+
+    if authenticatorTokenLabel then
+        authenticatorTokenLabel:setOn(true)
+    end
+
+    if authenticatorTokenTextEdit then
+        authenticatorTokenTextEdit:setOn(true)
+    end
+
+    local function reopenPrompt()
+        showAuthenticatorTokenPrompt(protocol, 0)
+    end
+
+    authenticatorTokenBox = UIInputBox.create(tr('Two-Factor Authentification'), function(token)
+        authenticatorTokenBox = nil
+
+        token = token and token:trim() or ''
+        if token == '' then
+            local errorBox = displayErrorBox(tr('Login Error'), tr('You must enter an authenticator token.'))
+            connect(errorBox, {
+                onOk = function()
+                    EnterGame.show()
+                    reopenPrompt()
+                end
+            })
+            return
+        end
+
+        if authenticatorTokenTextEdit then
+            authenticatorTokenTextEdit:setText(token)
+        end
+
+        EnterGame.doLogin()
+    end, function()
+        authenticatorTokenBox = nil
+
+        if authenticatorTokenTextEdit then
+            authenticatorTokenTextEdit:clearText()
+        end
+
+        EnterGame.show()
+    end)
+
+    if requestType and requestType ~= 0 then
+        authenticatorTokenBox:addLabel(tr('Invalid authentification token.'))
+    end
+
+    authenticatorTokenBox:addLabel(tr('Enter your authenticator token.'))
+
+    local defaultText = ''
+    if authenticatorTokenTextEdit then
+        defaultText = authenticatorTokenTextEdit:getText()
+    end
+
+    local input = authenticatorTokenBox:addLineEdit(tr('Authenticator Token'), defaultText)
+
+    authenticatorTokenBox:display(tr('Ok'), tr('Cancel'))
+
+    if input then
+        input:focus()
+        input:selectAll()
     end
 end
 
@@ -299,6 +388,13 @@ function EnterGame.terminate()
     if protocolLogin then
         protocolLogin:cancelLogin()
         protocolLogin = nil
+    end
+
+    if authenticatorTokenBox then
+        if not authenticatorTokenBox:isDestroyed() then
+            authenticatorTokenBox:destroy()
+        end
+        authenticatorTokenBox = nil
     end
 
     EnterGame = nil
@@ -751,6 +847,7 @@ function EnterGame.doLogin()
         protocolLogin.onSessionKey = onSessionKey
         protocolLogin.onCharacterList = onCharacterList
         protocolLogin.onUpdateNeeded = onUpdateNeeded
+        protocolLogin.onAuthenticatorToken = showAuthenticatorTokenPrompt
 
         loadBox = displayCancelBox(tr('Please wait'), tr('Connecting to login server...'))
         connect(loadBox, {

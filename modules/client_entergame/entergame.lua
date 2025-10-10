@@ -513,6 +513,12 @@ function EnterGame.show()
         return
     end
 
+    local tokenEdit = enterGame and enterGame:getChildById('authenticatorTokenTextEdit')
+    if tokenEdit then
+        tokenEdit:setText('')
+    end
+    G.authenticatorToken = ''
+
     enterGame:show()
     enterGame:raise()
     enterGame:focus()

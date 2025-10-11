@@ -246,19 +246,28 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
     bar.mana.showText = true
     bar.mana:setValue(mana, maxMana)
 
-    local defaultShieldMargin = bar.manashield.defaultMarginTop
-    if not defaultShieldMargin then
-        defaultShieldMargin = bar.manashield:getMarginTop()
-        bar.manashield.defaultMarginTop = defaultShieldMargin
+    if not bar.mana.defaultHeight then
+        bar.mana.defaultHeight = bar.mana:getHeight()
     end
 
-    if manashield > 0 and player:getMaxManaShield() > 0 then
+    local maxManaShield = player:getMaxManaShield()
+    if manashield > 0 and maxManaShield > 0 then
+        local fullHeight = bar.mana.defaultHeight
+        local manaHeight = math.floor(fullHeight / 2)
+        local shieldHeight = math.max(1, fullHeight - manaHeight)
+
+        bar.mana:setHeight(manaHeight)
+
         bar.manashield:show()
         bar.manashield.showText = true
-        bar.manashield:setMarginTop(defaultShieldMargin)
-        bar.manashield:setHeight(bar.mana:getHeight())
-        bar.manashield:setValue(player:getManaShield(), player:getMaxManaShield())
+        bar.manashield:setMarginTop(0)
+        bar.manashield:setHeight(shieldHeight)
+        bar.manashield:setValue(manashield, maxManaShield)
     else
+        if bar.mana.defaultHeight then
+            bar.mana:setHeight(bar.mana.defaultHeight)
+        end
+
         bar.manashield:setMarginTop(0)
         bar.manashield:setHeight(0)
         bar.manashield:hide()

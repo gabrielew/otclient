@@ -369,7 +369,7 @@ TopStatsBarLargeOnTop < UIWidget
     !statsbar-size: 'large'
     !statsbar-orientation: 'horizontal'
     statsbar-text: true
-    margin-top: 5
+    margin-top: 0
     margin-right: 15
     margin-left: 7
     height: 27
@@ -423,7 +423,7 @@ TopStatsBarParallelOnTop < UIWidget
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
     statsbar-text: true
-    margin-top: 5
+    margin-top: 0
     height: 14
 
   Panel
@@ -488,7 +488,7 @@ TopStatsBarDefaultOnTop < UIWidget
     statsbar-text: true
     margin-right: 12
     margin-left: 5
-    margin-top: 5
+    margin-top: 0
     height: 14
 
   Panel
@@ -998,7 +998,7 @@ TopStatsBarLargeOnBottom < UIWidget
     statsbar-text: true
     margin-left: 7
     margin-right: 7
-    margin-top: 6
+    margin-top: 0
     height: 27
 
   Panel
@@ -1049,7 +1049,7 @@ TopStatsBarParallelOnBottom < UIWidget
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
     statsbar-text: true
-    margin-top: 8
+    margin-top: 0
     height: 14
 
   Panel
@@ -1113,7 +1113,7 @@ TopStatsBarDefaultOnBottom < UIWidget
     statsbar-text: true
     margin-left: 7
     margin-right: 7
-    margin-top: 8
+    margin-top: 0
     height: 14
 
   Panel
@@ -1184,7 +1184,7 @@ TopStatsBarCompactOnBottom < UIWidget
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
     statsbar-text: true
-    margin-top: 5
+    margin-top: 0
     margin-left: 7
     margin-right: 7
     height: 14

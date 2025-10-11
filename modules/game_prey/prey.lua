@@ -41,6 +41,32 @@ local setWidgetTreePhantom
 local updatePickSpecificPreyButton
 local refreshRerollButtonState
 
+local function registerPreyWindowChildReferences(widget)
+    if not preyWindow or not widget then
+        return
+    end
+
+    local function register(node)
+        if not node then
+            return
+        end
+
+        local id = node:getId()
+        if id and id ~= '' then
+            preyWindow[id] = node
+        end
+
+        local children = node:getChildren()
+        if children then
+            for _, child in pairs(children) do
+                register(child)
+            end
+        end
+    end
+
+    register(widget)
+end
+
 function bonusDescription(bonusType, bonusValue, bonusGrade)
     if bonusType == PREY_BONUS_DAMAGE_BOOST then
         return 'Damage bonus (' .. bonusGrade .. '/10)'
@@ -95,12 +121,13 @@ function init()
     if mainTabBar and tabContent then
         mainTabBar:setContentWidget(tabContent)
 
-        local preyPanel = g_ui.loadUI('game_prey/prey_content')
+        local preyPanel = g_ui.loadUI('prey_content')
         if preyPanel then
             mainTabBar:addTab('Prey Creatures', preyPanel)
+            registerPreyWindowChildReferences(preyPanel)
         end
 
-        local huntingPanel = g_ui.loadUI('game_hunting_tasks/hunting_tasks_content')
+        local huntingPanel = g_ui.loadUI('/game_hunting_tasks/hunting_tasks_content')
         if huntingPanel then
             mainTabBar:addTab('Hunting Tasks', huntingPanel)
         end
@@ -120,16 +147,15 @@ function init()
         local huntingTabButton = preyWindow:recursiveGetChildById('huntingTasksButton')
 
         local function updateButtonStates(tab)
-            local text = tab and tab:getText() and tab:getText():lower()
+            local isPreyTab = tab == preyTab
+            local isHuntingTab = tab == huntingTab
 
             if preyTabButton then
-                local isPreyTab = text == 'prey creatures'
                 preyTabButton:setChecked(isPreyTab)
                 preyTabButton:setOn(isPreyTab)
             end
 
             if huntingTabButton then
-                local isHuntingTab = text == 'hunting tasks'
                 huntingTabButton:setChecked(isHuntingTab)
                 huntingTabButton:setOn(isHuntingTab)
             end
@@ -347,12 +373,28 @@ function setUnsupportedSettings()
     local t = { 'slot1', 'slot2', 'slot3' }
     for i, slot in pairs(t) do
         local panel = preyWindow[slot]
-        for j, state in pairs({ panel.active, panel.inactive }) do
-            state.select.price.text:setText('5')
+        if panel then
+            for _, state in pairs({ panel.active, panel.inactive }) do
+                if state and state.select and state.select.price and state.select.price.text then
+                    state.select.price.text:setText('5')
+                end
+            end
+
+            local active = panel.active
+            if active then
+                if active.autoRerollPrice and active.autoRerollPrice.text then
+                    active.autoRerollPrice.text:setText('1')
+                end
+
+                if active.lockPreyPrice and active.lockPreyPrice.text then
+                    active.lockPreyPrice.text:setText('5')
+                end
+
+                if active.choose and active.choose.price and active.choose.price.text then
+                    active.choose.price.text:setText('1')
+                end
+            end
         end
-        panel.active.autoRerollPrice.text:setText('1')
-        panel.active.lockPreyPrice.text:setText('5')
-        panel.active.choose.price.text:setText(1)
     end
 end
 

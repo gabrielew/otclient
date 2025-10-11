@@ -122,7 +122,15 @@ function UIStatsBar:setValue(value, total)
         self.bar:setWidth(((self:getWidth() - 2) * value) / total)
 
         if self.statsType == 'manashield' then
-            self.bar:setHeight(6)
+            local availableHeight = self:getHeight() - 2
+            if availableHeight <= 0 then
+                availableHeight = self:getHeight()
+            end
+            if availableHeight <= 0 then
+                availableHeight = 6
+            end
+            local shieldHeight = math.max(1, math.floor(availableHeight / 2))
+            self.bar:setHeight(shieldHeight)
         end
     elseif self.statsOrientation == 'vertical' then
         g_logger.info(">>> self.statsType: " ..
@@ -161,7 +169,14 @@ function UIStatsBar:setValue(value, total)
     elseif self.statsType == 'manashield' then
         self.bar:setImageSource('/images/bars/' .. self.statsOrientation .. '_manashield_progressbar_' .. self.statsSize)
         g_logger.info("mana shieldstats size: " .. self.statsSize) -- debug
-        self.bar:setImageHeight(self:getHeight() / 2)
+        local halfHeight = math.floor(self:getHeight() / 2)
+        if halfHeight <= 0 then
+            halfHeight = math.floor(self.bar:getHeight())
+        end
+        if halfHeight <= 0 then
+            halfHeight = 6
+        end
+        self.bar:setImageHeight(halfHeight)
     elseif self.statsType == 'experience' then
         self.bar:setImageSource('/images/bars/' .. self.statsOrientation .. '_experience_progressbar_' .. self.statsSize)
     elseif self.statsType == 'skill' then

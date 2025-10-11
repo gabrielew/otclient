@@ -172,7 +172,7 @@ StatsBarUp < UIStatsBar
     width: 1
     anchors.left: parent.left
     anchors.top: parent.top
-    anchors.bottom: parente.bottom
+    anchors.bottom: parent.bottom
     margin: 1
     image-repeated: true
 
@@ -371,7 +371,7 @@ TopStatsBarLargeOnTop < UIWidget
     statsbar-text: true
     margin-right: 15
     margin-left: 7
-    height: 13
+    height: 27
 
   Panel
     id: skills
@@ -422,8 +422,8 @@ TopStatsBarParallelOnTop < UIWidget
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
     statsbar-text: true
-    margin-top: 10
-    height: 7
+    margin-top: 5
+    height: 14
 
   Panel
     id: skills
@@ -487,8 +487,8 @@ TopStatsBarDefaultOnTop < UIWidget
     statsbar-text: true
     margin-right: 12
     margin-left: 5
-    margin-top: 10
-    height: 7
+    margin-top: 5
+    height: 14
 
   Panel
     id: skills
@@ -561,7 +561,7 @@ TopStatsBarCompactOnTop < UIWidget
     statsbar-text: true
     margin-right: 15
     margin-left: 7
-    height: 7
+    height: 14
 
   Panel
     id: skills
@@ -792,7 +792,7 @@ StatsBarUp < UIStatsBar
     width: 1
     anchors.left: parent.left
     anchors.top: parent.top
-    anchors.bottom: parente.bottom
+    anchors.bottom: parent.bottom
     margin: 1
     image-repeated: true
 
@@ -996,8 +996,8 @@ TopStatsBarLargeOnBottom < UIWidget
     statsbar-text: true
     margin-left: 7
     margin-right: 7
-    margin-top: 5
-    height: 13
+    margin-top: 0
+    height: 27
 
   Panel
     id: skills
@@ -1047,8 +1047,8 @@ TopStatsBarParallelOnBottom < UIWidget
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
     statsbar-text: true
-    margin-top: 16
-    height: 7
+    margin-top: 8
+    height: 14
 
   Panel
     id: skills
@@ -1111,8 +1111,8 @@ TopStatsBarDefaultOnBottom < UIWidget
     statsbar-text: true
     margin-left: 7
     margin-right: 7
-    margin-top: 16
-    height: 7
+    margin-top: 8
+    height: 14
 
   Panel
     id: skills
@@ -1141,7 +1141,7 @@ TopStatsBarCompactOnBottom < UIWidget
     image-source: /images/ui/containerslot
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
-    achors.bottom: paren.bottom
+    anchors.bottom: parent.bottom
     margin-top: 8
     size: 103 14
     layout:
@@ -1184,7 +1184,7 @@ TopStatsBarCompactOnBottom < UIWidget
     statsbar-text: true
     margin-left: 7
     margin-right: 7
-    height: 7
+    height: 14
 
   Panel
     id: skills

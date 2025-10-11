@@ -67,6 +67,47 @@ local function registerPreyWindowChildReferences(widget)
     register(widget)
 end
 
+local function loadTabPanelFromModule(moduleName, fileName, widgetId)
+    if not moduleName or moduleName == '' or not fileName or fileName == '' then
+        return nil
+    end
+
+    local candidateFiles = {
+        string.format('/modules/%s/%s.otui', moduleName, fileName),
+        string.format('/%s/%s.otui', moduleName, fileName),
+        string.format('modules/%s/%s.otui', moduleName, fileName),
+        string.format('%s/%s.otui', moduleName, fileName),
+        string.format('%s.otui', fileName),
+        string.format('/%s.otui', fileName)
+    }
+
+    for _, filePath in ipairs(candidateFiles) do
+        if g_resources.fileExists(filePath) then
+            local contents = g_resources.readFileContents(filePath)
+            if contents and contents:len() > 0 then
+                local ok, widget = pcall(function()
+                    return g_ui.loadUIFromString(contents)
+                end)
+
+                if ok and widget then
+                    if widgetId and widget.setId then
+                        widget:setId(widgetId)
+                    end
+                    return widget
+                end
+
+                if not ok then
+                    g_logger.error(string.format('[Prey] Failed to instantiate tab panel from %s: %s',
+                        filePath, widget))
+                end
+            end
+        end
+    end
+
+    g_logger.warning(string.format('[Prey] Missing tab content file: %s/%s.otui', moduleName, fileName))
+    return nil
+end
+
 function bonusDescription(bonusType, bonusValue, bonusGrade)
     if bonusType == PREY_BONUS_DAMAGE_BOOST then
         return 'Damage bonus (' .. bonusGrade .. '/10)'
@@ -119,17 +160,32 @@ function init()
     local tabContent = preyWindow and preyWindow:getChildById('tabContent')
 
     if mainTabBar and tabContent then
+        if mainTabBar.getStyleName and mainTabBar:getStyleName() ~= 'TabBar' then
+            mainTabBar:setStyle('TabBar')
+        end
+        if not mainTabBar.buttonsPanel or mainTabBar.buttonsPanel:isDestroyed() then
+            mainTabBar.buttonsPanel = mainTabBar:getChildById('buttonsPanel')
+            if not mainTabBar.buttonsPanel then
+                mainTabBar.buttonsPanel = g_ui.createWidget('Panel', mainTabBar)
+                mainTabBar.buttonsPanel:setId('buttonsPanel')
+                mainTabBar.buttonsPanel:fill('parent')
+            end
+        end
+
         mainTabBar:setContentWidget(tabContent)
 
-        local preyPanel = g_ui.loadUI('prey_content')
+        local preyPanel = loadTabPanelFromModule('game_prey', 'prey_content', 'preyCreaturesTabPanel')
         if preyPanel then
+            preyWindow.preyCreaturesTabPanel = preyPanel
             mainTabBar:addTab('Prey Creatures', preyPanel)
             registerPreyWindowChildReferences(preyPanel)
         end
 
-        local huntingPanel = g_ui.loadUI('/game_hunting_tasks/hunting_tasks_content')
+        local huntingPanel = loadTabPanelFromModule('game_hunting_tasks', 'hunting_tasks_content', 'huntingTasksTabPanel')
         if huntingPanel then
+            preyWindow.huntingTasksTabPanel = huntingPanel
             mainTabBar:addTab('Hunting Tasks', huntingPanel)
+            registerPreyWindowChildReferences(huntingPanel)
         end
 
         local preyTab = mainTabBar:getTab('Prey Creatures')
@@ -137,10 +193,12 @@ function init()
 
         if preyTab then
             preyTab:setVisible(false)
+            preyTab:setEnabled(false)
         end
 
         if huntingTab then
             huntingTab:setVisible(false)
+            huntingTab:setEnabled(false)
         end
 
         local preyTabButton = preyWindow:recursiveGetChildById('preyCreaturesButton')
@@ -169,7 +227,12 @@ function init()
             end
         end
 
-        updateButtonStates(mainTabBar:getCurrentTab())
+        local currentTab = mainTabBar:getCurrentTab()
+        if currentTab then
+            updateButtonStates(currentTab)
+        else
+            updateButtonStates(nil)
+        end
 
         if preyTabButton and preyTab then
             g_mouse.bindPress(preyTabButton, function()

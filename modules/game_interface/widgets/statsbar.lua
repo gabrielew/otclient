@@ -243,54 +243,25 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
     bar.health:setValue(player:getHealth(), player:getMaxHealth())
 
     local manashield = player:getManaShield()
-    local manaFullHeight = bar.mana:getHeight()
-    local manashieldHeight = math.floor(manaFullHeight / 2)
-    if manashieldHeight <= 0 then
-        manashieldHeight = math.floor(bar.mana:getImageHeight() / 2)
-    end
-    if manashieldHeight <= 0 then
-        manashieldHeight = 7
-    end
-    if manaFullHeight <= 0 then
-        manaFullHeight = manashieldHeight * 2
+    bar.mana.showText = true
+    bar.mana:setValue(mana, maxMana)
+
+    local defaultShieldMargin = bar.manashield.defaultMarginTop
+    if not defaultShieldMargin then
+        defaultShieldMargin = bar.manashield:getMarginTop()
+        bar.manashield.defaultMarginTop = defaultShieldMargin
     end
 
-    local imgClip = {
-        x = 0,
-        y = 0,
-        width = bar.mana:getImageWidth(),
-        height = manashieldHeight
-    }
-    if manashield > 0 then
+    if manashield > 0 and player:getMaxManaShield() > 0 then
         bar.manashield:show()
-        bar.mana.showText = false
-        bar.mana:setImageHeight(manashieldHeight)
-        bar.mana:setImageClip(imgClip)
-        bar.mana:setValue(mana, maxMana)
-
-        bar.manashield:setImageHeight(manashieldHeight)
-        bar.manashield:setImageClip({
-            x = 0, y = 0, width = bar.manashield:getImageWidth(), height = manashieldHeight
-        })
-
+        bar.manashield.showText = true
+        bar.manashield:setMarginTop(defaultShieldMargin)
+        bar.manashield:setHeight(bar.mana:getHeight())
         bar.manashield:setValue(player:getManaShield(), player:getMaxManaShield())
-
-        local customText = string.format("%d/%d (%d/%d)",
-            player:getMana(),
-            player:getMaxMana(),
-            player:getManaShield(),
-            player:getMaxManaShield()
-        )
-        bar.manashield.text:setWidth(400)
-        bar.manashield.text:setMarginBottom(2)
-        bar.manashield.text:setText(customText)
     else
+        bar.manashield:setMarginTop(0)
+        bar.manashield:setHeight(0)
         bar.manashield:hide()
-        imgClip.height = manaFullHeight
-        bar.mana:setImageHeight(manaFullHeight)
-        bar.mana:setImageClip(imgClip)
-        bar.mana.showText = true
-        bar.mana:setValue(mana, maxMana)
     end
 end
 

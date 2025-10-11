@@ -362,13 +362,14 @@ TopStatsBarLargeOnTop < UIWidget
 
   StatsBarUp
     id: manashield
-    anchors.top: icons.top
+    anchors.top: mana.bottom
     anchors.right: parent.right
     anchors.left: icons.right
     !statsbar-type: 'manashield'
     !statsbar-size: 'large'
     !statsbar-orientation: 'horizontal'
     statsbar-text: true
+    margin-top: 5
     margin-right: 15
     margin-left: 7
     height: 27
@@ -377,7 +378,7 @@ TopStatsBarLargeOnTop < UIWidget
     id: skills
     anchors.left: parent.left
     anchors.right: parent.right
-    anchors.top: icons.bottom
+    anchors.top: manashield.bottom
     margin-top: 6
     margin-left: 12
     margin-right: 18
@@ -415,9 +416,9 @@ TopStatsBarParallelOnTop < UIWidget
 
   StatsBarUp
     id: manashield
-    anchors.top: health.bottom
-    anchors.left: health.left
-    anchors.right: health.right
+    anchors.top: mana.bottom
+    anchors.left: mana.left
+    anchors.right: mana.right
     !statsbar-type: 'manashield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
@@ -478,9 +479,9 @@ TopStatsBarDefaultOnTop < UIWidget
 
   StatsBarUp
     id: manashield
-    anchors.top: parent.top
-    anchors.right: parent.right
-    anchors.left: parent.horizontalCenter
+    anchors.top: mana.bottom
+    anchors.right: mana.right
+    anchors.left: mana.left
     !statsbar-type: 'manashield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
@@ -552,13 +553,14 @@ TopStatsBarCompactOnTop < UIWidget
 
   StatsBarUp
     id: manashield
-    anchors.top: icons.top
+    anchors.top: mana.bottom
     anchors.right: parent.right
     anchors.left: icons.right
     !statsbar-type: 'manashield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
     statsbar-text: true
+    margin-top: 5
     margin-right: 15
     margin-left: 7
     height: 14
@@ -567,7 +569,7 @@ TopStatsBarCompactOnTop < UIWidget
     id: skills
     anchors.left: parent.left
     anchors.right: parent.right
-    anchors.top: icons.bottom
+    anchors.top: manashield.bottom
     margin-top: 6
     margin-left: 12
     margin-right: 18
@@ -987,7 +989,7 @@ TopStatsBarLargeOnBottom < UIWidget
 
   StatsBarUp
     id: manashield
-    anchors.top: icons.top
+    anchors.top: mana.bottom
     anchors.right: parent.right
     anchors.left: icons.right
     !statsbar-type: 'manashield'
@@ -996,14 +998,14 @@ TopStatsBarLargeOnBottom < UIWidget
     statsbar-text: true
     margin-left: 7
     margin-right: 7
-    margin-top: 0
+    margin-top: 6
     height: 27
 
   Panel
     id: skills
     anchors.left: parent.left
     anchors.right: parent.right
-    anchors.top: icons.bottom
+    anchors.top: manashield.bottom
     margin-top: 8
     margin-right: 6
     height: 0
@@ -1040,9 +1042,9 @@ TopStatsBarParallelOnBottom < UIWidget
 
   StatsBarUp
     id: manashield
-    anchors.top: health.bottom
-    anchors.left: health.left
-    anchors.right: health.right
+    anchors.top: mana.bottom
+    anchors.left: mana.left
+    anchors.right: mana.right
     !statsbar-type: 'manashield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
@@ -1102,9 +1104,9 @@ TopStatsBarDefaultOnBottom < UIWidget
 
   StatsBarUp
     id: manashield
-    anchors.top: parent.top
-    anchors.right: parent.right
-    anchors.left: parent.horizontalCenter
+    anchors.top: mana.bottom
+    anchors.right: mana.right
+    anchors.left: mana.left
     !statsbar-type: 'manashield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
@@ -1175,13 +1177,14 @@ TopStatsBarCompactOnBottom < UIWidget
 
   StatsBarUp
     id: manashield
-    anchors.top: icons.top
+    anchors.top: mana.bottom
     anchors.right: parent.right
     anchors.left: icons.right
     !statsbar-type: 'manashield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
     statsbar-text: true
+    margin-top: 5
     margin-left: 7
     margin-right: 7
     height: 14
@@ -1190,7 +1193,7 @@ TopStatsBarCompactOnBottom < UIWidget
     id: skills
     anchors.left: parent.left
     anchors.right: parent.right
-    anchors.top: icons.bottom
+    anchors.top: manashield.bottom
     margin-top: 6
     margin-right: 6
     height: 0

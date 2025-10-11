@@ -117,30 +117,12 @@ function UIStatsBar:setValue(value, total)
 
     -- Bar dimension
     if self.statsOrientation == 'horizontal' then
-        g_logger.info(">>> self.statsType: " ..
-            self.statsType .. " horizontal stats bar: " .. ((self:getWidth() - 2) * value) / total) -- debug
         self.bar:setWidth(((self:getWidth() - 2) * value) / total)
-
-        if self.statsType == 'manashield' then
-            local availableHeight = self:getHeight() - 2
-            if availableHeight <= 0 then
-                availableHeight = self:getHeight()
-            end
-            if availableHeight <= 0 then
-                availableHeight = 6
-            end
-            local shieldHeight = math.max(1, math.floor(availableHeight / 2))
-            self.bar:setHeight(shieldHeight)
-        end
     elseif self.statsOrientation == 'vertical' then
-        g_logger.info(">>> self.statsType: " ..
-            self.statsType .. " vertical stats bar: " .. ((self:getHeight() - 2) * value) / total) -- debug
         self.bar:setHeight(((self:getHeight() - 2) * value) / total)
     else
         return
     end
-
-    g_logger.info(">>> self.statsType: " .. self.statsType)
 
     -- Bar color
     local percent = (value * 100) / total
@@ -168,15 +150,6 @@ function UIStatsBar:setValue(value, total)
         self.bar:setImageSource('/images/bars/' .. self.statsOrientation .. '_mana_progressbar_' .. self.statsSize)
     elseif self.statsType == 'manashield' then
         self.bar:setImageSource('/images/bars/' .. self.statsOrientation .. '_manashield_progressbar_' .. self.statsSize)
-        g_logger.info("mana shieldstats size: " .. self.statsSize) -- debug
-        local halfHeight = math.floor(self:getHeight() / 2)
-        if halfHeight <= 0 then
-            halfHeight = math.floor(self.bar:getHeight())
-        end
-        if halfHeight <= 0 then
-            halfHeight = 6
-        end
-        self.bar:setImageHeight(halfHeight)
     elseif self.statsType == 'experience' then
         self.bar:setImageSource('/images/bars/' .. self.statsOrientation .. '_experience_progressbar_' .. self.statsSize)
     elseif self.statsType == 'skill' then

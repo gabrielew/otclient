@@ -243,18 +243,23 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
     bar.health:setValue(player:getHealth(), player:getMaxHealth())
 
     local manashield = player:getManaShield()
-    bar.mana.showText = true
-    bar.mana:setValue(mana, maxMana)
-
     if not bar.mana.defaultHeight then
         bar.mana.defaultHeight = bar.mana:getHeight()
     end
 
     local maxManaShield = player:getMaxManaShield()
-    if manashield > 0 and maxManaShield > 0 then
+    local shouldShowManaShield = manashield > 0 and maxManaShield > 0
+
+    if shouldShowManaShield then
         local fullHeight = bar.mana.defaultHeight
         local manaHeight = math.floor(fullHeight / 2)
         local shieldHeight = math.max(1, fullHeight - manaHeight)
+
+        bar.mana.showText = false
+        bar.mana:setValue(mana, maxMana)
+        if bar.mana.text then
+            bar.mana.text:hide()
+        end
 
         bar.mana:setHeight(manaHeight)
 
@@ -263,7 +268,15 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
         bar.manashield:setMarginTop(0)
         bar.manashield:setHeight(shieldHeight)
         bar.manashield:setValue(manashield, maxManaShield)
+
+        if bar.manashield.text then
+            local manaText = string.format('%d/%d (%d/%d)', mana, maxMana, manashield, maxManaShield)
+            bar.manashield.text:setText(manaText)
+        end
     else
+        bar.mana.showText = true
+        bar.mana:setValue(mana, maxMana)
+
         if bar.mana.defaultHeight then
             bar.mana:setHeight(bar.mana.defaultHeight)
         end
@@ -271,6 +284,14 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
         bar.manashield:setMarginTop(0)
         bar.manashield:setHeight(0)
         bar.manashield:hide()
+        bar.manashield.showText = false
+        if bar.manashield.text then
+            bar.manashield.text:hide()
+        end
+    end
+
+    if not shouldShowManaShield and bar.mana.text then
+        bar.mana.text:show()
     end
 end
 

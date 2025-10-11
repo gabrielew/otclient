@@ -552,12 +552,13 @@ TopStatsBarCompactOnTop < UIWidget
 
   StatsBarUp
     id: manashield
-    anchors.top: icons.top
-    anchors.right: parent.right
-    anchors.left: icons.right
+    anchors.bottom: mana.bottom
+    anchors.right: mana.right
+    anchors.left: mana.left
     !statsbar-type: 'manashield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
+    statsbar-split-mana: true
     statsbar-text: true
     margin-right: 15
     margin-left: 7
@@ -1040,15 +1041,14 @@ TopStatsBarParallelOnBottom < UIWidget
 
   StatsBarUp
     id: manashield
-    anchors.top: health.bottom
-    anchors.left: health.left
-    anchors.right: health.right
+    anchors.bottom: mana.bottom
+    anchors.left: mana.left
+    anchors.right: mana.right
     !statsbar-type: 'manashield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
     statsbar-split-mana: true
     statsbar-text: true
-    margin-top: 16
     height: 7
 
   Panel
@@ -1103,9 +1103,9 @@ TopStatsBarDefaultOnBottom < UIWidget
 
   StatsBarUp
     id: manashield
-    anchors.top: parent.top
-    anchors.right: parent.right
-    anchors.left: parent.horizontalCenter
+    anchors.bottom: mana.bottom
+    anchors.right: mana.right
+    anchors.left: mana.left
     !statsbar-type: 'manashield'
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
@@ -1113,7 +1113,6 @@ TopStatsBarDefaultOnBottom < UIWidget
     statsbar-text: true
     margin-left: 7
     margin-right: 7
-    margin-top: 16
     height: 7
 
   Panel

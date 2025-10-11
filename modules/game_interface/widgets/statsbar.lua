@@ -239,32 +239,92 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
 
     bar.health:setValue(player:getHealth(), player:getMaxHealth())
     bar.mana:setValue(player:getMana(), player:getMaxMana())
+
+    local manaWidget = bar.mana
+    local manashieldWidget = bar.manashield
     local manashield = player:getManaShield()
-    local manashieldHeight = 7
 
-    local imgClip = {
-        x = 0,
-        y = 0,
-        width = bar.mana:getImageWidth(),
-        height = manashieldHeight
-    }
-    if manashield > 0 then
-        bar.manashield:show()
+    if manaWidget and not manaWidget.defaultImageHeight then
+        local defaultManaHeight = manaWidget:getHeight()
+        if manashieldWidget and defaultManaHeight <= 0 then
+            defaultManaHeight = manashieldWidget:getHeight() * 2
+        end
+        manaWidget.defaultImageHeight = (defaultManaHeight and defaultManaHeight > 0) and defaultManaHeight or 14
+    end
 
-        bar.mana:setImageHeight(manashieldHeight)
-        bar.mana:setImageClip(imgClip)
+    if manashieldWidget and not manashieldWidget.defaultImageHeight then
+        local defaultManashieldHeight = manashieldWidget:getHeight()
+        manashieldWidget.defaultImageHeight = (defaultManashieldHeight and defaultManashieldHeight > 0)
+            and defaultManashieldHeight or 7
+    end
 
-        bar.manashield:setImageHeight(manashieldHeight)
-        bar.manashield:setImageClip({
-            x = 0, y = 0, width = bar.manashield:getImageWidth(), height = manashieldHeight
-        })
+    local function updateWidgetImage(widget, height)
+        if not widget or not height or height <= 0 then
+            return
+        end
 
-        bar.manashield:setValue(player:getManaShield(), player:getMaxManaShield())
+        height = math.max(1, math.floor(height + 0.5))
+        local clip = {
+            x = 0,
+            y = 0,
+            width = widget:getImageWidth(),
+            height = height
+        }
+        widget:setImageHeight(height)
+        widget:setImageClip(clip)
+    end
+
+    local manaDefaultHeight = manaWidget and manaWidget.defaultImageHeight or 14
+    local manashieldDefaultHeight = manashieldWidget and manashieldWidget.defaultImageHeight or 7
+
+    if manaDefaultHeight <= 0 and manashieldDefaultHeight > 0 then
+        manaDefaultHeight = manashieldDefaultHeight * 2
+        if manaWidget then
+            manaWidget.defaultImageHeight = manaDefaultHeight
+        end
+    end
+
+    if manaDefaultHeight <= 0 then
+        manaDefaultHeight = 14
+        if manaWidget then
+            manaWidget.defaultImageHeight = manaDefaultHeight
+        end
+    end
+
+    if manashieldDefaultHeight <= 0 then
+        manashieldDefaultHeight = math.max(1, math.floor(manaDefaultHeight / 2 + 0.5))
+        if manashieldWidget then
+            manashieldWidget.defaultImageHeight = manashieldDefaultHeight
+        end
+    end
+
+    local splitWithMana = manashieldWidget and manashieldWidget:usesSplitMana()
+
+    if manashieldWidget and manashield > 0 then
+        manashieldWidget:show()
+
+        updateWidgetImage(manaWidget, manaDefaultHeight)
+
+        local manashieldImageHeight = manashieldDefaultHeight
+        if splitWithMana then
+            manashieldImageHeight = math.max(1, math.floor(manaDefaultHeight / 2 + 0.5))
+            if manashieldDefaultHeight > 0 then
+                manashieldImageHeight = math.min(manashieldImageHeight, manashieldDefaultHeight)
+            end
+        end
+
+        updateWidgetImage(manashieldWidget, manashieldImageHeight)
+
+        manashieldWidget:setValue(player:getManaShield(), player:getMaxManaShield())
     else
-        bar.manashield:hide()
-        bar.mana:setImageHeight(manashieldHeight * 2)
-        -- imgClip.height = manashieldHeight * 2
-        bar.mana:setImageClip(imgClip)
+        if manashieldWidget then
+            manashieldWidget:hide()
+            if splitWithMana then
+                updateWidgetImage(manashieldWidget, manashieldDefaultHeight)
+            end
+        end
+
+        updateWidgetImage(manaWidget, manaDefaultHeight)
     end
 end
 

@@ -102,8 +102,14 @@ function UIStatsBar:onStyleApply(styleName, styleNode)
             self.statsGrade = value
         elseif name == 'statsbar-gradecolor' then
             self.statsGradeColor = value
+        elseif name == 'statsbar-split-mana' then
+            self.splitWithMana = value == true or value == 'true'
         end
     end
+end
+
+function UIStatsBar:usesSplitMana()
+    return self.splitWithMana or false
 end
 
 function UIStatsBar:setValue(value, total)

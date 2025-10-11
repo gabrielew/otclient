@@ -344,6 +344,23 @@ getPreySlotWidgetById = function(slotId)
     return preyWindow:recursiveGetChildById(slotId)
 end
 
+local function setWidgetTextValue(widget, value)
+    if not widget then
+        return
+    end
+
+    if widget.setText then
+        widget:setText(value)
+    end
+
+    if widget.getChildById then
+        local textChild = widget:getChildById('text')
+        if textChild and textChild.setText then
+            textChild:setText(value)
+        end
+    end
+end
+
 function Prey.toggleHuntingTasksWindow()
     if modules and modules.game_tasks and modules.game_tasks.toggleWindow then
         modules.game_tasks.toggleWindow()
@@ -362,15 +379,9 @@ local function resetPreyWindowState()
         description:setText('')
     end
 
-    local gold = getPreySlotWidgetById('gold')
-    if gold then
-        gold:setText('0')
-    end
-
-    local wildCards = getPreySlotWidgetById('wildCards')
-    if wildCards then
-        wildCards:setText('0')
-    end
+    setWidgetTextValue(getPreySlotWidgetById('gold'), '0')
+    setWidgetTextValue(getPreySlotWidgetById('wildCards'), '0')
+    setWidgetTextValue(getPreySlotWidgetById('huntingTasksResource'), '0')
 
     for slot = 0, 2 do
         onPreyInactive(slot, 0, 0)
@@ -1949,14 +1960,12 @@ function Prey.onResourcesBalanceChange(balance, oldBalance, type)
     local player = g_game.getLocalPlayer()
     g_logger.debug('' .. tostring(type) .. ', ' .. tostring(balance))
     if player then
-        local wildCardsLabel = getPreySlotWidgetById('wildCards')
-        if wildCardsLabel then
-            wildCardsLabel:setText(tostring(player:getResourceBalance(ResourceTypes.PREY_WILDCARDS)))
-        end
-
-        local goldLabel = getPreySlotWidgetById('gold')
-        if goldLabel then
-            goldLabel:setText(comma_value(player:getTotalMoney()))
+        setWidgetTextValue(getPreySlotWidgetById('wildCards'),
+            tostring(player:getResourceBalance(ResourceTypes.PREY_WILDCARDS)))
+        setWidgetTextValue(getPreySlotWidgetById('gold'), comma_value(player:getTotalMoney()))
+        if ResourceTypes and ResourceTypes.TASK_HUNTING then
+            local tasksBalance = player:getResourceBalance(ResourceTypes.TASK_HUNTING) or 0
+            setWidgetTextValue(getPreySlotWidgetById('huntingTasksResource'), tostring(tasksBalance))
         end
     end
 

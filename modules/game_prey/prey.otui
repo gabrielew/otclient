@@ -586,11 +586,29 @@ CardLabel < FlatPanel
     anchors.verticalCenter: parent.verticalCenter
     text-align: right
 
+TaskResourceLabel < FlatPanel
+  padding: 5
+
+  UIWidget
+    id: icon
+    anchors.right: parent.right
+    anchors.verticalCenter: parent.verticalCenter
+    image-source: /modules/game_tasks/images/taskIcon
+    tooltip: tr('Hunting Task Points')
+
+  UIWidget
+    id: text
+    anchors.right: prev.left
+    margin-right: 5
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    text-align: right
+
 GoldLabel < FlatPanel
   image-source: /images/ui/backdrop-dark-grey
   image-border: 5
   margin: 1
-  
+
   UIWidget
     id: gold
     anchors.right: parent.right
@@ -770,6 +788,13 @@ MainWindow
 
   CardLabel
     id: wildCards
+    anchors.left: prev.right
+    margin-left: 10
+    anchors.verticalCenter: closeButton.verticalCenter
+    size: 55 20
+
+  TaskResourceLabel
+    id: huntingTasksResource
     anchors.left: prev.right
     margin-left: 10
     anchors.verticalCenter: closeButton.verticalCenter

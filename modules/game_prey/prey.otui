@@ -659,79 +659,50 @@ MainWindow
   padding: 20
   @onHoverChange: modules.game_prey.onHover(self)
 
-  SlotPanel
-    id: slot1
-    anchors.left: parent.left
+  UITabBar
+    id: mainTabBar
     anchors.top: parent.top
-    margin-top: 10
-
-  SlotPanel
-    id: slot2
-    anchors.verticalCenter: prev.verticalCenter
-    anchors.left: prev.right
-    margin-left: 10
-
-  SlotPanel
-    id: slot3
-    anchors.verticalCenter: prev.verticalCenter
-    anchors.left: prev.right
-    margin-left: 10
-
-  FlatLabel
-    id: description
-    anchors.left: slot1.left
-    anchors.top: slot1.bottom
-    anchors.right: slot3.right
-    anchors.bottom: bottomSep.top
-    margin-bottom: 10
-    margin-top: 10
-    text-wrap: true
-
-  HorizontalSeparator
-    id: bottomSep
     anchors.left: parent.left
     anchors.right: parent.right
-    anchors.bottom: closeButton.top
-    margin-bottom: 10
+    height: 32
 
-  Button
-    id: closeButton
+    Panel
+      id: buttonsPanel
+      anchors.fill: parent
+
+      Button
+        id: preyCreaturesButton
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.horizontalCenter
+        height: 32
+        text: Prey Creatures
+        font: cipsoftFont
+        icon: /images/game/prey/prey_choose.png
+        icon-align: left
+        icon-offset: 6 0
+        icon-size: 32 32
+
+      Button
+        id: huntingTasksButton
+        anchors.top: parent.top
+        anchors.left: parent.horizontalCenter
+        anchors.right: parent.right
+        height: 32
+        text: Hunting Tasks
+        font: cipsoftFont
+        icon: /images/game/prey/prey_choose.png
+        icon-align: left
+        icon-offset: 6 0
+        icon-size: 32 32
+
+  Panel
+    id: tabContent
+    anchors.top: mainTabBar.bottom
+    anchors.left: parent.left
     anchors.right: parent.right
     anchors.bottom: parent.bottom
-    size: 45 21
-    text: Close
-    font: cipsoftFont
-    @onClick: modules.game_prey.hide()
-
-  GoldLabel
-    id: gold
-    anchors.left: bottomSep.left
-    anchors.verticalCenter: closeButton.verticalCenter
-    size: 105 20
-
-  CardLabel
-    id: wildCards
-    anchors.left: prev.right
-    margin-left: 10
-    anchors.verticalCenter: closeButton.verticalCenter
-    size: 55 20
-
-  UIButton
-    id: openStore
-    anchors.left: prev.right
-    margin-left: 10
-    size: 26 20
-    anchors.verticalCenter: closeButton.verticalCenter
-    tooltip: Go to the Store to get more Prey Wildcards!
-    image-source: /images/game/prey/prey_smallstore
-    image-clip: 0 0 26 20
-    background-color: #17354e
-    @onClick: modules.game_mainpanel.toggleStore()
-
-    $pressed:
-      image-clip: 0 0 26 20
-      image-source: /images/game/prey/prey_smallstore_clicked
-      image-clip: -1 -1 27 21
+    margin-top: 10
 
 PreyCreature < Panel
   height: 22

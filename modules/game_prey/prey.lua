@@ -87,6 +87,79 @@ function init()
 
     preyWindow = g_ui.displayUI('prey')
     preyWindow:hide()
+
+    -- Configure the Prey window tab system
+    local mainTabBar = preyWindow and preyWindow:getChildById('mainTabBar')
+    local tabContent = preyWindow and preyWindow:getChildById('tabContent')
+
+    if mainTabBar and tabContent then
+        mainTabBar:setContentWidget(tabContent)
+
+        local preyPanel = g_ui.loadUI('game_prey/prey_content')
+        if preyPanel then
+            mainTabBar:addTab('Prey Creatures', preyPanel)
+        end
+
+        local huntingPanel = g_ui.loadUI('game_hunting_tasks/hunting_tasks_content')
+        if huntingPanel then
+            mainTabBar:addTab('Hunting Tasks', huntingPanel)
+        end
+
+        local preyTab = mainTabBar:getTab('Prey Creatures')
+        local huntingTab = mainTabBar:getTab('Hunting Tasks')
+
+        if preyTab then
+            preyTab:setVisible(false)
+        end
+
+        if huntingTab then
+            huntingTab:setVisible(false)
+        end
+
+        local preyTabButton = preyWindow:recursiveGetChildById('preyCreaturesButton')
+        local huntingTabButton = preyWindow:recursiveGetChildById('huntingTasksButton')
+
+        if preyTabButton then
+            preyTabButton:setCheckable(true)
+        end
+
+        if huntingTabButton then
+            huntingTabButton:setCheckable(true)
+        end
+
+        local function updateButtonStates(tab)
+            local text = tab and tab:getText() and tab:getText():lower()
+            if preyTabButton then
+                preyTabButton:setOn(text == 'prey creatures')
+            end
+            if huntingTabButton then
+                huntingTabButton:setOn(text == 'hunting tasks')
+            end
+        end
+
+        local previousOnTabChange = mainTabBar.onTabChange
+        mainTabBar.onTabChange = function(self, tab)
+            updateButtonStates(tab)
+            if previousOnTabChange then
+                previousOnTabChange(self, tab)
+            end
+        end
+
+        updateButtonStates(mainTabBar:getCurrentTab())
+
+        if preyTabButton and preyTab then
+            g_mouse.bindPress(preyTabButton, function()
+                mainTabBar:selectTab(preyTab)
+            end, MouseLeftButton)
+        end
+
+        if huntingTabButton and huntingTab then
+            g_mouse.bindPress(huntingTabButton, function()
+                mainTabBar:selectTab(huntingTab)
+            end, MouseLeftButton)
+        end
+    end
+
     preyTracker = g_ui.createWidget('PreyTracker', modules.game_interface.getRightPanel())
     preyTracker:setup()
     preyTracker:setContentMaximumHeight(110)

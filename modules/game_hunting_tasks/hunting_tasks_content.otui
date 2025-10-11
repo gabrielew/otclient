@@ -1,0 +1,6 @@
+Panel
+  anchors.fill: parent
+
+  Label
+    text: Hunting Tasks Content
+    anchors.centerIn: parent

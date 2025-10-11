@@ -272,6 +272,7 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
         }
         widget:setImageHeight(height)
         widget:setImageClip(clip)
+        widget:setHeight(height)
     end
 
     local manaDefaultHeight = manaWidget and manaWidget.defaultImageHeight or 14

@@ -130,8 +130,6 @@ function UIStatsBar:setValue(value, total)
         return
     end
 
-    g_logger.info(">>> self.statsType: " .. self.statsType)
-
     -- Bar color
     local percent = (value * 100) / total
     if self.statsType == 'health' then
@@ -158,8 +156,6 @@ function UIStatsBar:setValue(value, total)
         self.bar:setImageSource('/images/bars/' .. self.statsOrientation .. '_mana_progressbar_' .. self.statsSize)
     elseif self.statsType == 'manashield' then
         self.bar:setImageSource('/images/bars/' .. self.statsOrientation .. '_manashield_progressbar_' .. self.statsSize)
-        g_logger.info("mana shieldstats size: " .. self.statsSize) -- debug
-        self.bar:setImageHeight(self:getHeight() / 2)
     elseif self.statsType == 'experience' then
         self.bar:setImageSource('/images/bars/' .. self.statsOrientation .. '_experience_progressbar_' .. self.statsSize)
     elseif self.statsType == 'skill' then

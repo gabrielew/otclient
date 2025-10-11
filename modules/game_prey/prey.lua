@@ -95,12 +95,12 @@ function init()
     if mainTabBar and tabContent then
         mainTabBar:setContentWidget(tabContent)
 
-        local preyPanel = g_ui.loadUI('game_prey/prey_content')
+        local preyPanel = g_ui.loadUI('prey_content')
         if preyPanel then
             mainTabBar:addTab('Prey Creatures', preyPanel)
         end
 
-        local huntingPanel = g_ui.loadUI('game_hunting_tasks/hunting_tasks_content')
+        local huntingPanel = g_ui.loadUI('/modules/game_hunting_tasks/hunting_tasks_content')
         if huntingPanel then
             mainTabBar:addTab('Hunting Tasks', huntingPanel)
         end
@@ -119,21 +119,19 @@ function init()
         local preyTabButton = preyWindow:recursiveGetChildById('preyCreaturesButton')
         local huntingTabButton = preyWindow:recursiveGetChildById('huntingTasksButton')
 
-        if preyTabButton then
-            preyTabButton:setCheckable(true)
-        end
-
-        if huntingTabButton then
-            huntingTabButton:setCheckable(true)
-        end
-
         local function updateButtonStates(tab)
             local text = tab and tab:getText() and tab:getText():lower()
+
             if preyTabButton then
-                preyTabButton:setOn(text == 'prey creatures')
+                local isPreyTab = text == 'prey creatures'
+                preyTabButton:setChecked(isPreyTab)
+                preyTabButton:setOn(isPreyTab)
             end
+
             if huntingTabButton then
-                huntingTabButton:setOn(text == 'hunting tasks')
+                local isHuntingTab = text == 'hunting tasks'
+                huntingTabButton:setChecked(isHuntingTab)
+                huntingTabButton:setOn(isHuntingTab)
             end
         end
 

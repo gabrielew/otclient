@@ -4,8 +4,6 @@ Prey = {}
 preyWindow = nil
 preyButton = nil
 local preyTrackerButton
-local preyTabBar
-local huntingTasksPanel
 local msgWindow
 local bankGold = 0
 local inventoryGold = 0
@@ -42,7 +40,6 @@ local restoreRaceListItemBackground
 local setWidgetTreePhantom
 local updatePickSpecificPreyButton
 local refreshRerollButtonState
-local setupPreyTabs
 
 function bonusDescription(bonusType, bonusValue, bonusGrade)
     if bonusType == PREY_BONUS_DAMAGE_BOOST then
@@ -71,62 +68,6 @@ function timeleftTranslation(timeleft, forPreyTimeleft) -- in seconds
     return hours .. ':' .. mins
 end
 
-local function setupPreyTabs()
-    if not preyWindow then
-        return
-    end
-
-    preyTabBar = preyWindow:getChildById('preyTabBar')
-    local tabContent = preyWindow:getChildById('preyTabContent')
-
-    if not preyTabBar or not tabContent then
-        return
-    end
-
-    preyTabBar:setContentWidget(tabContent)
-
-    if preyTabBar:getTab(tr('Prey Creatures')) then
-        return
-    end
-
-    local creaturesPanel = tabContent:getChildById('preyCreaturesPanel')
-    huntingTasksPanel = tabContent:getChildById('huntingTasksPanel')
-
-    local creaturesTab
-    if creaturesPanel then
-        creaturesTab = preyTabBar:addTab(tr('Prey Creatures'), creaturesPanel, '/images/game/prey/icon-prey-widget')
-        if creaturesTab then
-            creaturesTab:setWidth(200)
-            creaturesTab:setIconSize({ width = 20, height = 20 })
-        end
-    end
-
-    if huntingTasksPanel then
-        local huntingTasksTab = preyTabBar:addTab(tr('Hunting Tasks'), huntingTasksPanel, '/modules/game_tasks/images/taskIconColorless')
-        if huntingTasksTab then
-            huntingTasksTab:setWidth(200)
-            huntingTasksTab:setIconSize({ width = 20, height = 20 })
-        end
-
-        local openTasksButton = huntingTasksPanel:getChildById('openTasksButton')
-        local hasTasksModule = modules and modules.game_tasks and modules.game_tasks.toggleWindow
-
-        if openTasksButton then
-            if hasTasksModule then
-                openTasksButton:setEnabled(true)
-                openTasksButton:setTooltip(tr('Open the standalone hunting tasks window.'))
-            else
-                openTasksButton:setEnabled(false)
-                openTasksButton:setTooltip(tr('The Tasks module is not available.'))
-            end
-        end
-    end
-
-    if creaturesTab then
-        preyTabBar:selectTab(creaturesTab)
-    end
-end
-
 function init()
     connect(g_game, {
         onGameStart = check,
@@ -146,7 +87,9 @@ function init()
 
     preyWindow = g_ui.displayUI('prey')
     preyWindow:hide()
-    setupPreyTabs()
+    if PreyHuntingTasks and PreyHuntingTasks.setup then
+        PreyHuntingTasks.setup(preyWindow)
+    end
     preyTracker = g_ui.createWidget('PreyTracker', modules.game_interface.getRightPanel())
     preyTracker:setup()
     preyTracker:setContentMaximumHeight(110)
@@ -325,8 +268,9 @@ function terminate()
     end
     preyWindow:destroy()
     preyTracker:destroy()
-    preyTabBar = nil
-    huntingTasksPanel = nil
+    if PreyHuntingTasks and PreyHuntingTasks.terminate then
+        PreyHuntingTasks.terminate()
+    end
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil
@@ -360,6 +304,10 @@ function check()
     elseif preyButton then
         preyButton:destroy()
         preyButton = nil
+    end
+
+    if PreyHuntingTasks and PreyHuntingTasks.refresh then
+        PreyHuntingTasks.refresh()
     end
 end
 

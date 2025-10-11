@@ -749,54 +749,6 @@ MainWindow
       image-border: 1
       padding: 20
 
-      UIWidget
-        id: huntingTasksIcon
-        anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        size: 48 48
-        image-source: /modules/game_tasks/images/taskIconColorless
-
-      Label
-        id: huntingTasksTitle
-        anchors.top: prev.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        margin-top: 10
-        font: cipsoftFont
-        !text: tr('Hunting Tasks')
-
-      Label
-        id: huntingTasksDescription
-        anchors.top: prev.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        margin-top: 8
-        text-wrap: true
-        text-align: center
-        font: verdana-11px-rounded
-        !text: tr('Track and manage your hunting tasks here. Additional functionality will be added in future updates.')
-
-      Button
-        id: openTasksButton
-        anchors.top: prev.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        margin-top: 14
-        width: 160
-        !text: tr('Open Tasks Window')
-        font: cipsoftFont
-        !tooltip: tr('Open the standalone hunting tasks window.')
-        @onClick: modules.game_prey.toggleHuntingTasksWindow()
-
-      Label
-        id: huntingTasksHint
-        anchors.top: prev.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        margin-top: 8
-        text-wrap: true
-        text-align: center
-        font: verdana-11px-rounded
-        !text: tr('Use the Tasks window to view detailed objectives and rewards.')
-
   HorizontalSeparator
     id: bottomSep
     anchors.left: parent.left

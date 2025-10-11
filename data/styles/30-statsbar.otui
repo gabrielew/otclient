@@ -486,8 +486,6 @@ TopStatsBarDefaultOnTop < UIWidget
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
     statsbar-text: true
-    margin-right: 12
-    margin-left: 5
     margin-top: 0
     height: 14
 
@@ -1111,8 +1109,6 @@ TopStatsBarDefaultOnBottom < UIWidget
     !statsbar-size: 'small'
     !statsbar-orientation: 'horizontal'
     statsbar-text: true
-    margin-left: 7
-    margin-right: 7
     margin-top: 0
     height: 14
 

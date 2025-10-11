@@ -664,6 +664,7 @@ function StatsBar.init()
         onLevelChange = StatsBar.reloadCurrentStatsBarDeepInfo,
         onHealthChange = StatsBar.reloadCurrentStatsBarQuickInfo,
         onManaChange = StatsBar.reloadCurrentStatsBarQuickInfo,
+        onManaShieldChange = StatsBar.reloadCurrentStatsBarQuickInfo,
         onMagicLevelChange = StatsBar.reloadCurrentStatsBarDeepInfo,
         onBaseMagicLevelChange = StatsBar.reloadCurrentStatsBarDeepInfo,
         onSkillChange = StatsBar.reloadCurrentStatsBarDeepInfo,

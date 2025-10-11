@@ -742,12 +742,9 @@ MainWindow
         margin-top: 10
         text-wrap: true
 
-    FlatPanel
+    Panel
       id: huntingTasksPanel
       anchors.fill: parent
-      image-source: /images/ui/panel_flat
-      image-border: 1
-      padding: 20
 
   HorizontalSeparator
     id: bottomSep

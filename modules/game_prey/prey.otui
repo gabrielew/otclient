@@ -659,10 +659,18 @@ MainWindow
   padding: 20
   @onHoverChange: modules.game_prey.onHover(self)
 
+  Button
+    id: preyCreaturesButton
+    anchors.top: parent.top
+    anchors.left: parent.left
+    size: 130 24
+    text: Prey Creatures
+    font: cipsoftFont
+
   SlotPanel
     id: slot1
     anchors.left: parent.left
-    anchors.top: parent.top
+    anchors.top: prev.bottom
     margin-top: 10
 
   SlotPanel

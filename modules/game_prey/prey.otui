@@ -660,6 +660,7 @@ MainWindow
   @onHoverChange: modules.game_prey.onHover(self)
 
   UITabBar
+    style: TabBar
     id: mainTabBar
     anchors.top: parent.top
     anchors.left: parent.left
@@ -672,6 +673,7 @@ MainWindow
 
       Button
         id: preyCreaturesButton
+        checkable: true
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.horizontalCenter
@@ -685,6 +687,7 @@ MainWindow
 
       Button
         id: huntingTasksButton
+        checkable: true
         anchors.top: parent.top
         anchors.left: parent.horizontalCenter
         anchors.right: parent.right

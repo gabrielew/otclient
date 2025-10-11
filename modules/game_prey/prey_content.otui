@@ -1,5 +1,4 @@
 Panel
-  anchors.fill: parent
 
   SlotPanel
     id: slot1

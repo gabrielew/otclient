@@ -95,12 +95,12 @@ function init()
     if mainTabBar and tabContent then
         mainTabBar:setContentWidget(tabContent)
 
-        local preyPanel = g_ui.loadUI('prey_content')
+        local preyPanel = g_ui.loadUI('game_prey/prey_content')
         if preyPanel then
             mainTabBar:addTab('Prey Creatures', preyPanel)
         end
 
-        local huntingPanel = g_ui.loadUI('/modules/game_hunting_tasks/hunting_tasks_content')
+        local huntingPanel = g_ui.loadUI('game_hunting_tasks/hunting_tasks_content')
         if huntingPanel then
             mainTabBar:addTab('Hunting Tasks', huntingPanel)
         end

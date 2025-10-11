@@ -47,6 +47,9 @@ function PreyHuntingTasks.setup(preyWindow)
         local creaturesTabName = tr('Prey Creatures')
         local creaturesTab = preyTabBar:getTab(creaturesTabName)
         if not creaturesTab then
+            if creaturesPanel:getParent() == tabContent then
+                tabContent:removeChild(creaturesPanel)
+            end
             creaturesTab = preyTabBar:addTab(creaturesTabName, creaturesPanel, '/images/game/prey/icon-prey-widget')
         end
         configureTabAppearance(creaturesTab)
@@ -61,17 +64,20 @@ function PreyHuntingTasks.setup(preyWindow)
         return
     end
 
+    local huntingTasksTabName = tr('Hunting Tasks')
+    local huntingTasksTab = preyTabBar:getTab(huntingTasksTabName)
+    if not huntingTasksTab then
+        if huntingTasksPanel:getParent() == tabContent then
+            tabContent:removeChild(huntingTasksPanel)
+        end
+        huntingTasksTab = preyTabBar:addTab(huntingTasksTabName, huntingTasksPanel, '/modules/game_tasks/images/taskIconColorless')
+    end
+
     if not huntingTasksPanel:getChildById('huntingTasksContent') then
         g_ui.loadUI('hunting_tasks', huntingTasksPanel)
     end
 
     openTasksButton = huntingTasksPanel:recursiveGetChildById('openTasksButton')
-
-    local huntingTasksTabName = tr('Hunting Tasks')
-    local huntingTasksTab = preyTabBar:getTab(huntingTasksTabName)
-    if not huntingTasksTab then
-        huntingTasksTab = preyTabBar:addTab(huntingTasksTabName, huntingTasksPanel, '/modules/game_tasks/images/taskIconColorless')
-    end
     configureTabAppearance(huntingTasksTab)
 
     updateOpenTasksButtonState()

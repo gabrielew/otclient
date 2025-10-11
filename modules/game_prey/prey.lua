@@ -41,6 +41,7 @@ local setWidgetTreePhantom
 local updatePickSpecificPreyButton
 local refreshRerollButtonState
 local getPreySlotWidgetById
+local getPreySlotWidget
 
 function bonusDescription(bonusType, bonusValue, bonusGrade)
     if bonusType == PREY_BONUS_DAMAGE_BOOST then
@@ -705,7 +706,7 @@ function capitalFormatStr(str)
     return formatted:trim()
 end
 
-local function getPreySlotWidget(slot)
+getPreySlotWidget = function(slot)
     if slot == nil then
         return nil
     end

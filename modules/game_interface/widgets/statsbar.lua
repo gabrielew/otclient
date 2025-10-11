@@ -631,6 +631,27 @@ function StatsBar.OnGameStart()
     StatsBar.loadSettings()
     StatsBar.reloadCurrentTab()
     modules.game_healthcircle.setStatsBarOption()
+
+    local attempts = 0
+    local function ensureInitialRefresh()
+        if not g_game.isOnline() then
+            return
+        end
+
+        local player = g_game.getLocalPlayer()
+        local bar = StatsBar.getCurrentStatsBarWithPosition()
+        if not player or not bar then
+            if attempts < 5 then
+                attempts = attempts + 1
+                addEvent(ensureInitialRefresh)
+            end
+            return
+        end
+
+        StatsBar.reloadCurrentStatsBarQuickInfo()
+    end
+
+    addEvent(ensureInitialRefresh)
 end
 
 function createStatsBarWidgets(statsBar)

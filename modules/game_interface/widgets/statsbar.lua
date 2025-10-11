@@ -273,9 +273,11 @@ function StatsBar.reloadCurrentStatsBarQuickInfo()
             local manaText = string.format('%d/%d (%d/%d)', mana, maxMana, manashield, maxManaShield)
             bar.manashield.text:setText(manaText)
 
-            local textOffset = math.floor(shieldHeight / 2)
+            local textOffset = math.floor(manaHeight / 2)
             bar.manashield.text:setMarginTop(-textOffset)
-            bar.manashield.text:setMarginBottom(textOffset)
+            bar.manashield.text:setMarginBottom(0)
+            bar.manashield.text:show()
+            bar.manashield.text:raise()
         end
     else
         bar.mana.showText = true

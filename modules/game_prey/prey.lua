@@ -87,6 +87,9 @@ function init()
 
     preyWindow = g_ui.displayUI('prey')
     preyWindow:hide()
+    if PreyHuntingTasks and PreyHuntingTasks.setup then
+        PreyHuntingTasks.setup(preyWindow)
+    end
     preyTracker = g_ui.createWidget('PreyTracker', modules.game_interface.getRightPanel())
     preyTracker:setup()
     preyTracker:setContentMaximumHeight(110)
@@ -265,6 +268,9 @@ function terminate()
     end
     preyWindow:destroy()
     preyTracker:destroy()
+    if PreyHuntingTasks and PreyHuntingTasks.terminate then
+        PreyHuntingTasks.terminate()
+    end
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil
@@ -299,6 +305,10 @@ function check()
         preyButton:destroy()
         preyButton = nil
     end
+
+    if PreyHuntingTasks and PreyHuntingTasks.refresh then
+        PreyHuntingTasks.refresh()
+    end
 end
 
 function toggleTracker()
@@ -314,6 +324,14 @@ function toggleTracker()
             panel:addChild(preyTracker)
         end
         preyTracker:show()
+    end
+end
+
+function Prey.toggleHuntingTasksWindow()
+    if modules and modules.game_tasks and modules.game_tasks.toggleWindow then
+        modules.game_tasks.toggleWindow()
+    else
+        g_logger.warning(tr('The Tasks module is not available.'))
     end
 end
 

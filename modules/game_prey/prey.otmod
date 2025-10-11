@@ -4,7 +4,7 @@ Module
   author: otclient.ovh & kivera-global.com & Vithrax#5814
   website: http://otclient.ovh
   sandboxed: true
-  scripts: [ prey ]
+  scripts: [ game_hunting_tasks, prey ]
   dependencies: [ client_topmenu ]
   @onLoad: init()
   @onUnload: terminate()

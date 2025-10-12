@@ -10,36 +10,33 @@
   height: 340px;
 }
 
-#prey_creature_1,
-#prey_creature_2,
-#prey_creature_3 uicreature {
-  --creature-size: 32;
-}
-
 .preyCreature {
-  --creature-size: 32;
-  width: 32px;
-  height: 32px;
+  --creature-size: 124;
 }
 
 .qtpanelMonsters {
   display: flex;
+  height: 145px;
+  width: 135px;
 }
 
-.qtpanelMonsters {
-  height: 140px;
-  width: 135px;
+.qtpanelMonster {
+  --image-source: /images/ui/test/button-verydarkgrey-down;
   margin-left: 2px;
-  border: 1px black;
+  height: 145px;
+  width: 135px;
+  text-align: center;
+  align-items: center;
 }
 
 .qtpanelPrey {
-  height: 140px;
+  height: 145px;
   width: 70px;
   margin-left: 4px;
   text-align: center;
   display: block;
   padding-top: 8px;
+  --image-source: /images/ui/test/button-verydarkgrey-down;
 }
 
 .qtpanelPreyStars {
@@ -54,7 +51,6 @@
   margin-left: 2px;
   height: 20px;
   width: 100%;
-  background-color: lightskyblue;
   text-align: center;
   align-items: center;
   --image-source: /images/ui/test/button-verydarkgrey-down;
@@ -63,9 +59,11 @@
 
 .preyTimeLeftProgress {
   height: 20px;
-  top: 0;
-  left: 0;
   background-color: #8a5e00;
+}
+
+.preyTimeLeftProgress.reroll {
+  height: 10px;
 }
 
 .preyTimeLeftText {
@@ -139,9 +137,9 @@
 }
 
 .qtpanelHints {
-  height: 100px;
+  /* height: 100px; */
   width: 675px;
-  margin-top: 16px;
+  margin-top: 32px;
   border: 1px red;
 }
 
@@ -169,6 +167,16 @@
 
 .preyCardOption.rerollList {
   height: 69px;
+}
+
+.rerollListContainer {
+  position: relative;
+}
+.rerolllistWrapper {
+  position: absolute;
+  left: 15%;
+  bottom: 8px;
+  height: 10px;
 }
 
 .rerollListButtonPrey {

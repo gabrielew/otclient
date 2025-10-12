@@ -13,14 +13,14 @@
         *margin-left="slot.id > 1 and 4 or 0"
       >
         <div class="qtpanelMonsters">
-          <div class="qtpanelMonsters">
-            <!-- <uicreature class="preyCreature" *outfit="{type = slot.lookType}" /> -->
+          <div class="qtpanelMonster">
+            <uicreature class="preyCreature" *outfit="{type = slot.lookType}" />
           </div>
           <div class="qtpanelPrey">
             <img *image-source="slot.prey" width="44" height="92" />
-            <hr style="width: 80%; margin-left: 5px" />
+            <hr style="width: 80%; margin-left: 5px; height: 1pxo" />
             <div class="qtpanelPreyStars">
-              <div *for="local i in self.slot_1_stars" *if="i > 5" class="star">
+              <div *for="local i in self.slot_1_stars" class="star">
                 <img
                   src="/images/game/prey/prey_star.png"
                   width="9"
@@ -29,7 +29,7 @@
               </div>
             </div>
             <div class="qtpanelPreyStars">
-              <div *for="local i in self.slot_1_stars" *if="i > 5" class="star">
+              <div *for="local i in self.slot_1_stars" class="star">
                 <img
                   src="/images/game/prey/prey_star.png"
                   width="9"
@@ -45,11 +45,20 @@
         </div>
         <div class="preyCardOptions">
           <div class="preyCardOption">
-            <img
-              class="rerollListButtonPrey"
-              src="/modules/game_prey_html/images/prey-reroll-list.png"
-              onclick="self:selectPrey(slot.id)"
-            />
+            <div class="rerollListContainer">
+              <img
+                class="rerollListButtonPrey"
+                src="/modules/game_prey_html/images/prey-reroll-list.png"
+                onclick="self:selectPrey(slot.id)"
+              />
+              <div class="rerolllistWrapper">
+                <div
+                  class="preyTimeLeftProgress reroll"
+                  style="width: 80%"
+                ></div>
+                <label class="preyTimeLeftText">19:59</label>
+              </div>
+            </div>
             <div class="preyCardOptionPrice" style="text-align: left">
               <div>
                 <label style="margin-left: 4px">194k</label>

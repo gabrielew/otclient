@@ -231,12 +231,12 @@ function preyController:onInit()
         preyButton = nil
     end
 
-    preyController.slot_1_stars = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }
+    preyController.slot_1_stars = { 1, 2, 3, 4, 5 }
 
     preyController.slots = {
-        { id = 1, stars = 10, name = "Rat",    prey = "/images/game/prey/prey_bigxp.png",     lookType = 2599, reroll = true,  lockPrey = false, nextFreeReroll = "02:50", timeleft = "19:59" },
-        { id = 2, stars = 5,  name = "Bat",    prey = "/images/game/prey/prey_bigloot.png",   lookType = 2598, reroll = false, lockPrey = true,  nextFreeReroll = "02:50", timeleft = "19:12" },
-        { id = 3, stars = 10, name = "Wyvern", prey = "/images/game/prey/prey_bigdamage.png", lookType = 2597, reroll = true,  lockPrey = false, nextFreeReroll = "02:50", timeleft = "19:11" },
+        { id = 1, stars = 10, name = "Rat",    prey = "/images/game/prey/prey_bigxp.png",     lookType = 56,   reroll = true,  lockPrey = false, nextFreeReroll = "02:50", timeleft = "19:59" },
+        { id = 2, stars = 5,  name = "Bat",    prey = "/images/game/prey/prey_bigloot.png",   lookType = 34,   reroll = false, lockPrey = true,  nextFreeReroll = "02:50", timeleft = "19:12" },
+        { id = 3, stars = 10, name = "Wyvern", prey = "/images/game/prey/prey_bigdamage.png", lookType = 1794, reroll = true,  lockPrey = false, nextFreeReroll = "02:50", timeleft = "19:11" },
     }
 end
 

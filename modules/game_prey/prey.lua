@@ -6,6 +6,7 @@ preyButton = nil
 local preyTrackerButton
 local msgWindow
 local preyTabBar
+local preyCreaturesTab
 local bankGold = 0
 local inventoryGold = 0
 local rerollPrice = 0
@@ -90,10 +91,23 @@ function init()
     preyWindow:hide()
     preyTabBar = preyWindow:getChildById('preyTabBar')
     local preyTabContent = preyWindow:getChildById('preyTabContent')
+    preyCreaturesTab = preyWindow:getChildById('preyCreaturesTab')
+    if preyCreaturesTab then
+        for slotIndex = 1, 3 do
+            local slotWidget = preyCreaturesTab:getChildById('slot' .. slotIndex)
+            if slotWidget then
+                preyWindow['slot' .. slotIndex] = slotWidget
+            end
+        end
+
+        local descriptionWidget = preyCreaturesTab:getChildById('description')
+        if descriptionWidget then
+            preyWindow.description = descriptionWidget
+        end
+    end
     if preyTabBar and preyTabContent then
         preyTabBar:setContentWidget(preyTabContent)
 
-        local preyCreaturesTab = preyWindow:getChildById('preyCreaturesTab')
         local huntingTasksTab = preyWindow:getChildById('huntingTasksTab')
 
         local creaturesTab = preyTabBar:addTab(tr('Prey Creatures'), preyCreaturesTab)
@@ -280,6 +294,7 @@ function terminate()
     preyWindow:destroy()
     preyTracker:destroy()
     preyTabBar = nil
+    preyCreaturesTab = nil
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil

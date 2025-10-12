@@ -1,0 +1,10 @@
+Module
+  name: game_hunting_tasks
+  description: Hunting tasks integration for the prey window
+  author: OTClient team
+  website: https://github.com/edubart/otclient
+  sandboxed: true
+  dependencies: [ game_prey ]
+  scripts: [ hunting_tasks ]
+  @onLoad: huntingTasksController:init()
+  @onUnload: huntingTasksController:terminate()

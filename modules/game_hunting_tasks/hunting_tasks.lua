@@ -1,40 +1,42 @@
-local controller = Controller:new()
+huntingTasksController = Controller:new()
+huntingTasks = nil
 
 function setUnsupportedSettings()
     local t = { 'hunting_tasks_slot_1', 'hunting_tasks_slot_2', 'hunting_tasks_slot_3' }
-    for i, slot in pairs(t) do
-        local panel = preyWindow[slot]
-        if panel then
-            for _, state in pairs({ panel.active, panel.inactive }) do
-                if state and state.select and state.select.price and state.select.price.text then
-                    state.select.price.text:setText('5')
-                end
-            end
+    -- for i, slot in pairs(t) do
+    --     local panel = huntingTasks[slot]
+    --     if panel then
+    --         for _, state in pairs({ panel.active, panel.inactive }) do
+    --             if state and state.select and state.select.price and state.select.price.text then
+    --                 state.select.price.text:setText('5')
+    --             end
+    --         end
 
-            local active = panel.active
-            if active then
-                if active.autoRerollPrice and active.autoRerollPrice.text then
-                    active.autoRerollPrice.text:setText('1')
-                end
+    --         local active = panel.active
+    --         if active then
+    --             if active.autoRerollPrice and active.autoRerollPrice.text then
+    --                 active.autoRerollPrice.text:setText('1')
+    --             end
 
-                if active.lockPreyPrice and active.lockPreyPrice.text then
-                    active.lockPreyPrice.text:setText('5')
-                end
+    --             if active.lockPreyPrice and active.lockPreyPrice.text then
+    --                 active.lockPreyPrice.text:setText('5')
+    --             end
 
-                if active.choose and active.choose.price and active.choose.price.text then
-                    active.choose.price.text:setText('1')
-                end
-            end
-        end
-    end
+    --             if active.choose and active.choose.price and active.choose.price.text then
+    --                 active.choose.price.text:setText('1')
+    --             end
+    --         end
+    --     end
+    -- end
 end
 
-function controller:init()
+function huntingTasksController:onInit()
     g_logger.info(">>>>")
     self:registerEvents(g_game, {
         onTaskHuntingData = onTaskHuntingData,
         taskHuntingBasicData = taskHuntingBasicData,
     })
+
     setUnsupportedSettings()
 end
 

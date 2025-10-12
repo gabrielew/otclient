@@ -659,33 +659,55 @@ MainWindow
   padding: 20
   @onHoverChange: modules.game_prey.onHover(self)
 
-  SlotPanel
-    id: slot1
-    anchors.left: parent.left
+  TabBar
+    id: preyTabBar
     anchors.top: parent.top
-    margin-top: 10
+    anchors.left: parent.left
+    anchors.right: parent.right
+    height: 24
 
-  SlotPanel
-    id: slot2
-    anchors.verticalCenter: prev.verticalCenter
-    anchors.left: prev.right
-    margin-left: 10
-
-  SlotPanel
-    id: slot3
-    anchors.verticalCenter: prev.verticalCenter
-    anchors.left: prev.right
-    margin-left: 10
-
-  FlatLabel
-    id: description
-    anchors.left: slot1.left
-    anchors.top: slot1.bottom
-    anchors.right: slot3.right
+  Panel
+    id: preyTabContent
+    anchors.top: preyTabBar.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
     anchors.bottom: bottomSep.top
-    margin-bottom: 10
-    margin-top: 10
-    text-wrap: true
+
+    Panel
+      id: preyCreaturesTab
+      anchors.fill: parent
+
+      SlotPanel
+        id: slot1
+        anchors.left: parent.left
+        anchors.top: parent.top
+        margin-top: 10
+
+      SlotPanel
+        id: slot2
+        anchors.verticalCenter: prev.verticalCenter
+        anchors.left: prev.right
+        margin-left: 10
+
+      SlotPanel
+        id: slot3
+        anchors.verticalCenter: prev.verticalCenter
+        anchors.left: prev.right
+        margin-left: 10
+
+      FlatLabel
+        id: description
+        anchors.left: slot1.left
+        anchors.top: slot1.bottom
+        anchors.right: slot3.right
+        anchors.bottom: bottomSep.top
+        margin-bottom: 10
+        margin-top: 10
+        text-wrap: true
+
+    Panel
+      id: huntingTasksTab
+      anchors.fill: parent
 
   HorizontalSeparator
     id: bottomSep

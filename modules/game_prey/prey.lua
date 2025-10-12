@@ -5,6 +5,7 @@ preyWindow = nil
 preyButton = nil
 local preyTrackerButton
 local msgWindow
+local preyTabBar
 local bankGold = 0
 local inventoryGold = 0
 local rerollPrice = 0
@@ -87,6 +88,19 @@ function init()
 
     preyWindow = g_ui.displayUI('prey')
     preyWindow:hide()
+    preyTabBar = preyWindow:getChildById('preyTabBar')
+    local preyTabContent = preyWindow:getChildById('preyTabContent')
+    if preyTabBar and preyTabContent then
+        preyTabBar:setContentWidget(preyTabContent)
+
+        local preyCreaturesTab = preyWindow:getChildById('preyCreaturesTab')
+        local huntingTasksTab = preyWindow:getChildById('huntingTasksTab')
+
+        local creaturesTab = preyTabBar:addTab(tr('Prey Creatures'), preyCreaturesTab)
+        preyTabBar:addTab(tr('Hunting Tasks'), huntingTasksTab)
+        preyTabBar:selectTab(creaturesTab)
+    end
+
     preyTracker = g_ui.createWidget('PreyTracker', modules.game_interface.getRightPanel())
     preyTracker:setup()
     preyTracker:setContentMaximumHeight(110)
@@ -265,6 +279,7 @@ function terminate()
     end
     preyWindow:destroy()
     preyTracker:destroy()
+    preyTabBar = nil
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil

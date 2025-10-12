@@ -14,6 +14,35 @@ local PREY_TASK_STATE_LIST_SELECTION = 3
 local PREY_TASK_STATE_ACTIVE = 4
 local PREY_TASK_STATE_COMPLETED = 5
 
+local descriptionTable = {
+    shopPermButton =
+    'Go to the Store to purchase the Permanent Hunting Task Slot. Once you complete the purchase, the slot remains unlocked for any account status.',
+    shopTempButton = 'Activate this hunting task slot while your account has Premium status.',
+    noBonusIcon =
+    'This hunting task slot is not available yet. Check the blue buttons below to learn how to unlock access to hunting tasks.',
+    selectHuntingTask =
+    'Spend hunting task points to reroll the active bonus. The chosen creature will remain active for the duration of the task.',
+    chooseHuntingTaskButton =
+    'Confirm the highlighted creatures to start a hunting task. Completing tasks grants hunting task points and potential rewards.',
+    pickSpecificHuntingTask =
+    'Browse the full creature list to select a specific hunting task target. This requires hunting task points.',
+    rerollButton =
+    'Request a new list of hunting task creatures. Rerolls consume hunting task points or gold depending on your configuration.',
+    huntingTasksWindow = '',
+}
+
+local function setDescriptionText(text)
+    local preyModule = modules and modules.game_prey
+    local window = preyModule and preyModule.preyWindow
+    local description = window and window.description
+
+    if not description or description:isDestroyed() then
+        return
+    end
+
+    description:setText(text or '')
+end
+
 local function toggleWidgetVisible(widget, visible)
     if not widget then
         return
@@ -68,6 +97,30 @@ end
 
 function onPreyRaceListItemHoverChange(widget)
 
+end
+
+function onHover(widget)
+    if type(widget) == 'string' then
+        local description = descriptionTable[widget]
+        if description then
+            setDescriptionText(description)
+        end
+        return
+    end
+
+    if not widget or widget:isDestroyed() or not widget:isVisible() then
+        return
+    end
+
+    local id = widget:getId()
+    if not id then
+        return
+    end
+
+    local description = descriptionTable[id]
+    if description then
+        setDescriptionText(description)
+    end
 end
 
 local function resolveRaceData(raceId)

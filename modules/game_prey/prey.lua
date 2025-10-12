@@ -70,7 +70,7 @@ local function registerPreyWindowChildReferences(widget)
     register(widget)
 end
 
-local function loadTabPanelFromModule(moduleName, fileName, widgetId)
+local function loadTabPanelFromModule(moduleName, fileName, widgetId, parent)
     if not moduleName or moduleName == '' or not fileName or fileName == '' then
         return nil
     end
@@ -89,6 +89,10 @@ local function loadTabPanelFromModule(moduleName, fileName, widgetId)
             local contents = g_resources.readFileContents(filePath)
             if contents and contents:len() > 0 then
                 local ok, widget = pcall(function()
+                    if parent then
+                        return g_ui.loadUI(filePath, parent)
+                    end
+
                     return g_ui.loadUIFromString(contents)
                 end)
 
@@ -177,14 +181,14 @@ function init()
 
         mainTabBar:setContentWidget(tabContent)
 
-        local preyPanel = loadTabPanelFromModule('game_prey', 'prey_content', 'preyCreaturesTabPanel')
+        local preyPanel = loadTabPanelFromModule('game_prey', 'prey_content', 'preyCreaturesTabPanel', tabContent)
         if preyPanel then
             preyWindow.preyCreaturesTabPanel = preyPanel
             mainTabBar:addTab('Prey Creatures', preyPanel)
             registerPreyWindowChildReferences(preyPanel)
         end
 
-        local huntingPanel = loadTabPanelFromModule('game_hunting_tasks', 'hunting_tasks_content', 'huntingTasksTabPanel')
+        local huntingPanel = loadTabPanelFromModule('game_hunting_tasks', 'hunting_tasks_content', 'huntingTasksTabPanel', tabContent)
         if huntingPanel then
             preyWindow.huntingTasksTabPanel = huntingPanel
             mainTabBar:addTab('Hunting Tasks', huntingPanel)

@@ -1,0 +1,173 @@
+<link href="hunting_tasks.css" />
+<html>
+  <Panel
+    id="huntingTasksTabPanel"
+    class="hunting-tasks-tab"
+    layout="type: horizontalBox;spacing:16"
+  >
+    <Panel class="slot-column" layout="type: verticalBox;spacing:12">
+      <Panel id="hunting_tasks_slot_1" class="slot-card" layout="type: verticalBox;spacing:8">
+        <Label id="title" class="slot-title" text="Slot 1" />
+
+        <Panel id="inactive" class="slot-state inactive-state" layout="type: verticalBox;spacing:6">
+          <FlatPanel id="preview" class="preview-card" layout="type: verticalBox;spacing:4">
+            <Label class="preview-title" text="Preview" />
+            <Panel class="preview-body" layout="type: horizontalBox;spacing:8">
+              <FlatPanel class="preview-creature" layout="type: verticalBox;spacing:4">
+                <UICreature id="creature" phantom="true" size="64 64" />
+                <Label id="placeholder" class="preview-placeholder" text="No creature selected" />
+              </FlatPanel>
+              <FlatPanel class="preview-details" layout="type: verticalBox;spacing:4">
+                <Label class="preview-info" text="Select a creature to begin" />
+                <Label class="preview-info" text="Bonus: --" />
+              </FlatPanel>
+            </Panel>
+          </FlatPanel>
+
+          <FlatPanel id="actions" class="actions-row" layout="type: horizontalBox;spacing:6">
+            <FlatPanel id="choose" class="action-card" layout="type: verticalBox;spacing:4">
+              <UIButton
+                id="chooseHuntingTaskButton"
+                class="store-button"
+                image-source="/images/game/prey/prey_choose"
+                onclick="modules.game_mainpanel.toggleStore()"
+              />
+              <Label class="action-label" text="Choose (1)" />
+            </FlatPanel>
+            <FlatPanel id="select" class="action-card" layout="type: verticalBox;spacing:4">
+              <UIButton
+                id="pickSpecificHuntingTask"
+                class="store-button blocked"
+                image-source="/images/game/prey/prey_select_blocked"
+                onclick="modules.game_mainpanel.toggleStore()"
+              />
+              <Label class="action-label" text="Select (5)" />
+            </FlatPanel>
+            <FlatPanel id="reroll" class="action-card" layout="type: verticalBox;spacing:4">
+              <UIButton
+                id="rerollButton"
+                class="store-button"
+                image-source="/images/game/prey/prey_reroll"
+                onclick="modules.game_mainpanel.toggleStore()"
+              />
+              <ProgressBar id="time" class="reroll-timer" text="Free in 01:00" />
+              <Label id="price" class="action-price" text="5" />
+            </FlatPanel>
+          </FlatPanel>
+
+          <FlatPanel id="list" class="creature-grid" layout="type: grid;cell-size:60 60;cell-spacing:3;num-columns:3">
+            <UICheckBox class="creature-box" text="Wolf" />
+            <UICheckBox class="creature-box" text="Bear" />
+            <UICheckBox class="creature-box" text="Dragon" />
+            <UICheckBox class="creature-box" text="Cyclops" />
+            <UICheckBox class="creature-box" text="Hydra" />
+            <UICheckBox class="creature-box" text="Demon" />
+          </FlatPanel>
+
+          <FlatPanel id="fullList" class="creature-list" visible="false" layout="type: verticalBox;spacing:6">
+            <Label class="list-title" text="Available Creatures" />
+            <Panel class="search-row" layout="type: horizontalBox;spacing:4">
+              <TextEdit
+                id="searchEdit"
+                class="search-input"
+                placeholder="Type to search"
+                ontextchange="modules.game_hunting_tasks.onRaceSearchTextChanged(self)"
+              />
+              <UIButton
+                id="searchClearButton"
+                class="clear-button"
+                image-source="/images/ui/button-clear-18x18-up"
+                visible="false"
+                onclick="modules.game_hunting_tasks.onRaceSearchClearClicked(self)"
+              />
+            </Panel>
+            <UIScrollArea
+              id="entries"
+              class="creature-scroll"
+              vertical-scrollbar="entriesScroll"
+              layout="type: verticalBox;spacing:2"
+            >
+              <Label class="empty-list" text="No creatures available" />
+            </UIScrollArea>
+            <VerticalScrollBar id="entriesScroll" step="20" pixel-scroll="true" />
+          </FlatPanel>
+        </Panel>
+
+        <Panel id="active" class="slot-state active-state" visible="false" layout="type: verticalBox;spacing:8">
+          <Panel class="creature-bonus" layout="type: horizontalBox;spacing:10">
+            <FlatPanel class="creature-card" layout="type: verticalBox;spacing:4">
+              <UICreature id="creature" phantom="true" size="124 124" />
+            </FlatPanel>
+            <FlatPanel id="bonus" class="bonus-card" layout="type: verticalBox;spacing:6">
+              <UIWidget id="icon" class="bonus-icon" image-source="/images/game/prey/prey_bignobonus" />
+              <Panel id="grade" class="bonus-stars" layout="type: grid;cell-size:9 10;cell-spacing:2;num-columns:5">
+                <UIWidget class="bonus-star" image-source="/images/game/prey/prey_nostar" />
+                <UIWidget class="bonus-star" image-source="/images/game/prey/prey_nostar" />
+                <UIWidget class="bonus-star" image-source="/images/game/prey/prey_nostar" />
+                <UIWidget class="bonus-star" image-source="/images/game/prey/prey_nostar" />
+                <UIWidget class="bonus-star" image-source="/images/game/prey/prey_nostar" />
+              </Panel>
+            </FlatPanel>
+          </Panel>
+          <ProgressBar id="timeLeft" class="time-progress" text="02:30 remaining" />
+        </Panel>
+
+        <Panel id="locked" class="slot-state locked-state" visible="false" layout="type: verticalBox;spacing:10">
+          <FlatPanel class="locked-preview" layout="type: verticalBox;spacing:6">
+            <Label class="locked-title" text="Premium Feature" />
+            <Label class="locked-info" text="Unlock this hunting task in the Store." />
+          </FlatPanel>
+          <Panel class="locked-buttons" layout="type: verticalBox;spacing:8">
+            <UIButton
+              id="perm"
+              class="store-banner"
+              image-source="/images/game/prey/prey_perm_test"
+              onclick="modules.game_mainpanel.toggleStore()"
+            />
+            <UIButton
+              id="temp"
+              class="store-banner"
+              image-source="/images/game/prey/prey_temp_test"
+              onclick="modules.game_mainpanel.toggleStore()"
+            />
+          </Panel>
+        </Panel>
+      </Panel>
+
+      <Panel id="hunting_tasks_slot_2" class="slot-card" layout="type: verticalBox;spacing:8">
+        <Label id="title" class="slot-title" text="Slot 2" />
+        <Panel id="inactive" class="slot-state inactive-state" layout="type: verticalBox;spacing:6">
+          <Label class="placeholder-text" text="Waiting for content" />
+        </Panel>
+        <Panel id="active" class="slot-state active-state" visible="false" />
+        <Panel id="locked" class="slot-state locked-state" visible="false" />
+      </Panel>
+
+      <Panel id="hunting_tasks_slot_3" class="slot-card" layout="type: verticalBox;spacing:8">
+        <Label id="title" class="slot-title" text="Slot 3" />
+        <Panel id="inactive" class="slot-state inactive-state" layout="type: verticalBox;spacing:6">
+          <Label class="placeholder-text" text="Waiting for content" />
+        </Panel>
+        <Panel id="active" class="slot-state active-state" visible="false" />
+        <Panel id="locked" class="slot-state locked-state" visible="false" />
+      </Panel>
+    </Panel>
+
+    <Panel class="list-column" layout="type: verticalBox;spacing:12">
+      <FlatPanel class="tracker-summary" layout="type: verticalBox;spacing:6">
+        <Label class="summary-title" text="Task Summary" />
+        <Label class="summary-info" text="Track your hunting progress and bonuses." />
+      </FlatPanel>
+
+      <FlatPanel class="tracker-list" layout="type: verticalBox;spacing:6">
+        <Label class="list-title" text="Tracked Creatures" />
+        <UIScrollArea class="tracker-scroll" layout="type: verticalBox;spacing:4">
+          <Panel class="tracker-entry" layout="type: horizontalBox;spacing:6">
+            <UICreature class="tracker-creature" phantom="true" size="20 20" />
+            <Label class="tracker-name" text="No active task" />
+          </Panel>
+        </UIScrollArea>
+      </FlatPanel>
+    </Panel>
+  </Panel>
+</html>

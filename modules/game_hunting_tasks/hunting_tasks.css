@@ -1,0 +1,302 @@
+.hunting-tasks-tab {
+  min-width: 660px;
+  min-height: 480px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(12, 25, 38, 0.95), rgba(8, 16, 26, 0.95));
+  border: 1px solid #263d52;
+  border-radius: 6px;
+  color: #d7e2ef;
+}
+
+.hunting-tasks-tab .slot-column,
+.hunting-tasks-tab .list-column {
+  flex: 1;
+}
+
+.slot-card {
+  background: rgba(15, 31, 46, 0.88);
+  border: 1px solid #1f3550;
+  border-radius: 6px;
+  padding: 10px;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.35);
+}
+
+.slot-card + .slot-card {
+  margin-top: 6px;
+}
+
+.slot-title {
+  font: verdana-11px-bold;
+  text-align: center;
+  color: #f0f5ff;
+}
+
+.slot-state {
+  background: rgba(10, 22, 35, 0.65);
+  border: 1px solid rgba(38, 61, 82, 0.6);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.slot-state.inactive-state {
+  background: rgba(13, 28, 44, 0.9);
+}
+
+.preview-card,
+.actions-row,
+.creature-grid,
+.creature-list {
+  background: rgba(12, 24, 37, 0.9);
+  border: 1px solid #1d3248;
+  border-radius: 4px;
+  padding: 6px;
+}
+
+.preview-title {
+  font: verdana-11px-bold;
+  color: #f0f5ff;
+}
+
+.preview-body {
+  align-items: center;
+}
+
+.preview-creature {
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  background: rgba(6, 14, 22, 0.7);
+  border: 1px solid rgba(32, 55, 76, 0.8);
+  border-radius: 4px;
+  padding: 6px;
+}
+
+.preview-placeholder {
+  text-align: center;
+  font: verdana-11px-rounded;
+  color: #b5c2d0;
+}
+
+.preview-details {
+  flex: 1;
+}
+
+.preview-info {
+  font: verdana-11px-rounded;
+  color: #9ab7d3;
+}
+
+.actions-row {
+  align-items: stretch;
+  justify-content: space-between;
+}
+
+.action-card {
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(9, 20, 32, 0.9);
+  border: 1px solid rgba(36, 58, 81, 0.7);
+  border-radius: 4px;
+  padding: 6px;
+}
+
+.action-card + .action-card {
+  margin-left: 4px;
+}
+
+.store-button {
+  width: 66px;
+  height: 66px;
+  background-color: transparent;
+  border: none;
+}
+
+.store-button.blocked {
+  filter: grayscale(0.35);
+}
+
+.action-label {
+  font: verdana-11px-rounded;
+  color: #f0f5ff;
+  text-align: center;
+}
+
+.reroll-timer {
+  margin-top: 4px;
+  background-color: #c28400;
+  color: #101820;
+  font: verdana-11px-bold;
+}
+
+.action-price {
+  margin-top: 4px;
+  font: verdana-11px-bold;
+  color: #ffd26b;
+  text-align: center;
+}
+
+.creature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.creature-box {
+  font: verdana-11px-rounded;
+  color: #d7e2ef;
+  text-align: center;
+  background: rgba(9, 20, 32, 0.8);
+  border: 1px solid rgba(46, 74, 101, 0.6);
+  border-radius: 3px;
+  padding: 4px;
+}
+
+.creature-list {
+  max-height: 200px;
+}
+
+.search-row {
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  font: verdana-11px-rounded;
+  padding: 3px 6px;
+  background: rgba(8, 16, 26, 0.9);
+  border: 1px solid #1f3550;
+  color: #d7e2ef;
+}
+
+.clear-button {
+  width: 20px;
+  height: 20px;
+  background-color: transparent;
+  border: none;
+}
+
+.empty-list {
+  font: verdana-11px-rounded;
+  color: #9ab7d3;
+  text-align: center;
+  padding: 12px 0;
+}
+
+.creature-bonus {
+  align-items: center;
+}
+
+.creature-card {
+  background: rgba(9, 20, 32, 0.9);
+  border: 1px solid rgba(36, 58, 81, 0.7);
+  border-radius: 4px;
+  padding: 6px;
+  justify-content: center;
+  align-items: center;
+}
+
+.bonus-card {
+  flex: 1;
+  background: rgba(9, 20, 32, 0.9);
+  border: 1px solid rgba(36, 58, 81, 0.7);
+  border-radius: 4px;
+  padding: 6px;
+  align-items: center;
+}
+
+.bonus-icon {
+  width: 64px;
+  height: 64px;
+}
+
+.bonus-stars {
+  margin-top: 6px;
+  justify-content: center;
+}
+
+.bonus-star {
+  width: 9px;
+  height: 10px;
+}
+
+.time-progress {
+  background-color: #c28400;
+  color: #101820;
+  font: verdana-11px-bold;
+}
+
+.locked-preview {
+  background: rgba(12, 24, 37, 0.9);
+  border: 1px solid rgba(36, 58, 81, 0.7);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.locked-title {
+  font: verdana-11px-bold;
+  color: #ffd26b;
+  text-align: center;
+}
+
+.locked-info {
+  font: verdana-11px-rounded;
+  text-align: center;
+  color: #d7e2ef;
+}
+
+.store-banner {
+  width: 195px;
+  height: 64px;
+  background-color: transparent;
+  border: none;
+  align-self: center;
+}
+
+.placeholder-text {
+  font: verdana-11px-rounded;
+  color: #9ab7d3;
+  text-align: center;
+  padding: 12px 0;
+}
+
+.tracker-summary,
+.tracker-list {
+  background: rgba(12, 24, 37, 0.9);
+  border: 1px solid #1f3550;
+  border-radius: 6px;
+  padding: 10px;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.25);
+}
+
+.summary-title,
+.list-title {
+  font: verdana-11px-bold;
+  color: #f0f5ff;
+}
+
+.summary-info,
+.tracker-name {
+  font: verdana-11px-rounded;
+  color: #b5c2d0;
+}
+
+.tracker-scroll {
+  max-height: 180px;
+  background: rgba(9, 20, 32, 0.9);
+  border: 1px solid rgba(36, 58, 81, 0.7);
+  border-radius: 4px;
+  padding: 6px;
+}
+
+.tracker-entry {
+  align-items: center;
+  background: rgba(13, 28, 44, 0.8);
+  border: 1px solid rgba(36, 58, 81, 0.5);
+  border-radius: 4px;
+  padding: 4px 6px;
+}
+
+.tracker-creature {
+  margin-right: 6px;
+}

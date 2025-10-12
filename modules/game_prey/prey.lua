@@ -41,6 +41,73 @@ local setWidgetTreePhantom
 local updatePickSpecificPreyButton
 local refreshRerollButtonState
 
+local function registerPreyWindowChildReferences(widget)
+    if not preyWindow or not widget then
+        return
+    end
+
+    local function register(node)
+        if not node then
+            return
+        end
+
+        local id = node:getId()
+        if id and id ~= '' then
+            preyWindow[id] = node
+        end
+
+        local children = node:getChildren()
+        if children then
+            for _, child in pairs(children) do
+                register(child)
+            end
+        end
+    end
+
+    register(widget)
+end
+
+local function loadTabPanelFromModule(moduleName, fileName, widgetId)
+    if not moduleName or moduleName == '' or not fileName or fileName == '' then
+        return nil
+    end
+
+    local candidateFiles = {
+        string.format('/modules/%s/%s.otui', moduleName, fileName),
+        string.format('/%s/%s.otui', moduleName, fileName),
+        string.format('modules/%s/%s.otui', moduleName, fileName),
+        string.format('%s/%s.otui', moduleName, fileName),
+        string.format('%s.otui', fileName),
+        string.format('/%s.otui', fileName)
+    }
+
+    for _, filePath in ipairs(candidateFiles) do
+        if g_resources.fileExists(filePath) then
+            local contents = g_resources.readFileContents(filePath)
+            if contents and contents:len() > 0 then
+                local ok, widget = pcall(function()
+                    return g_ui.loadUIFromString(contents)
+                end)
+
+                if ok and widget then
+                    if widgetId and widget.setId then
+                        widget:setId(widgetId)
+                    end
+                    return widget
+                end
+
+                if not ok then
+                    g_logger.error(string.format('[Prey] Failed to instantiate tab panel from %s: %s',
+                        filePath, widget))
+                end
+            end
+        end
+    end
+
+    g_logger.warning(string.format('[Prey] Missing tab content file: %s/%s.otui', moduleName, fileName))
+    return nil
+end
+
 function bonusDescription(bonusType, bonusValue, bonusGrade)
     if bonusType == PREY_BONUS_DAMAGE_BOOST then
         return 'Damage bonus (' .. bonusGrade .. '/10)'
@@ -87,6 +154,99 @@ function init()
 
     preyWindow = g_ui.displayUI('prey')
     preyWindow:hide()
+
+    -- Configure the Prey window tab system
+    local mainTabBar = preyWindow and preyWindow:getChildById('mainTabBar')
+    local tabContent = preyWindow and preyWindow:getChildById('tabContent')
+
+    if mainTabBar and tabContent then
+        if mainTabBar.getStyleName and mainTabBar:getStyleName() ~= 'TabBar' then
+            mainTabBar:setStyle('TabBar')
+        end
+        if not mainTabBar.buttonsPanel or mainTabBar.buttonsPanel:isDestroyed() then
+            mainTabBar.buttonsPanel = mainTabBar:getChildById('buttonsPanel')
+            if not mainTabBar.buttonsPanel then
+                mainTabBar.buttonsPanel = g_ui.createWidget('Panel', mainTabBar)
+                mainTabBar.buttonsPanel:setId('buttonsPanel')
+                mainTabBar.buttonsPanel:fill('parent')
+            end
+        end
+
+        mainTabBar:setContentWidget(tabContent)
+
+        local preyPanel = loadTabPanelFromModule('game_prey', 'prey_content', 'preyCreaturesTabPanel')
+        if preyPanel then
+            preyWindow.preyCreaturesTabPanel = preyPanel
+            mainTabBar:addTab('Prey Creatures', preyPanel)
+            registerPreyWindowChildReferences(preyPanel)
+        end
+
+        local huntingPanel = loadTabPanelFromModule('game_hunting_tasks', 'hunting_tasks_content', 'huntingTasksTabPanel')
+        if huntingPanel then
+            preyWindow.huntingTasksTabPanel = huntingPanel
+            mainTabBar:addTab('Hunting Tasks', huntingPanel)
+            registerPreyWindowChildReferences(huntingPanel)
+        end
+
+        local preyTab = mainTabBar:getTab('Prey Creatures')
+        local huntingTab = mainTabBar:getTab('Hunting Tasks')
+
+        if preyTab then
+            preyTab:setVisible(false)
+            preyTab:setEnabled(false)
+        end
+
+        if huntingTab then
+            huntingTab:setVisible(false)
+            huntingTab:setEnabled(false)
+        end
+
+        local preyTabButton = preyWindow:recursiveGetChildById('preyCreaturesButton')
+        local huntingTabButton = preyWindow:recursiveGetChildById('huntingTasksButton')
+
+        local function updateButtonStates(tab)
+            local isPreyTab = tab == preyTab
+            local isHuntingTab = tab == huntingTab
+
+            if preyTabButton then
+                preyTabButton:setChecked(isPreyTab)
+                preyTabButton:setOn(isPreyTab)
+            end
+
+            if huntingTabButton then
+                huntingTabButton:setChecked(isHuntingTab)
+                huntingTabButton:setOn(isHuntingTab)
+            end
+        end
+
+        local previousOnTabChange = mainTabBar.onTabChange
+        mainTabBar.onTabChange = function(self, tab)
+            updateButtonStates(tab)
+            if previousOnTabChange then
+                previousOnTabChange(self, tab)
+            end
+        end
+
+        local currentTab = mainTabBar:getCurrentTab()
+        if currentTab then
+            updateButtonStates(currentTab)
+        else
+            updateButtonStates(nil)
+        end
+
+        if preyTabButton and preyTab then
+            g_mouse.bindPress(preyTabButton, function()
+                mainTabBar:selectTab(preyTab)
+            end, MouseLeftButton)
+        end
+
+        if huntingTabButton and huntingTab then
+            g_mouse.bindPress(huntingTabButton, function()
+                mainTabBar:selectTab(huntingTab)
+            end, MouseLeftButton)
+        end
+    end
+
     preyTracker = g_ui.createWidget('PreyTracker', modules.game_interface.getRightPanel())
     preyTracker:setup()
     preyTracker:setContentMaximumHeight(110)
@@ -276,12 +436,28 @@ function setUnsupportedSettings()
     local t = { 'slot1', 'slot2', 'slot3' }
     for i, slot in pairs(t) do
         local panel = preyWindow[slot]
-        for j, state in pairs({ panel.active, panel.inactive }) do
-            state.select.price.text:setText('5')
+        if panel then
+            for _, state in pairs({ panel.active, panel.inactive }) do
+                if state and state.select and state.select.price and state.select.price.text then
+                    state.select.price.text:setText('5')
+                end
+            end
+
+            local active = panel.active
+            if active then
+                if active.autoRerollPrice and active.autoRerollPrice.text then
+                    active.autoRerollPrice.text:setText('1')
+                end
+
+                if active.lockPreyPrice and active.lockPreyPrice.text then
+                    active.lockPreyPrice.text:setText('5')
+                end
+
+                if active.choose and active.choose.price and active.choose.price.text then
+                    active.choose.price.text:setText('1')
+                end
+            end
         end
-        panel.active.autoRerollPrice.text:setText('1')
-        panel.active.lockPreyPrice.text:setText('5')
-        panel.active.choose.price.text:setText(1)
     end
 end
 

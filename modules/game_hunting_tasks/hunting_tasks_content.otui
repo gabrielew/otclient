@@ -1,0 +1,19 @@
+Panel
+
+  SlotPanel
+    id: hunting_tasks_slot_1
+    anchors.left: parent.left
+    anchors.top: parent.top
+    margin-top: 10
+
+  SlotPanel
+    id: hunting_tasks_slot_2
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.left: prev.right
+    margin-left: 10
+
+  SlotPanel
+    id: hunting_tasks_slot_3
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.left: prev.right
+    margin-left: 10

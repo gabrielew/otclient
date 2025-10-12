@@ -53,7 +53,10 @@ local function registerPreyWindowChildReferences(widget)
 
         local id = node:getId()
         if id and id ~= '' then
-            preyWindow[id] = node
+            local existing = preyWindow[id]
+            if not existing or existing:isDestroyed() then
+                preyWindow[id] = node
+            end
         end
 
         local children = node:getChildren()

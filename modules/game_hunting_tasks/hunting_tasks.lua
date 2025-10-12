@@ -4,6 +4,8 @@ huntingTasksWindow = nil
 
 huntingTasksController.difficultyByRaceId = {}
 huntingTasksController.optionsByDifficultyAndStars = {}
+huntingTasksController.tabPanel = nil
+huntingTasksController.tabHtmlId = nil
 
 function onPreyRaceListItemClicked(widget)
 
@@ -13,25 +15,27 @@ function onPreyRaceListItemHoverChange(widget)
 
 end
 
-function setUnsupportedSettings()
-    local t = { 'hunting_tasks_slot_1', 'hunting_tasks_slot_2', 'hunting_tasks_slot_3' }
-    for i, slot in pairs(t) do
-        local panel = huntingTasks[slot]
-        if panel then
-            for _, state in pairs({ panel.active, panel.inactive }) do
-                if state and state.select and state.select.price and state.select.price.text then
-                    state.select.price.text:setText('5')
-                end
-            end
+local function applyDefaultLabel(query, text)
+    local widgets = huntingTasksController:findWidgets(query)
+    if type(widgets) ~= 'table' then
+        return
+    end
 
-            local active = panel.active
-            if active then
-                if active.choose and active.choose.price and active.choose.price.text then
-                    active.choose.price.text:setText('1')
-                end
-            end
+    for _, widget in pairs(widgets) do
+        if widget and widget.setText then
+            widget:setText(text)
         end
     end
+end
+
+function setUnsupportedSettings()
+    if not huntingTasksController.tabPanel or huntingTasksController.tabPanel:isDestroyed() then
+        return
+    end
+
+    applyDefaultLabel('#hunting_tasks_slot_1 #select .action-label', 'Select (5)')
+    applyDefaultLabel('#hunting_tasks_slot_1 #choose .action-label', 'Choose (1)')
+    applyDefaultLabel('#hunting_tasks_slot_1 #reroll .action-price', '5')
 end
 
 local function getPreySlotWidget(slot)
@@ -42,16 +46,58 @@ local function getPreySlotWidget(slot)
 end
 
 function huntingTasksController:onInit()
-    g_logger.info(">>>>")
     self:registerEvents(g_game, {
         onTaskHuntingData = onTaskHuntingData,
         taskHuntingBasicData = taskHuntingBasicData,
     })
 
-    -- huntingTasksWindow = g_ui.displayUI('hunting_tasks')
-    -- huntingTasksWindow:hide()
+    setUnsupportedSettings()
+end
+
+function huntingTasksController:createTabPanel(widgetId)
+    if self.tabPanel and not self.tabPanel:isDestroyed() then
+        if widgetId and self.tabPanel.setId then
+            self.tabPanel:setId(widgetId)
+        end
+        return self.tabPanel
+    end
+
+    if self.tabHtmlId then
+        self:destroyUI()
+        self.tabPanel = nil
+        self.tabHtmlId = nil
+    end
+
+    local tempParent = g_ui.createWidget('Panel', g_ui.getRootWidget())
+    tempParent:setVisible(false)
+    local htmlId = g_html.load(self.name, 'hunting_tasks_content.html', tempParent)
+    local root = g_html.getRootWidget(htmlId)
+
+    if not root then
+        tempParent:destroy()
+        return nil
+    end
+
+    root:setParent(nil)
+    tempParent:destroy()
+
+    if widgetId and root.setId then
+        root:setId(widgetId)
+    end
+
+    self.tabHtmlId = htmlId
+    self.htmlId = htmlId
+    self.tabPanel = root
+    self.ui = root
 
     setUnsupportedSettings()
+
+    return root
+end
+
+function huntingTasksController:onTerminate()
+    self.tabPanel = nil
+    self.tabHtmlId = nil
 end
 
 function taskHuntingBasicData(data)

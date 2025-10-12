@@ -107,6 +107,13 @@ local function loadTabPanelFromModule(moduleName, fileName, widgetId)
         end
     end
 
+    if moduleName == 'game_hunting_tasks' and huntingTasksController and huntingTasksController.createTabPanel then
+        local widget = huntingTasksController:createTabPanel(widgetId)
+        if widget then
+            return widget
+        end
+    end
+
     g_logger.warning(string.format('[Prey] Missing tab content file: %s/%s.otui', moduleName, fileName))
     return nil
 end

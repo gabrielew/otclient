@@ -1,0 +1,121 @@
+.content {
+  position: relative;
+  background-color: red;
+  width: 500;
+  height: 350;
+}
+
+.form {
+  display: inline-block;
+  width: 50%;
+  height: 30%;
+  margin-top: 30;
+}
+
+.form > div > uicreature {
+  --creature-size: 64;
+  background-color: blue;
+  border: 1px red;
+}
+
+.footer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
+.equalizerEffect {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  text-align: center;
+  height: 100px;
+}
+
+.equalizerEffect > .line {
+  position: relative;
+  width: 15;
+  top: 80;
+  margin-left: 30;
+  background-color: yellow;
+  bottom: 0;
+  display: inline-block;
+}
+
+.equalizerEffect > .line:nth-child(odd) {
+  background-color: rgb(202, 75, 202);
+}
+
+#players {
+  background-color: black;
+  overflow: scroll;
+}
+
+#players thead tr {
+  background-color: rgb(151, 151, 165);
+}
+
+#players tbody tr:nth-child(odd) {
+  background-color: rgb(134, 127, 134);
+}
+
+#players tbody tr:hover {
+  background-color: rgb(104, 106, 241);
+}
+
+#players uicreature {
+  --creature-size: 32;
+}
+
+img.shield {
+  width: 64;
+  height: 64;
+  position: absolute;
+  right: 0;
+  --shader: Map - Party;
+}
+
+.prey-window {
+  position: relative;
+  width: 500px;
+  height: 405px;
+}
+
+.button-panel {
+  position: absolute;
+  top: -4px;
+  left: 20px;
+  width: 468px;
+  height: 36px;
+  --background-color: #404040;
+  --border-width-top: 1;
+  --border-color-top: black;
+  --border-width-left: 1;
+  --border-color-left: black;
+  --border-width-bottom: 1;
+  --border-color-bottom: #747474;
+  --border-width-right: 1;
+  --border-color-right: #747474;
+  --border-draw-order: 2;
+}
+
+.prey-btn {
+  width: 97px;
+  height: 34px;
+  margin-top: 2px;
+  --image-clip: 0 0 116 34;
+}
+
+.prey-btn:pressed,
+.prey-btn:checked,
+.prey-btn:not(:on) {
+  --image-clip: 0 34 116 34;
+}
+
+.prey-btn.btn-preyCreatures {
+  --image-source: "/game_prey_html/images/prey-button";
+}
+
+.prey-btn.btn-huntingTasks {
+  --image-source: "/game_prey_html/images/prey-button";
+}

@@ -304,14 +304,43 @@ end
 local n = 0
 function setUnsupportedSettings()
     local t = { 'slot1', 'slot2', 'slot3' }
-    for i, slot in pairs(t) do
-        local panel = preyWindow[slot]
-        for j, state in pairs({ panel.active, panel.inactive }) do
-            state.select.price.text:setText('5')
+    for _, slot in ipairs(t) do
+        local panel = preyWindow and preyWindow[slot]
+        if not panel and preyWindow and preyWindow.recursiveGetChildById then
+            panel = preyWindow:recursiveGetChildById(slot)
+            if panel then
+                preyWindow[slot] = panel
+            end
         end
-        panel.active.autoRerollPrice.text:setText('1')
-        panel.active.lockPreyPrice.text:setText('5')
-        panel.active.choose.price.text:setText(1)
+
+        if panel then
+            for _, state in ipairs({ panel.active, panel.inactive }) do
+                local selectWidget = state and state.select
+                local priceWidget = selectWidget and selectWidget.price
+                local priceText = priceWidget and priceWidget.text
+                if priceText then
+                    priceText:setText('5')
+                end
+            end
+
+            local active = panel.active
+            if active then
+                local autoRerollPrice = active.autoRerollPrice and active.autoRerollPrice.text
+                if autoRerollPrice then
+                    autoRerollPrice:setText('1')
+                end
+
+                local lockPreyPrice = active.lockPreyPrice and active.lockPreyPrice.text
+                if lockPreyPrice then
+                    lockPreyPrice:setText('5')
+                end
+
+                local choosePrice = active.choose and active.choose.price and active.choose.price.text
+                if choosePrice then
+                    choosePrice:setText(1)
+                end
+            end
+        end
     end
 end
 

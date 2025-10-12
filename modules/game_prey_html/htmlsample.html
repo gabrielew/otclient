@@ -1,31 +1,37 @@
 <link href="htmlsample.css" />
+<link href="tab/preyCreatures/preyCreatures.css" />
 <script type="text">
   self.title = "Prey";
   self.msg = "Welcome to HTML/CSS";
 </script>
 <html>
-  <window class="prey-window" anchor="parent" *title="self.title">
+  <window
+    class="prey-window"
+    anchor="parent"
+    *title="self.title"
+    onescape="self:hide()"
+  >
     <div
       id="buttonPanel"
       class="button-panel"
       layout="type: horizontalBox;spacing:0"
     >
-      <button
-        id="fusionBtn"
-        class="forge-btn btn-preyCreatures"
+      <img
+        class="prey-btn btn-preyCreatures"
         onclick="self:loadMenu('preyCreaturesMenu')"
-      ></button>
-
-      <button
-        id="transferBtn"
-        class="forge-btn btn-huntingTasks"
+        src="/modules/game_prey_html/images/prey-button"
+        *image-clip="self.buttons.prey"
+      />
+      <img
+        class="prey-btn btn-huntingTasks"
         onclick="self:loadMenu('huntingTasksMenu')"
-      ></button>
+        src="/modules/game_prey_html/images/task-button"
+        *image-clip="self.buttons.task"
+      />
     </div>
 
     <div class="footer">
-      <button onclick="alert('HTML/CSS V.3b')">About</button>
-      <button style="float: right" onclick="self:unloadHtml()">Close</button>
+      <button style="float: right" onclick="self:hide()">Close</button>
     </div>
   </window>
 </html>

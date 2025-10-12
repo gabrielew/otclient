@@ -1,0 +1,200 @@
+.preyCreaturesContainer {
+  margin-top: 36px;
+  width: 680px;
+  height: 320px;
+  display: flex;
+}
+
+.preySlots {
+  width: 224px;
+  height: 340px;
+}
+
+#prey_creature_1,
+#prey_creature_2,
+#prey_creature_3 uicreature {
+  --creature-size: 32;
+}
+
+.preyCreature {
+  --creature-size: 32;
+  width: 32px;
+  height: 32px;
+}
+
+.qtpanelMonsters {
+  display: flex;
+}
+
+.qtpanelMonsters {
+  height: 140px;
+  width: 135px;
+  margin-left: 2px;
+  border: 1px black;
+}
+
+.qtpanelPrey {
+  height: 140px;
+  width: 70px;
+  margin-left: 4px;
+  text-align: center;
+  display: block;
+  padding-top: 8px;
+}
+
+.qtpanelPreyStars {
+  width: 70px;
+  height: 10px;
+  display: block;
+  margin-top: 1px;
+}
+
+.preyTimeLeft {
+  margin-top: 4px;
+  margin-left: 2px;
+  height: 20px;
+  width: 100%;
+  background-color: lightskyblue;
+  text-align: center;
+  align-items: center;
+  --image-source: /images/ui/test/button-verydarkgrey-down;
+  position: relative;
+}
+
+.preyTimeLeftProgress {
+  height: 20px;
+  top: 0;
+  left: 0;
+  background-color: #8a5e00;
+}
+
+.preyTimeLeftText {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  top: 2px;
+}
+
+.preyCardOptions {
+  display: flex;
+  height: 70px;
+  width: 100%;
+  margin-left: 2px;
+  margin-top: 8px;
+}
+
+.preyCardOption {
+  position: relative;
+  height: 66px;
+  width: 65px;
+}
+
+.preyCardOption.secondOption {
+  margin-left: 4px;
+}
+.preyCardOption.thirdOption {
+  margin-left: 8px;
+}
+.preyCardOptionPrice {
+  margin-top: 2px;
+  width: 65px;
+  height: 20px;
+  align-items: center;
+  text-align: center;
+  --image-source: /images/ui/test/button-verydarkgrey-down;
+}
+
+.checkOptions {
+  display: flex;
+  height: 20px;
+}
+
+.checkOptions.reroll {
+  margin-top: 8px;
+  align-items: center;
+}
+
+.checkOption {
+  display: inline;
+  width: 170px;
+  height: 20px;
+  padding-top: 3px;
+}
+
+.checkOption label {
+  margin-left: 2px;
+}
+
+.checkOptionPrice {
+  margin-left: 4px;
+  height: 20px;
+  width: 35px;
+  align-items: center;
+  text-align: center;
+  --image-source: /images/ui/test/button-verydarkgrey-down;
+}
+
+.checkOptionPrice img {
+  margin-left: 2px;
+}
+
+.qtpanelHints {
+  height: 100px;
+  width: 675px;
+  margin-top: 16px;
+  border: 1px red;
+}
+
+/* 5 colunas: (16px largura + 2px gap) * 5 = 90px */
+.stars {
+} /* font-size:0 remove o “espaço” entre inline-blocks */
+.star {
+  display: inline;
+  margin-left: 2px;
+}
+
+.selectButtonPrey {
+  width: 65px;
+  height: 66px;
+  --image-clip: 0 0 65 66;
+}
+
+.selectButtonPrey:pressed {
+  --image-clip: 0 66 65 66;
+}
+
+.selectButtonPrey:disabled {
+  --image-clip: 0 132 65 66;
+}
+
+.preyCardOption.rerollList {
+  height: 69px;
+}
+
+.rerollListButtonPrey {
+  width: 66px;
+  height: 66px;
+  --image-clip: 0 0 66 66;
+}
+
+.rerollListButtonPrey:pressed {
+  --image-clip: 0 66 66 66;
+}
+
+.rerollListButtonPrey:disabled {
+  --image-clip: 0 138 66 66;
+}
+
+.rerollBonusButtonPrey {
+  width: 66px;
+  height: 66px;
+  --image-clip: 0 0 66 66;
+}
+
+.rerollBonusButtonPrey:pressed {
+  --image-clip: 0 66 66 66;
+}
+
+.rerollBonusButtonPrey:disabled {
+  --image-clip: 0 132 66 66;
+}

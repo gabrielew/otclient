@@ -3,5 +3,121 @@
   self.msg = "Prey Creatures";
 </script>
 <html>
-  <div><label>{{self.msg}}</label></div>
+  <div>
+    <div id="preyCreatures" class="preyCreaturesContainer">
+      <div
+        *for="local slot in self.slots"
+        class="minipanel preySlots"
+        style="background-color: lightcoral"
+        *title="slot.name"
+        *margin-left="slot.id > 1 and 4 or 0"
+      >
+        <div class="qtpanelMonsters">
+          <div class="qtpanelMonsters">
+            <!-- <uicreature class="preyCreature" *outfit="{type = slot.lookType}" /> -->
+          </div>
+          <div class="qtpanelPrey">
+            <img *image-source="slot.prey" width="44" height="92" />
+            <hr style="width: 80%; margin-left: 5px" />
+            <div class="qtpanelPreyStars">
+              <div *for="local i in self.slot_1_stars" *if="i > 5" class="star">
+                <img
+                  src="/images/game/prey/prey_star.png"
+                  width="9"
+                  height="10"
+                />
+              </div>
+            </div>
+            <div class="qtpanelPreyStars">
+              <div *for="local i in self.slot_1_stars" *if="i > 5" class="star">
+                <img
+                  src="/images/game/prey/prey_star.png"
+                  width="9"
+                  height="10"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="preyTimeLeft">
+          <div class="preyTimeLeftProgress" style="width: 50%"></div>
+          <label class="preyTimeLeftText">{{slot.timeleft}}</label>
+        </div>
+        <div class="preyCardOptions">
+          <div class="preyCardOption">
+            <img
+              class="rerollListButtonPrey"
+              src="/modules/game_prey_html/images/prey-reroll-list.png"
+              onclick="self:selectPrey(slot.id)"
+            />
+            <div class="preyCardOptionPrice" style="text-align: left">
+              <div>
+                <label style="margin-left: 4px">194k</label>
+                <span
+                  >0 <img src="/modules/game_prey_html/images/prey_gold.png"
+                /></span>
+              </div>
+            </div>
+          </div>
+          <div class="preyCardOption" style="margin-left: 4px">
+            <img
+              class="selectButtonPrey"
+              src="/modules/game_prey_html/images/prey-select-bonus-button"
+              onclick="self:rerollList(slot.id)"
+            />
+            <div class="preyCardOptionPrice">
+              5
+              <img src="/images/game/prey/prey_wildcard.png" />
+            </div>
+          </div>
+          <div class="preyCardOption" style="margin-left: 8px">
+            <img
+              class="rerollBonusButtonPrey"
+              src="/modules/game_prey_html/images/prey-reroll-bonus"
+              onclick="self:rerollPrey(slot.id)"
+            />
+            <div class="preyCardOptionPrice">
+              1
+              <img src="/images/game/prey/prey_wildcard.png" />
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px">
+          <div class="checkOptions reroll">
+            <div class="checkOption">
+              <input
+                id="slot_1_reroll"
+                type="checkbox"
+                *checked="slot.reroll"
+              />
+              <label for="slot_1_reroll">Automatic Reroll Bonus</label>
+            </div>
+            <div class="checkOptionPrice">
+              1
+              <img src="/images/game/prey/prey_wildcard.png" />
+            </div>
+          </div>
+          <div class="checkOptions">
+            <div class="checkOption">
+              <input
+                id="slot_1_lock_prey"
+                type="checkbox"
+                *checked="slot.lockPrey"
+              />
+              <label for="slot_1_lock_prey">Lock Prey</label>
+            </div>
+            <div class="checkOptionPrice">
+              5
+              <img src="/images/game/prey/prey_wildcard.png" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qtpanel qtpanelHints">
+      <label>hints</label>
+    </div>
+  </div>
 </html>

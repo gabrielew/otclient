@@ -3,22 +3,11 @@ local preyButton = nil
 local preyTrackerButton = nil
 local windowTypes = {}
 local TAB_ORDER = { 'preyCreatures', 'huntingTasks' }
+preyController.lookType1 = 2599
+preyController.lookType2 = 2599
+preyController.lookType3 = 2599
 
-local function hide()
-    if not preyController.ui then
-        return
-    end
 
-    preyController.ui:hide()
-
-    if preyButton then
-        preyButton:setOn(false)
-    end
-end
-
-function preyController:close()
-    hide()
-end
 
 local TAB_CONFIG = {
     preyCreatures = {
@@ -34,9 +23,13 @@ ui = {
 }
 
 local function hideAllPanels()
-    for _, panel in pairs(ui.panels) do
-        if panel and panel.hide then
-            panel:hide()
+    for key, panel in pairs(ui.panels) do
+        if panel then
+            if panel:isDestroyed() then
+                ui.panels[key] = nil
+            elseif panel.hide then
+                panel:hide()
+            end
         end
     end
 end
@@ -67,18 +60,51 @@ function preyController:getCurrentWindow()
 end
 
 function preyController:loadTab(tabName)
-    if ui.panels[tabName] then
-        return ui.panels[tabName]
+    local panel = ui.panels[tabName]
+    if panel and panel:isDestroyed() then
+        ui.panels[tabName] = nil
+        panel = nil
     end
 
-    local panel = loadTabFragment(tabName)
+    if panel then
+        return panel
+    end
+
+    panel = loadTabFragment(tabName)
     if panel then
         ui.panels[tabName] = panel
     end
     return panel
 end
 
-local function show(self)
+function preyController:toggle()
+    if not self.ui or self.ui:isDestroyed() then
+        self:show()
+        return
+    end
+
+    if self.ui:isVisible() then
+        self:hide()
+    else
+        self:show()
+    end
+end
+
+local buttons = {
+    normal = { x = 0, y = 0, width = 340, height = 34 },
+    pressed = { x = 0, y = 34, width = 340, height = 34 },
+}
+
+local preySelectButtons = {
+    normal = { x = 0, y = 0, width = 65, height = 66 },
+    pressed = { x = 0, y = 66, width = 65, height = 66 },
+    disabled = { x = 0, y = 132, width = 65, height = 66 },
+}
+
+function preyController:selectPrey(slotId)
+end
+
+function preyController:show()
     local needsReload = not self.ui or self.ui:isDestroyed()
     if needsReload then
         self:loadHtml('htmlsample.html')
@@ -116,31 +142,19 @@ local function show(self)
     end
 
     SelectWindow('preyCreaturesMenu')
-end
-
-local function toggle(self)
-    if not self.ui or self.ui:isDestroyed() then
-        show(self)
-        return
-    end
-
-    if self.ui:isVisible() then
-        hide()
-    else
-        show(self)
-    end
-end
-
-function preyController:toggle()
-    toggle(self)
-end
-
-function preyController:show()
-    show(self)
+    self.buttons.prey = buttons.pressed
 end
 
 function preyController:hide()
-    hide()
+    if not self.ui then
+        return
+    end
+
+    self.ui:hide()
+
+    if preyButton then
+        preyButton:setOn(false)
+    end
 end
 
 local function setWindowState(window, enabled)
@@ -157,6 +171,11 @@ end
 function preyController:loadMenu(a, b, c)
     SelectWindow(a)
 end
+
+preyController.buttons = {
+    prey = buttons.pressed,
+    task = buttons.normal
+}
 
 function SelectWindow(type, isBackButtonPress)
     local nextWindow = windowTypes[type]
@@ -181,6 +200,8 @@ function SelectWindow(type, isBackButtonPress)
     end
 
     if type == "preyCreaturesMenu" then
+        preyController.buttons.prey = buttons.pressed
+        preyController.buttons.task = buttons.normal
         if not isBackButtonPress then
             g_game.preyRequest()
         end
@@ -188,6 +209,8 @@ function SelectWindow(type, isBackButtonPress)
     end
 
     if type == "huntingTasksMenu" then
+        preyController.buttons.prey = buttons.normal
+        preyController.buttons.task = buttons.pressed
     end
 end
 
@@ -197,7 +220,7 @@ function preyController:onInit()
     if g_game.getFeature(GamePrey) then
         if not preyButton then
             preyButton = modules.game_mainpanel.addToggleButton('preyButton', tr('Prey Dialog'),
-                '/images/options/button_preydialog', function() toggle(self) end)
+                '/images/options/button_preydialog', function() self:toggle() end)
         end
         -- if not preyTrackerButton then
         --     preyTrackerButton = modules.game_mainpanel.addToggleButton('preyTrackerButton', tr('Prey Tracker'),
@@ -207,7 +230,14 @@ function preyController:onInit()
         preyButton:destroy()
         preyButton = nil
     end
-    self.players = {}
+
+    preyController.slot_1_stars = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }
+
+    preyController.slots = {
+        { id = 1, stars = 10, name = "Rat",    prey = "/images/game/prey/prey_bigxp.png",     lookType = 2599, reroll = true,  lockPrey = false, nextFreeReroll = "02:50", timeleft = "19:59" },
+        { id = 2, stars = 5,  name = "Bat",    prey = "/images/game/prey/prey_bigloot.png",   lookType = 2598, reroll = false, lockPrey = true,  nextFreeReroll = "02:50", timeleft = "19:12" },
+        { id = 3, stars = 10, name = "Wyvern", prey = "/images/game/prey/prey_bigdamage.png", lookType = 2597, reroll = true,  lockPrey = false, nextFreeReroll = "02:50", timeleft = "19:11" },
+    }
 end
 
 function preyController:terminate()

@@ -1,33 +1,44 @@
 huntingTasksController = Controller:new()
 huntingTasks = nil
+huntingTasksWindow = nil
+
+huntingTasksController.difficultyByRaceId = {}
+huntingTasksController.optionsByDifficultyAndStars = {}
+
+function onPreyRaceListItemClicked(widget)
+
+end
+
+function onPreyRaceListItemHoverChange(widget)
+
+end
 
 function setUnsupportedSettings()
     local t = { 'hunting_tasks_slot_1', 'hunting_tasks_slot_2', 'hunting_tasks_slot_3' }
-    -- for i, slot in pairs(t) do
-    --     local panel = huntingTasks[slot]
-    --     if panel then
-    --         for _, state in pairs({ panel.active, panel.inactive }) do
-    --             if state and state.select and state.select.price and state.select.price.text then
-    --                 state.select.price.text:setText('5')
-    --             end
-    --         end
+    for i, slot in pairs(t) do
+        local panel = huntingTasks[slot]
+        if panel then
+            for _, state in pairs({ panel.active, panel.inactive }) do
+                if state and state.select and state.select.price and state.select.price.text then
+                    state.select.price.text:setText('5')
+                end
+            end
 
-    --         local active = panel.active
-    --         if active then
-    --             if active.autoRerollPrice and active.autoRerollPrice.text then
-    --                 active.autoRerollPrice.text:setText('1')
-    --             end
+            local active = panel.active
+            if active then
+                if active.choose and active.choose.price and active.choose.price.text then
+                    active.choose.price.text:setText('1')
+                end
+            end
+        end
+    end
+end
 
-    --             if active.lockPreyPrice and active.lockPreyPrice.text then
-    --                 active.lockPreyPrice.text:setText('5')
-    --             end
-
-    --             if active.choose and active.choose.price and active.choose.price.text then
-    --                 active.choose.price.text:setText('1')
-    --             end
-    --         end
-    --     end
-    -- end
+local function getPreySlotWidget(slot)
+    if not huntingTasksWindow then
+        return nil
+    end
+    return huntingTasksWindow['hunting_tasks_slot_' .. (slot + 1)]
 end
 
 function huntingTasksController:onInit()
@@ -36,6 +47,9 @@ function huntingTasksController:onInit()
         onTaskHuntingData = onTaskHuntingData,
         taskHuntingBasicData = taskHuntingBasicData,
     })
+
+    -- huntingTasksWindow = g_ui.displayUI('hunting_tasks')
+    -- huntingTasksWindow:hide()
 
     setUnsupportedSettings()
 end
@@ -46,13 +60,16 @@ function taskHuntingBasicData(data)
 
     -- Log compacto
     for i, p in ipairs(data.preys or {}) do
-        g_logger.info(("  Prey[%d] raceId=%d difficulty=%d"):format(i, p.raceId, p.difficulty))
+        huntingTasksController.difficultyByRaceId[p.raceId] = p.difficulty
+        -- g_logger.info(("  Prey[%d] raceId=%d difficulty=%d"):format(i, p.raceId, p.difficulty))
     end
 
-    for i, o in ipairs(data.options or {}) do
-        g_logger.info(("  Option[%d] diff=%d stars=%d firstKill=%d firstReward=%d secondKill=%d secondReward=%d")
-            :format(i, o.difficulty, o.stars, o.firstKill, o.firstReward, o.secondKill, o.secondReward))
-    end
+    huntingTasksController.optionsByDifficultyAndStars = data.options or {}
+
+    -- for i, o in ipairs(data.options or {}) do
+    --     g_logger.info(("  Option[%d] diff=%d stars=%d firstKill=%d firstReward=%d secondKill=%d secondReward=%d")
+    --         :format(i, o.difficulty, o.stars, o.firstKill, o.firstReward, o.secondKill, o.secondReward))
+    -- end
 
     -- Acesso fácil por dificuldade/estrela:
     -- ex.: pegar os dados de difficulty=2, stars=4:

@@ -11,6 +11,146 @@ local slotsContainer
 local placeholderWidget
 local slotWidgets = {}
 
+local CANCEL_BUTTON_STYLE = 'HuntingTaskCancelButton'
+local CANCEL_BUTTON_ID = 'huntingTaskCancelButton'
+local CANCEL_BUTTON_SIZE = { width = 65, height = 69 }
+
+local cancelButtonStylesLoaded = false
+local cancelButtonStylesAttempted = false
+
+local function ensureCancelButtonStyle()
+    if cancelButtonStylesLoaded then
+        return true
+    end
+
+    if cancelButtonStylesAttempted then
+        return false
+    end
+
+    cancelButtonStylesAttempted = true
+
+    if not g_ui or not g_ui.importStyle then
+        return false
+    end
+
+    cancelButtonStylesLoaded = g_ui.importStyle('modules/game_prey/hunting_tasks') or false
+
+    return cancelButtonStylesLoaded
+end
+
+local function getActivePanel(slotWidget)
+    if not slotWidget or slotWidget.isDestroyed and slotWidget:isDestroyed() then
+        return nil
+    end
+
+    local activePanel = slotWidget:recursiveGetChildById('active')
+    if activePanel and activePanel.isDestroyed and activePanel:isDestroyed() then
+        return nil
+    end
+
+    return activePanel
+end
+
+local function getCancelButton(slotWidget)
+    local activePanel = getActivePanel(slotWidget)
+    if not activePanel then
+        return nil, activePanel
+    end
+
+    local cancelButton = activePanel:recursiveGetChildById(CANCEL_BUTTON_ID)
+    if cancelButton and cancelButton.isDestroyed and cancelButton:isDestroyed() then
+        return nil, activePanel
+    end
+
+    return cancelButton, activePanel
+end
+
+local function ensureCancelButton(slotWidget)
+    local cancelButton, activePanel = getCancelButton(slotWidget)
+    if cancelButton then
+        return cancelButton, activePanel
+    end
+
+    activePanel = activePanel or getActivePanel(slotWidget)
+    if not activePanel then
+        return nil, nil
+    end
+
+    if not ensureCancelButtonStyle() then
+        return nil, activePanel
+    end
+
+    local selectWidget = activePanel:recursiveGetChildById('select')
+    if not selectWidget or selectWidget.isDestroyed and selectWidget:isDestroyed() then
+        return nil, activePanel
+    end
+
+    if not g_ui or not g_ui.createWidget then
+        return nil, activePanel
+    end
+
+    cancelButton = g_ui.createWidget(CANCEL_BUTTON_STYLE, activePanel)
+    if not cancelButton then
+        return nil, activePanel
+    end
+
+    cancelButton:setId(CANCEL_BUTTON_ID)
+    cancelButton:setVisible(false)
+    cancelButton:setFocusable(false)
+
+    if cancelButton.setWidth then
+        cancelButton:setWidth(CANCEL_BUTTON_SIZE.width)
+    end
+    if cancelButton.setHeight then
+        cancelButton:setHeight(CANCEL_BUTTON_SIZE.height)
+    end
+
+    if cancelButton.breakAnchors then
+        cancelButton:breakAnchors()
+        cancelButton:addAnchor(AnchorVerticalCenter, selectWidget:getId(), AnchorVerticalCenter)
+        cancelButton:addAnchor(AnchorRight, selectWidget:getId(), AnchorLeft)
+    end
+
+    if cancelButton.setMarginRight then
+        cancelButton:setMarginRight(2)
+    end
+
+    if cancelButton.setMarginTop then
+        cancelButton:setMarginTop(0)
+    end
+
+    if cancelButton.setMarginBottom then
+        cancelButton:setMarginBottom(0)
+    end
+
+    return cancelButton, activePanel
+end
+
+local function setCancelButtonVisible(slotWidget, visible)
+    local cancelButton, activePanel = getCancelButton(slotWidget)
+    if visible and not cancelButton then
+        cancelButton, activePanel = ensureCancelButton(slotWidget)
+    end
+
+    if cancelButton then
+        cancelButton:setVisible(visible)
+        if cancelButton.setEnabled then
+            cancelButton:setEnabled(visible)
+        end
+    end
+
+    activePanel = activePanel or getActivePanel(slotWidget)
+    if not activePanel then
+        return
+    end
+
+    local rerollPanel = activePanel:recursiveGetChildById('reroll')
+    if rerollPanel then
+        local shouldHideReroll = visible and cancelButton ~= nil
+        rerollPanel:setVisible(not shouldHideReroll)
+    end
+end
+
 local function clearSlotWidgets()
     for index = #slotWidgets, 1, -1 do
         local widget = slotWidgets[index]
@@ -250,6 +390,8 @@ local function hideSlotPanels(slotWidget)
         return
     end
 
+    setCancelButtonVisible(slotWidget, false)
+
     local inactive = slotWidget:recursiveGetChildById('inactive')
     if inactive then
         inactive:setVisible(false)
@@ -274,7 +416,7 @@ local function updateTaskRarity(gradePanel, rarity)
     gradePanel:destroyChildren()
 
     local effectiveRarity = math.max(0, math.floor(rarity or 0))
-    local maxStars = 10
+    local maxStars = 5
 
     if not g_ui or not g_ui.createWidget then
         return
@@ -332,6 +474,10 @@ local function applyActiveTask(slotWidget, activeData)
     if activePanel then
         activePanel:setVisible(true)
     end
+
+    local cancelButton = ensureCancelButton(slotWidget)
+    setCancelButtonVisible(slotWidget, true)
+    cancelButton = select(1, getCancelButton(slotWidget))
 
     local raceData = resolveRaceData(activeData.selectedRaceId)
     local titleWidget = slotWidget:recursiveGetChildById('title')
@@ -399,7 +545,11 @@ local function applyActiveTask(slotWidget, activeData)
 
     accumulateCardBounds(activePanel:recursiveGetChildById('choose'))
     accumulateCardBounds(activePanel:recursiveGetChildById('select'))
-    accumulateCardBounds(activePanel:recursiveGetChildById('reroll'))
+    if cancelButton and cancelButton:isVisible() then
+        accumulateCardBounds(cancelButton)
+    else
+        accumulateCardBounds(activePanel:recursiveGetChildById('reroll'))
+    end
 
     local creatureMarginTop = 0
     local creatureMarginBottom = 0

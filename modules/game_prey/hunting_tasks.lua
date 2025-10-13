@@ -160,6 +160,50 @@ local function configureSlotWidget(slotWidget, index)
         titleWidget:setText(tr('Hunting Task Slot %d', index))
     end
 
+    local activePanel = slotWidget:recursiveGetChildById('active')
+    if activePanel then
+        local creatureAndBonus = activePanel:recursiveGetChildById('creatureAndBonus')
+        if creatureAndBonus and not creatureAndBonus.__huntingTaskAdjusted then
+            creatureAndBonus.__huntingTaskAdjusted = true
+
+            local creatureHeight = 160
+            local creatureWidget = creatureAndBonus:recursiveGetChildById('creature')
+            local originalCreatureHeight = creatureWidget and creatureWidget:getHeight() or 0
+            if creatureWidget then
+                creatureWidget:setHeight(creatureHeight)
+            end
+
+            local originalContainerHeight = creatureAndBonus:getHeight() or 0
+            if originalCreatureHeight > 0 and originalContainerHeight > 0 then
+                local heightDelta = creatureHeight - originalCreatureHeight
+                if heightDelta ~= 0 then
+                    local newContainerHeight = math.max(originalContainerHeight + heightDelta, creatureHeight)
+                    creatureAndBonus:setHeight(newContainerHeight)
+                end
+            end
+
+            local progressBar = creatureAndBonus:recursiveGetChildById('timeLeft')
+            if progressBar and progressBar.breakAnchors then
+                progressBar:breakAnchors()
+                progressBar:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+                progressBar:addAnchor(AnchorRight, 'parent', AnchorRight)
+                progressBar:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+                progressBar:setMarginBottom(0)
+                progressBar:setMarginTop(0)
+            end
+
+            local bonusPanel = creatureAndBonus:recursiveGetChildById('bonus')
+            if bonusPanel then
+                local gradePanel = bonusPanel:recursiveGetChildById('grade')
+                if gradePanel and gradePanel.setMarginBottom then
+                    local progressHeight = progressBar and progressBar:getHeight() or 0
+                    local spacing = 5
+                    gradePanel:setMarginBottom(progressHeight + spacing)
+                end
+            end
+        end
+    end
+
     return slotWidget
 end
 
@@ -184,6 +228,236 @@ end
 local function setSlotsVisible(visible)
     if slotsContainer and not slotsContainer:isDestroyed() then
         slotsContainer:setVisible(visible)
+    end
+end
+
+local function getSlotWidgetBySlotId(slotId)
+    if slotId == nil then
+        return nil, nil
+    end
+
+    local index = slotId + 1
+    if index < 1 or index > SLOT_COUNT then
+        return nil, nil
+    end
+
+    local slots = ensureSlots()
+    return slots and slots[index] or nil, index
+end
+
+local function hideSlotPanels(slotWidget)
+    if not slotWidget or slotWidget:isDestroyed() then
+        return
+    end
+
+    local inactive = slotWidget:recursiveGetChildById('inactive')
+    if inactive then
+        inactive:setVisible(false)
+    end
+
+    local active = slotWidget:recursiveGetChildById('active')
+    if active then
+        active:setVisible(false)
+    end
+
+    local locked = slotWidget:recursiveGetChildById('locked')
+    if locked then
+        locked:setVisible(false)
+    end
+end
+
+local function updateTaskRarity(gradePanel, rarity)
+    if not gradePanel or gradePanel:isDestroyed() then
+        return
+    end
+
+    gradePanel:destroyChildren()
+
+    local effectiveRarity = math.max(0, math.floor(rarity or 0))
+    local maxStars = 10
+
+    if not g_ui or not g_ui.createWidget then
+        return
+    end
+
+    for index = 1, maxStars do
+        local widgetName = index <= effectiveRarity and 'Star' or 'NoStar'
+        g_ui.createWidget(widgetName, gradePanel)
+    end
+
+    gradePanel:setTooltip(tr('Rarity: %d', effectiveRarity))
+end
+
+local function updateTaskProgress(progressBar, currentKills, requiredKills)
+    if not progressBar or progressBar:isDestroyed() then
+        return
+    end
+
+    local kills = math.max(0, math.floor(currentKills or 0))
+    local total = math.max(0, math.floor(requiredKills or 0))
+    local percent = 0
+
+    if total > 0 then
+        percent = math.min(100, (kills / total) * 100)
+    end
+
+    local text = string.format('%d / %d', kills, total)
+
+    progressBar:setPercent(percent)
+    progressBar:setText(text)
+    progressBar:setTooltip(tr('Hunting task progress: %s', text))
+end
+
+local function resolveRaceData(raceId)
+    if not raceId or not g_things or not g_things.getRaceData then
+        return nil
+    end
+
+    local data = g_things.getRaceData(raceId)
+    if not data or data.raceId == 0 then
+        return nil
+    end
+
+    return data
+end
+
+local function applyActiveTask(slotWidget, activeData)
+    if not slotWidget or slotWidget:isDestroyed() or not activeData then
+        return
+    end
+
+    hideSlotPanels(slotWidget)
+
+    local activePanel = slotWidget:recursiveGetChildById('active')
+    if activePanel then
+        activePanel:setVisible(true)
+    end
+
+    local raceData = resolveRaceData(activeData.selectedRaceId)
+    local titleWidget = slotWidget:recursiveGetChildById('title')
+    local raceName = raceData and raceData.name or ''
+
+    if not raceName or raceName:len() == 0 then
+        raceName = activeData.selectedRaceId and tr('Unknown Creature (%d)', activeData.selectedRaceId) or
+            tr('Hunting Task')
+    end
+
+    if titleWidget then
+        titleWidget:setText(raceName)
+    end
+
+    if not activePanel then
+        return
+    end
+
+    local creatureAndBonus = activePanel:recursiveGetChildById('creatureAndBonus')
+    if creatureAndBonus and not creatureAndBonus:isDestroyed() then
+        local creatureWidget = creatureAndBonus:recursiveGetChildById('creature')
+        if creatureWidget then
+            if raceData and raceData.outfit then
+                creatureWidget:setOutfit(raceData.outfit)
+                creatureWidget:setVisible(true)
+            else
+                creatureWidget:setVisible(false)
+            end
+            creatureWidget:setTooltip(raceName)
+        end
+
+        local bonusPanel = creatureAndBonus:recursiveGetChildById('bonus')
+        if bonusPanel then
+            local iconWidget = bonusPanel:recursiveGetChildById('icon')
+            if iconWidget then
+                iconWidget:setImageSource('/images/game/prey/prey_hunting_task_prey_token')
+            end
+
+            local gradePanel = bonusPanel:recursiveGetChildById('grade')
+            updateTaskRarity(gradePanel, activeData.rarity)
+        end
+
+        local progressBar = creatureAndBonus:recursiveGetChildById('timeLeft')
+        updateTaskProgress(progressBar, activeData.currentKills, activeData.requiredKills)
+    end
+
+    local activeCardsHeight = 0
+    local cardSpacing = 4
+
+    local function accumulateCardBounds(widget)
+        if not widget or widget:isDestroyed() then
+            return
+        end
+
+        if widget.getMarginTop and widget.setMarginTop and widget:getId() == 'choose' then
+            widget:setMarginTop(cardSpacing)
+        end
+
+        local marginTop = widget.getMarginTop and widget:getMarginTop() or 0
+        local marginBottom = widget.getMarginBottom and widget:getMarginBottom() or 0
+        local height = widget.getHeight and widget:getHeight() or 0
+
+        activeCardsHeight = math.max(activeCardsHeight, marginTop + height + marginBottom)
+    end
+
+    accumulateCardBounds(activePanel:recursiveGetChildById('choose'))
+    accumulateCardBounds(activePanel:recursiveGetChildById('select'))
+    accumulateCardBounds(activePanel:recursiveGetChildById('reroll'))
+
+    local creatureMarginTop = 0
+    local creatureMarginBottom = 0
+    local creatureHeight = 0
+    if creatureAndBonus and not creatureAndBonus:isDestroyed() then
+        creatureMarginTop = creatureAndBonus.getMarginTop and creatureAndBonus:getMarginTop() or 0
+        creatureMarginBottom = creatureAndBonus.getMarginBottom and creatureAndBonus:getMarginBottom() or 0
+        creatureHeight = creatureAndBonus.getHeight and creatureAndBonus:getHeight() or 0
+    end
+
+    local panelPaddingTop = activePanel.getPaddingTop and activePanel:getPaddingTop() or 0
+    local panelPaddingBottom = activePanel.getPaddingBottom and activePanel:getPaddingBottom() or 0
+
+    local desiredActiveHeight = creatureMarginTop + creatureHeight + creatureMarginBottom + activeCardsHeight +
+        panelPaddingTop + panelPaddingBottom
+
+    if desiredActiveHeight > 0 and activePanel.setHeight then
+        local currentHeight = activePanel:getHeight() or 0
+        if desiredActiveHeight > currentHeight then
+            activePanel:setHeight(desiredActiveHeight)
+        end
+    end
+
+    local titleWidget = slotWidget:recursiveGetChildById('title')
+    local titleHeight = 0
+    if titleWidget and not titleWidget:isDestroyed() then
+        local titleMarginTop = titleWidget.getMarginTop and titleWidget:getMarginTop() or 0
+        local titleMarginBottom = titleWidget.getMarginBottom and titleWidget:getMarginBottom() or 0
+        titleHeight = titleMarginTop + (titleWidget.getHeight and titleWidget:getHeight() or 0) + titleMarginBottom
+    end
+
+    local slotPaddingTop = slotWidget.getPaddingTop and slotWidget:getPaddingTop() or 0
+    local slotPaddingBottom = slotWidget.getPaddingBottom and slotWidget:getPaddingBottom() or 0
+    local desiredSlotHeight = desiredActiveHeight + titleHeight + slotPaddingTop + slotPaddingBottom
+
+    if desiredSlotHeight > 0 and slotWidget.setHeight then
+        local currentSlotHeight = slotWidget:getHeight() or 0
+        if desiredSlotHeight > currentSlotHeight then
+            slotWidget:setHeight(desiredSlotHeight)
+        end
+    end
+end
+
+local function applyInactiveTask(slotWidget, title)
+    if not slotWidget or slotWidget:isDestroyed() then
+        return
+    end
+
+    hideSlotPanels(slotWidget)
+
+    local inactivePanel = slotWidget:recursiveGetChildById('inactive')
+    if inactivePanel then
+        inactivePanel:setVisible(true)
+    end
+
+    local titleWidget = slotWidget:recursiveGetChildById('title')
+    if titleWidget then
+        titleWidget:setText(title or tr('No hunting task'))
     end
 end
 
@@ -241,6 +515,11 @@ function onTaskHuntingData(data)
     g_logger.info(("TaskHuntingData received: slotId=%d, state=%d, freeRerollRemainingSeconds=%d")
         :format(data.slotId, data.state, data.freeRerollRemainingSeconds or 0))
 
+    local slotWidget = getSlotWidgetBySlotId(data.slotId)
+    if not slotWidget then
+        return
+    end
+
     -- Locked
     if data.isPremium ~= nil then
         g_logger.info(("  [Locked] isPremium=%s"):format(tostring(data.isPremium)))
@@ -269,6 +548,8 @@ function onTaskHuntingData(data)
         local a = data.active
         g_logger.info(("  [Active] selectedRaceId=%d, upgrade=%s, requiredKills=%d, currentKills=%d, rarity=%d")
             :format(a.selectedRaceId, tostring(a.upgrade), a.requiredKills, a.currentKills, a.rarity))
+        applyActiveTask(slotWidget, a)
+        return
     end
 
     -- Completed
@@ -276,7 +557,11 @@ function onTaskHuntingData(data)
         local c = data.completed
         g_logger.info(("  [Completed] selectedRaceId=%d, upgrade=%s, requiredKills=%d, achievedKills=%d, rarity=%d")
             :format(c.selectedRaceId, tostring(c.upgrade), c.requiredKills, c.achievedKills, c.rarity))
+        applyInactiveTask(slotWidget, tr('Completed task'))
+        return
     end
+
+    applyInactiveTask(slotWidget)
 end
 
 function Tasks.terminate()

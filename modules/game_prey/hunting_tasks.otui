@@ -21,3 +21,61 @@ HuntingTaskHigherStarsButton < UIButton
 
   $disabled:
     image-clip: 0 138 64 69
+
+HuntingTaskClaimRewardButton < UIButton
+  size: 65 91
+  focusable: false
+  image-source: /images/game/prey/prey_hunting_task_claim_reward
+  image-clip: 0 0 65 91
+
+  $pressed:
+    image-clip: 0 91 65 91
+
+  $disabled:
+    image-clip: 0 182 65 91
+
+HuntingTaskClaimRewardPanel < FlatPanel
+  padding: 2
+  size: 70 95
+  focusable: false
+
+  HuntingTaskClaimRewardButton
+    id: selectPrey
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-top: 0
+    enabled: false
+    @onHoverChange: modules.game_prey.onHover(self)
+
+HuntingTaskActivePanel < Panel
+  size: 202 312
+
+  CreatureAndBonus
+    id: creatureAndBonus
+    anchors.left: parent.left
+    anchors.top: parent.top
+    margin-top: 20
+
+  HuntingTaskClaimRewardPanel
+    id: choose
+    anchors.right: parent.right
+    anchors.top: prev.bottom
+
+  SelectPreyCreature
+    id: select
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.right: prev.left
+    margin-right: 2
+
+  RerollButton
+    id: reroll
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.right: prev.left
+    margin-right: 2
+
+HuntingTaskSlotPanel < SlotPanel
+  HuntingTaskActivePanel
+    id: active
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    visible: false

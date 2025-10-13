@@ -330,7 +330,7 @@ local function clearSlotWidgets()
     end
 end
 
-local function destroyWidget(widget)
+function destroyWidget(widget)
     if widget and not widget:isDestroyed() then
         widget:destroy()
     end
@@ -470,6 +470,14 @@ local function configureSlotWidget(slotWidget, index)
     end
 
     local activePanel = slotWidget:recursiveGetChildById('active')
+    if activePanel and not slotWidget.__huntingTaskActiveStyled then
+        ensureCancelButtonStyle()
+        if activePanel.setStyle then
+            activePanel:setStyle('HuntingTaskActivePanel')
+            activePanel = slotWidget:recursiveGetChildById('active')
+        end
+        slotWidget.__huntingTaskActiveStyled = true
+    end
     if activePanel then
         local creatureAndBonus = activePanel:recursiveGetChildById('creatureAndBonus')
         if creatureAndBonus and not creatureAndBonus.__huntingTaskAdjusted then
@@ -525,7 +533,8 @@ local function ensureSlots()
     for index = 1, SLOT_COUNT do
         local slotWidget = slotWidgets[index]
         if not slotWidget or (slotWidget.isDestroyed and slotWidget:isDestroyed()) then
-            slotWidget = g_ui and g_ui.createWidget('SlotPanel', container)
+            ensureCancelButtonStyle()
+            slotWidget = g_ui and g_ui.createWidget('HuntingTaskSlotPanel', container)
             slotWidgets[index] = slotWidget
             configureSlotWidget(slotWidget, index)
         end
@@ -808,12 +817,8 @@ function onHuntingTaskPrices(data)
     Tasks.prices = Tasks.prices or {}
     Tasks.prices.cancelProgress = data.taskHuntingCancelProgressPriceInGold or 0
     Tasks.prices.rerollSelectionList = data.taskHuntingSelectionListPriceInGold or 0
-    local bonusRerollCards = data.taskHuntingBonusRerollPriceInCards
-    if bonusRerollCards == nil then
-        bonusRerollCards = 1
-    end
-    Tasks.prices.bonusRerollInCards = bonusRerollCards
-    Tasks.prices.taskHuntingBonusRerollPriceInCards = bonusRerollCards
+    Tasks.prices.bonusRerollInCards = data.taskHuntingBonusRerollPriceInCards or 1
+    Tasks.prices.taskHuntingBonusRerollPriceInCards = data.taskHuntingBonusRerollPriceInCards or 1
     Tasks.prices.rerollSelectionListInCards = data.taskHuntingSelectionListPriceInCards or 5
 
     for _, slotWidget in ipairs(slotWidgets) do

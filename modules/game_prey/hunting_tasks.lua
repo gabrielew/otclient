@@ -17,6 +17,9 @@ local CANCEL_BUTTON_ID = 'HuntingTaskCancelButton'
 local cancelButtonStylesLoaded = false
 local cancelButtonStylesAttempted = false
 
+local STAR_WIDGET = 'HuntingTaskStar'
+local EMPTY_STAR_WIDGET = 'HuntingTaskNoStar'
+
 local widgetDefaultWidths = setmetatable({}, { __mode = 'k' })
 
 local function isWidgetAvailable(widget)
@@ -81,6 +84,23 @@ local function anchorPriceLabel(priceLabel, topWidget, alignWidget)
 
     if marginTop and priceLabel.setMarginTop then
         priceLabel:setMarginTop(marginTop)
+    end
+end
+
+local function setWidgetText(widget, text)
+    if not isWidgetAvailable(widget) then
+        return
+    end
+
+    if widget.setText then
+        widget:setText(text)
+    end
+
+    if widget.recursiveGetChildById then
+        local textWidget = widget:recursiveGetChildById('text')
+        if textWidget and textWidget ~= widget and textWidget.setText then
+            textWidget:setText(text)
+        end
     end
 end
 
@@ -173,7 +193,7 @@ local function applyPriceToCancel(slotWidget, data)
     end
 
     local cancelText = handleFormatPrice(data.cancelProgress or 0)
-    timerWidget:setText(cancelText)
+    setWidgetText(timerWidget, cancelText)
 end
 
 local function ensureCancelButtonStyle()
@@ -390,14 +410,12 @@ local function updateHigherStarsButton(activePanel)
 
     local priceLabel = selectPanel:recursiveGetChildById('price')
     if priceLabel and not priceLabel:isDestroyed() then
-        local textWidget = priceLabel:recursiveGetChildById('text')
-        if textWidget and textWidget.setText then
-            if requiredCards and requiredCards > 0 then
-                textWidget:setText(tostring(requiredCards))
-            else
-                textWidget:setText(tr('Free'))
-            end
+        local priceText = tr('Free')
+        if requiredCards and requiredCards > 0 then
+            priceText = tostring(requiredCards)
         end
+
+        setWidgetText(priceLabel, priceText)
     end
 
     local hasEnoughCards = true
@@ -701,7 +719,7 @@ local function updateTaskRarity(gradePanel, rarity)
     end
 
     for index = 1, maxStars do
-        local widgetName = index <= effectiveRarity and 'Star' or 'NoStar'
+        local widgetName = index <= effectiveRarity and STAR_WIDGET or EMPTY_STAR_WIDGET
         g_ui.createWidget(widgetName, gradePanel)
     end
 

@@ -1,4 +1,6 @@
-local PreyWindowTabs = {}
+PreyWindowTabs = PreyWindowTabs or {}
+
+local Tabs = PreyWindowTabs
 
 local function detachWidget(widget)
     if not widget then
@@ -15,19 +17,19 @@ end
 
 local function isHuntingTasksTabSelected(selectedTab)
     if selectedTab then
-        return PreyWindowTabs.huntingTasksTabButton and selectedTab == PreyWindowTabs.huntingTasksTabButton or false
+        return Tabs.huntingTasksTabButton and selectedTab == Tabs.huntingTasksTabButton or false
     end
 
-    return PreyWindowTabs.tabBar and PreyWindowTabs.huntingTasksTabButton and
-        PreyWindowTabs.tabBar:getCurrentTab() == PreyWindowTabs.huntingTasksTabButton or false
+    return Tabs.tabBar and Tabs.huntingTasksTabButton and
+        Tabs.tabBar:getCurrentTab() == Tabs.huntingTasksTabButton or false
 end
 
 local function updateHuntingTasksResourceVisibility(selectedTab)
-    if not PreyWindowTabs.huntingTasksResource then
+    if not Tabs.huntingTasksResource then
         return
     end
 
-    PreyWindowTabs.huntingTasksResource:setVisible(isHuntingTasksTabSelected(selectedTab))
+    Tabs.huntingTasksResource:setVisible(isHuntingTasksTabSelected(selectedTab))
 end
 
 local function setupHuntingTasksResource(preyWindow)
@@ -40,7 +42,7 @@ local function setupHuntingTasksResource(preyWindow)
         return
     end
 
-    PreyWindowTabs.huntingTasksResource = huntingTasksResource
+    Tabs.huntingTasksResource = huntingTasksResource
 
     local huntingTaskIcon = huntingTasksResource:getChildById('huntingTaskPoints') or
         huntingTasksResource:recursiveGetChildById('huntingTaskPoints')
@@ -51,60 +53,60 @@ local function setupHuntingTasksResource(preyWindow)
     local textWidget = huntingTasksResource:getChildById('text') or
         huntingTasksResource:recursiveGetChildById('text')
     if textWidget then
-        PreyWindowTabs.huntingTasksResourceText = textWidget
+        Tabs.huntingTasksResourceText = textWidget
     end
 
     huntingTasksResource:setVisible(false)
 end
 
-function PreyWindowTabs.onTabChange(tabBar, tab)
+function Tabs.onTabChange(tabBar, tab)
     updateHuntingTasksResourceVisibility(tab)
 
     if isHuntingTasksTabSelected(tab) then
-        PreyWindowTabs.updateResourceLabelsFromPlayer()
+        Tabs.updateResourceLabelsFromPlayer()
     end
 end
 
-function PreyWindowTabs.setup(preyWindow, config)
-    PreyWindowTabs.window = preyWindow
-    PreyWindowTabs.tabBar = preyWindow and preyWindow:getChildById('preyTabBar') or nil
-    PreyWindowTabs.tabContent = config and config.tabContent or (preyWindow and preyWindow:getChildById('preyTabContent'))
-    PreyWindowTabs.creaturesTab = config and config.creaturesTab or
+function Tabs.setup(preyWindow, config)
+    Tabs.window = preyWindow
+    Tabs.tabBar = preyWindow and preyWindow:getChildById('preyTabBar') or nil
+    Tabs.tabContent = config and config.tabContent or (preyWindow and preyWindow:getChildById('preyTabContent'))
+    Tabs.creaturesTab = config and config.creaturesTab or
         (preyWindow and preyWindow:recursiveGetChildById('preyCreaturesTab'))
-    PreyWindowTabs.huntingTasksTab = config and config.huntingTasksTab or
+    Tabs.huntingTasksTab = config and config.huntingTasksTab or
         (preyWindow and preyWindow:recursiveGetChildById('huntingTasksTab'))
-    PreyWindowTabs.huntingTasksTabButton = nil
+    Tabs.huntingTasksTabButton = nil
 
     setupHuntingTasksResource(preyWindow)
 
-    if PreyWindowTabs.tabBar and PreyWindowTabs.tabContent then
-        PreyWindowTabs.tabBar:setContentWidget(PreyWindowTabs.tabContent)
+    if Tabs.tabBar and Tabs.tabContent then
+        Tabs.tabBar:setContentWidget(Tabs.tabContent)
 
-        local creaturesTabWidget = detachWidget(PreyWindowTabs.creaturesTab)
-        local huntingTasksWidget = detachWidget(PreyWindowTabs.huntingTasksTab)
+        local creaturesTabWidget = detachWidget(Tabs.creaturesTab)
+        local huntingTasksWidget = detachWidget(Tabs.huntingTasksTab)
 
         local creaturesTab
         if creaturesTabWidget then
-            creaturesTab = PreyWindowTabs.tabBar:addTab(tr('Prey Creatures'), creaturesTabWidget)
+            creaturesTab = Tabs.tabBar:addTab(tr('Prey Creatures'), creaturesTabWidget)
         end
 
         if huntingTasksWidget then
-            PreyWindowTabs.huntingTasksTabButton =
-                PreyWindowTabs.tabBar:addTab(tr('Hunting Tasks'), huntingTasksWidget)
+            Tabs.huntingTasksTabButton =
+                Tabs.tabBar:addTab(tr('Hunting Tasks'), huntingTasksWidget)
         end
 
-        connect(PreyWindowTabs.tabBar, { onTabChange = PreyWindowTabs.onTabChange })
+        connect(Tabs.tabBar, { onTabChange = Tabs.onTabChange })
 
         if creaturesTab then
-            PreyWindowTabs.tabBar:selectTab(creaturesTab)
+            Tabs.tabBar:selectTab(creaturesTab)
         end
     end
 
     updateHuntingTasksResourceVisibility()
 end
 
-function PreyWindowTabs.updateResourceLabelsFromPlayer()
-    local preyWindow = PreyWindowTabs.window
+function Tabs.updateResourceLabelsFromPlayer()
+    local preyWindow = Tabs.window
     if not preyWindow then
         return
     end
@@ -117,8 +119,8 @@ function PreyWindowTabs.updateResourceLabelsFromPlayer()
         if preyWindow.wildCards then
             preyWindow.wildCards:setText('0')
         end
-        if PreyWindowTabs.huntingTasksResourceText then
-            PreyWindowTabs.huntingTasksResourceText:setText('0')
+        if Tabs.huntingTasksResourceText then
+            Tabs.huntingTasksResourceText:setText('0')
         end
         return
     end
@@ -132,14 +134,14 @@ function PreyWindowTabs.updateResourceLabelsFromPlayer()
         preyWindow.wildCards:setText(tostring(wildcardsBalance))
     end
 
-    if PreyWindowTabs.huntingTasksResourceText and ResourceTypes and ResourceTypes.TASK_HUNTING then
+    if Tabs.huntingTasksResourceText and ResourceTypes and ResourceTypes.TASK_HUNTING then
         local huntingBalance = player:getResourceBalance(ResourceTypes.TASK_HUNTING)
-        PreyWindowTabs.huntingTasksResourceText:setText(tostring(huntingBalance))
+        Tabs.huntingTasksResourceText:setText(tostring(huntingBalance))
     end
 end
 
-function PreyWindowTabs.resetResourceDisplays()
-    local preyWindow = PreyWindowTabs.window
+function Tabs.resetResourceDisplays()
+    local preyWindow = Tabs.window
     if not preyWindow then
         return
     end
@@ -152,26 +154,26 @@ function PreyWindowTabs.resetResourceDisplays()
         preyWindow.wildCards:setText('0')
     end
 
-    if PreyWindowTabs.huntingTasksResourceText then
-        PreyWindowTabs.huntingTasksResourceText:setText('0')
+    if Tabs.huntingTasksResourceText then
+        Tabs.huntingTasksResourceText:setText('0')
     end
 
     updateHuntingTasksResourceVisibility()
 end
 
-function PreyWindowTabs.terminate()
-    if PreyWindowTabs.tabBar then
-        disconnect(PreyWindowTabs.tabBar, { onTabChange = PreyWindowTabs.onTabChange })
+function Tabs.terminate()
+    if Tabs.tabBar then
+        disconnect(Tabs.tabBar, { onTabChange = Tabs.onTabChange })
     end
 
-    PreyWindowTabs.window = nil
-    PreyWindowTabs.tabBar = nil
-    PreyWindowTabs.tabContent = nil
-    PreyWindowTabs.creaturesTab = nil
-    PreyWindowTabs.huntingTasksTab = nil
-    PreyWindowTabs.huntingTasksTabButton = nil
-    PreyWindowTabs.huntingTasksResource = nil
-    PreyWindowTabs.huntingTasksResourceText = nil
+    Tabs.window = nil
+    Tabs.tabBar = nil
+    Tabs.tabContent = nil
+    Tabs.creaturesTab = nil
+    Tabs.huntingTasksTab = nil
+    Tabs.huntingTasksTabButton = nil
+    Tabs.huntingTasksResource = nil
+    Tabs.huntingTasksResourceText = nil
 end
 
-return PreyWindowTabs
+return Tabs

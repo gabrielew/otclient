@@ -7,8 +7,6 @@ local preyTrackerButton
 local msgWindow
 local bankGold = 0
 
-local PreyWindowTabs = dofile('modules/game_prey/prey_window_tabs.lua')
-
 local inventoryGold = 0
 local rerollPrice = 0
 local bonusRerolls = 0

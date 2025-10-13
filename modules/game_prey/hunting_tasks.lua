@@ -163,16 +163,44 @@ local function configureSlotWidget(slotWidget, index)
     local activePanel = slotWidget:recursiveGetChildById('active')
     if activePanel then
         local creatureAndBonus = activePanel:recursiveGetChildById('creatureAndBonus')
-        if creatureAndBonus then
-            local creatureHeight = 230
+        if creatureAndBonus and not creatureAndBonus.__huntingTaskAdjusted then
+            creatureAndBonus.__huntingTaskAdjusted = true
+
+            local creatureHeight = 200
             local creatureWidget = creatureAndBonus:recursiveGetChildById('creature')
+            local originalCreatureHeight = creatureWidget and creatureWidget:getHeight() or 0
             if creatureWidget then
                 creatureWidget:setHeight(creatureHeight)
             end
 
-            -- Allow enough room for the enlarged creature and the progress bar.
-            local minimumPanelHeight = creatureHeight + 40
-            creatureAndBonus:setHeight(minimumPanelHeight)
+            local originalContainerHeight = creatureAndBonus:getHeight() or 0
+            if originalCreatureHeight > 0 and originalContainerHeight > 0 then
+                local heightDelta = creatureHeight - originalCreatureHeight
+                if heightDelta ~= 0 then
+                    local newContainerHeight = math.max(originalContainerHeight + heightDelta, creatureHeight)
+                    creatureAndBonus:setHeight(newContainerHeight)
+                end
+            end
+
+            local progressBar = creatureAndBonus:recursiveGetChildById('timeLeft')
+            if progressBar and progressBar.breakAnchors then
+                progressBar:breakAnchors()
+                progressBar:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+                progressBar:addAnchor(AnchorRight, 'parent', AnchorRight)
+                progressBar:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+                progressBar:setMarginBottom(0)
+                progressBar:setMarginTop(0)
+            end
+
+            local bonusPanel = creatureAndBonus:recursiveGetChildById('bonus')
+            if bonusPanel then
+                local gradePanel = bonusPanel:recursiveGetChildById('grade')
+                if gradePanel and gradePanel.setMarginBottom then
+                    local progressHeight = progressBar and progressBar:getHeight() or 0
+                    local spacing = 5
+                    gradePanel:setMarginBottom(progressHeight + spacing)
+                end
+            end
         end
     end
 

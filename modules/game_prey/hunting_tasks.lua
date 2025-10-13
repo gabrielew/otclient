@@ -22,7 +22,7 @@ local function resolveTasksTab(preyWindow, tabWidget)
     end
 
     local widget = preyWindow:recursiveGetChildById('huntingTasksTab')
-    if widget and widget:isDestroyed and widget:isDestroyed() then
+    if widget and widget.isDestroyed and widget:isDestroyed() then
         return nil
     end
 

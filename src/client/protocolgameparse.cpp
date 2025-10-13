@@ -5405,20 +5405,18 @@ void ProtocolGame::parsePreyData(const InputMessagePtr& msg)
 
 void ProtocolGame::parsePreyRerollPrice(const InputMessagePtr& msg)
 {
-    const uint32_t price = msg->getU32(); // prey reroll price
-    uint8_t wildcard = 0; // prey bonus reroll price
-    uint8_t directly = 0; // prey selection list price
-
+    PreyRerollPriceData data;
+    data.preyRerollPriceInGold = msg->getU32(); // prey reroll price
     if (g_game.getProtocolVersion() >= 1230) {
-        wildcard = msg->getU8();
-        directly = msg->getU8();
-        msg->getU32(); // task hunting reroll price
-        msg->getU32(); // task hunting reroll price
-        msg->getU8(); // task hunting selection list price
-        msg->getU8(); // task hunting bonus reroll price
+        data.preyBonusRerollPriceInCards = msg->getU8();
+        data.preySelectionListPriceInCards = msg->getU8();
+        data.taskHuntingSelectionListPriceInGold = msg->getU32(); // task hunting reroll price
+        data.taskHuntingCancelProgressPriceInGold = msg->getU32(); // task hunting reroll price
+        data.taskHuntingSelectionListPriceInCards = msg->getU8(); // task hunting selection list price
+        data.taskHuntingBonusRerollPriceInCards = msg->getU8(); // task hunting bonus reroll price
     }
 
-    g_lua.callGlobalField("g_game", "onPreyRerollPrice", price, wildcard, directly);
+    g_lua.callGlobalField("g_game", "onPreyRerollPrice", data);
 }
 
 Imbuement ProtocolGame::getImbuementInfo(const InputMessagePtr& msg)

@@ -17,6 +17,78 @@ local CANCEL_BUTTON_ID = 'HuntingTaskCancelButton'
 local cancelButtonStylesLoaded = false
 local cancelButtonStylesAttempted = false
 
+local function formatFreeRerollText(seconds)
+    local remainingSeconds = math.max(0, math.floor(tonumber(seconds) or 0))
+    if remainingSeconds <= 0 then
+        return 'Free'
+    end
+
+    local hours = math.floor(remainingSeconds / 3600)
+    local minutes = math.floor((remainingSeconds % 3600) / 60)
+
+    return string.format('%02d:%02d', hours, minutes)
+end
+
+local function handleFormatPrice(price)
+    local priceText = "Free"
+    if price > 0 then
+        if price >= 1000000 then
+            local millions = math.floor(price / 1000000)
+            local remainder = price % 1000000
+            if remainder >= 500000 then
+                priceText = string.format('%d.5M', millions)
+            elseif remainder >= 100000 then
+                priceText = string.format('%dM', millions)
+            else
+                priceText = string.format('%dM', math.max(1, millions))
+            end
+        elseif price >= 100000 then
+            local thousands = math.floor(price / 1000)
+            local remainder = price % 1000
+            if remainder >= 500 then
+                priceText = string.format('%d.5k', thousands)
+            elseif remainder >= 100 then
+                priceText = string.format('%dk', thousands)
+            else
+                priceText = string.format('%dk', math.max(1, thousands))
+            end
+        else
+            priceText = tostring(price)
+        end
+    end
+
+    return priceText
+end
+
+local function applyPriceToCancel(slotWidget, data)
+    if not slotWidget or slotWidget:isDestroyed() then
+        return
+    end
+
+    local activePanel = slotWidget:recursiveGetChildById('active')
+    if not activePanel or activePanel:isDestroyed() then
+        return
+    end
+
+    local rerollPanel = activePanel:recursiveGetChildById('reroll')
+    if not rerollPanel or rerollPanel:isDestroyed() then
+        return
+    end
+
+    local timerWidget
+    local buttonPanel = rerollPanel:recursiveGetChildById('button')
+    if buttonPanel and not buttonPanel:isDestroyed() then
+        timerWidget = buttonPanel:recursiveGetChildById('price')
+    end
+    timerWidget = timerWidget or rerollPanel:recursiveGetChildById('price')
+    if not timerWidget or timerWidget:isDestroyed() or not timerWidget.setText then
+        return
+    end
+
+    local cancelText = handleFormatPrice(data.cancelProgress or 0)
+    timerWidget:setText(cancelText)
+end
+
 local function ensureCancelButtonStyle()
     if cancelButtonStylesLoaded then
         return true
@@ -534,6 +606,8 @@ local function applyActiveTask(slotWidget, activeData)
         updateTaskProgress(progressBar, activeData.currentKills, activeData.requiredKills)
     end
 
+    applyPriceToCancel(slotWidget, Tasks.prices)
+
     local activeCardsHeight = 0
     local cardSpacing = 4
 
@@ -633,7 +707,20 @@ function Tasks.init(preyWindow, tabWidget)
     ensureSlots()
     Tasks.showSlots()
 
-    connect(g_game, { taskHuntingBasicData = taskHuntingBasicData, onTaskHuntingData = onTaskHuntingData })
+    connect(g_game,
+        {
+            taskHuntingBasicData = taskHuntingBasicData,
+            onTaskHuntingData = onTaskHuntingData,
+            onPreyRerollPrice = onHuntingTaskPrices
+        })
+end
+
+function onHuntingTaskPrices(data)
+    Tasks.prices = Tasks.prices or {}
+    Tasks.prices.cancelProgress = data.taskHuntingCancelProgressPriceInGold or 0
+    Tasks.prices.rerollSelectionList = data.taskHuntingSelectionListPriceInGold or 0
+    Tasks.prices.bonusRerollInCards = data.taskHuntingBonusRerollPriceInCards or 1
+    Tasks.prices.rerollSelectionListInCards = data.taskHuntingSelectionListPriceInCards or 5
 end
 
 function taskHuntingBasicData(data)
@@ -725,7 +812,11 @@ function onTaskHuntingData(data)
 end
 
 function Tasks.terminate()
-    disconnect(g_game, { taskHuntingBasicData = taskHuntingBasicData, onTaskHuntingData = onTaskHuntingData })
+    disconnect(g_game, {
+        taskHuntingBasicData = taskHuntingBasicData,
+        onTaskHuntingData = onTaskHuntingData,
+        onPreyRerollPrice = onPreyRerollPrice
+    })
     clearSlotWidgets()
     destroyWidget(slotsContainer)
     slotsContainer = nil

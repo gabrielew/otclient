@@ -655,6 +655,17 @@ struct TaskHuntingBasicData
     std::vector<TaskHuntingOption>    options; // tabela de kills/rewards por (difficulty, stars)
 };
 
+struct PreyRerollPriceData
+{
+    uint32_t preyRerollPriceInGold{ 0 };
+    uint8_t preyBonusRerollPriceInCards{ 0 };
+    uint8_t preySelectionListPriceInCards{ 0 };
+    uint8_t taskHuntingBonusRerollPriceInCards{ 0 };
+    uint8_t taskHuntingSelectionListPriceInCards{ 0 };
+    uint32_t taskHuntingCancelProgressPriceInGold{ 0 };
+    uint32_t taskHuntingSelectionListPriceInGold{ 0 };
+};
+
 //@bindsingleton g_game
 class Game
 {

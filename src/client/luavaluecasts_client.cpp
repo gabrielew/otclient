@@ -1756,3 +1756,23 @@ int push_luavalue(const TaskHuntingBasicData& data) {
 
     return 1;
 }
+
+int push_luavalue(const PreyRerollPriceData& data) {
+    g_lua.createTable(0, 7);
+    g_lua.pushInteger(data.preyRerollPriceInGold);
+    g_lua.setField("preyRerollPriceInGold");
+    g_lua.pushInteger(data.preyBonusRerollPriceInCards);
+    g_lua.setField("preyBonusRerollPriceInCards");
+    g_lua.pushInteger(data.preySelectionListPriceInCards);
+    g_lua.setField("preySelectionListPriceInCards");
+    g_lua.pushInteger(data.taskHuntingBonusRerollPriceInCards);
+    g_lua.setField("taskHuntingBonusRerollPriceInCards");
+    g_lua.pushInteger(data.taskHuntingSelectionListPriceInCards);
+    g_lua.setField("taskHuntingSelectionListPriceInCards");
+    g_lua.pushInteger(data.taskHuntingCancelProgressPriceInGold);
+    g_lua.setField("taskHuntingCancelProgressPriceInGold");
+    g_lua.pushInteger(data.taskHuntingSelectionListPriceInGold);
+    g_lua.setField("taskHuntingSelectionListPriceInGold");
+
+    return 1;
+}

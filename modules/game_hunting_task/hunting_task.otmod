@@ -1,0 +1,8 @@
+Module
+  name: game_hunting_task
+  description: Hunting task UI and logic helpers
+  author: otclient contributors
+  sandboxed: true
+  scripts: [ hunting_task ]
+  @onLoad: init()
+  @onUnload: terminate()

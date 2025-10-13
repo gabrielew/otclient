@@ -9,12 +9,13 @@ local preyTabBar
 local preyCreaturesTab
 local bankGold = 0
 
-local huntingTasksTabButton
 local function isHuntingTasksTabSelected(selectedTab)
-    if selectedTab then
-        return huntingTasksTabButton and selectedTab == huntingTasksTabButton or false
+    local huntingTaskModule = modules and modules.game_hunting_task
+    if not huntingTaskModule or not huntingTaskModule.isTabSelected then
+        return false
     end
-    return preyTabBar and huntingTasksTabButton and preyTabBar:getCurrentTab() == huntingTasksTabButton or false
+
+    return huntingTaskModule.isTabSelected(selectedTab)
 end
 
 local function updateHuntingTasksResourceVisibility(selectedTab)
@@ -169,7 +170,7 @@ function init()
     preyTabBar = preyWindow:getChildById('preyTabBar')
     local preyTabContent = preyWindow:getChildById('preyTabContent')
     preyCreaturesTab = preyWindow:recursiveGetChildById('preyCreaturesTab')
-    local huntingTasksTabPanel = preyWindow:recursiveGetChildById('huntingTasksTab')
+    local huntingTaskModule = modules and modules.game_hunting_task
 
     local descriptionWidget = preyWindow:recursiveGetChildById('description')
     if descriptionWidget then
@@ -210,7 +211,9 @@ function init()
         preyTabBar:setContentWidget(preyTabContent)
 
         local creaturesTab = preyTabBar:addTab(tr('Prey Creatures'), detachWidget(preyCreaturesTab))
-        huntingTasksTabButton = preyTabBar:addTab(tr('Hunting Tasks'), detachWidget(huntingTasksTabPanel))
+        if huntingTaskModule and huntingTaskModule.addTab then
+            huntingTaskModule.addTab(preyWindow, preyTabBar)
+        end
         connect(preyTabBar, { onTabChange = onPreyTabChange })
         preyTabBar:selectTab(creaturesTab)
     end
@@ -405,7 +408,9 @@ function terminate()
     preyTracker:destroy()
     preyTabBar = nil
     preyCreaturesTab = nil
-    huntingTasksTabButton = nil
+    if modules and modules.game_hunting_task and modules.game_hunting_task.clear then
+        modules.game_hunting_task.clear()
+    end
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil

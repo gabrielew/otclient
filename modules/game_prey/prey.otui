@@ -728,10 +728,6 @@ MainWindow
         margin-top: 10
         text-wrap: true
 
-    Panel
-      id: huntingTasksTab
-      anchors.fill: parent
-
   HorizontalSeparator
     id: bottomSep
     anchors.left: parent.left

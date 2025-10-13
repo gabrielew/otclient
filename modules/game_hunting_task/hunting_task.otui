@@ -1,0 +1,19 @@
+HuntingTaskTab < Panel
+  id: huntingTasksTab
+  anchors.fill: parent
+  padding: 10
+
+  Panel
+    id: content
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: description.top
+
+  FlatLabel
+    id: description
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    height: 50
+    text-wrap: true

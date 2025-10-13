@@ -17,6 +17,47 @@ local CANCEL_BUTTON_ID = 'HuntingTaskCancelButton'
 local cancelButtonStylesLoaded = false
 local cancelButtonStylesAttempted = false
 
+local function formatFreeRerollText(seconds)
+    local remainingSeconds = math.max(0, math.floor(tonumber(seconds) or 0))
+    if remainingSeconds <= 0 then
+        return 'Free'
+    end
+
+    local hours = math.floor(remainingSeconds / 3600)
+    local minutes = math.floor((remainingSeconds % 3600) / 60)
+
+    return string.format('%02d:%02d', hours, minutes)
+end
+
+local function applyFreeRerollTimer(slotWidget, seconds)
+    if not slotWidget or slotWidget:isDestroyed() then
+        return
+    end
+
+    local activePanel = slotWidget:recursiveGetChildById('active')
+    if not activePanel or activePanel:isDestroyed() then
+        return
+    end
+
+    local rerollPanel = activePanel:recursiveGetChildById('reroll')
+    if not rerollPanel or rerollPanel:isDestroyed() then
+        return
+    end
+
+    local timerWidget
+    local buttonPanel = rerollPanel:recursiveGetChildById('button')
+    if buttonPanel and not buttonPanel:isDestroyed() then
+        timerWidget = buttonPanel:recursiveGetChildById('time')
+    end
+    timerWidget = timerWidget or rerollPanel:recursiveGetChildById('time')
+
+    if not timerWidget or timerWidget:isDestroyed() or not timerWidget.setText then
+        return
+    end
+
+    timerWidget:setText(formatFreeRerollText(seconds))
+end
+
 local function ensureCancelButtonStyle()
     if cancelButtonStylesLoaded then
         return true
@@ -533,6 +574,8 @@ local function applyActiveTask(slotWidget, activeData)
         local progressBar = creatureAndBonus:recursiveGetChildById('timeLeft')
         updateTaskProgress(progressBar, activeData.currentKills, activeData.requiredKills)
     end
+
+    applyFreeRerollTimer(slotWidget, activeData.freeRerollRemainingSeconds)
 
     local activeCardsHeight = 0
     local cardSpacing = 4

@@ -4,6 +4,7 @@ local Tabs = PreyWindowTabs
 
 local CREATURES_TAB_STYLE = 'PreyCreaturesTabButton'
 local TASKS_TAB_STYLE = 'PreyTasksTabButton'
+local pendingTaskHuntingBasicData
 
 local function detachWidget(widget)
     if not widget then
@@ -25,6 +26,31 @@ local function isHuntingTasksTabSelected(selectedTab)
 
     return Tabs.tabBar and Tabs.huntingTasksTabButton and
         Tabs.tabBar:getCurrentTab() == Tabs.huntingTasksTabButton or false
+end
+
+local function getHuntingTasksModule()
+    return rawget(_G, 'HuntingTasks')
+end
+
+local function forwardTaskHuntingBasicData()
+    if not pendingTaskHuntingBasicData then
+        return
+    end
+
+    if not isHuntingTasksTabSelected() then
+        return
+    end
+
+    local module = getHuntingTasksModule()
+    if not module or type(module.setBasicData) ~= 'function' then
+        return
+    end
+
+    module.setBasicData(pendingTaskHuntingBasicData)
+
+    if type(module.onTabSelected) == 'function' then
+        module.onTabSelected()
+    end
 end
 
 local function updateHuntingTasksResourceVisibility(selectedTab)
@@ -67,6 +93,7 @@ function Tabs.onTabChange(tabBar, tab)
 
     if isHuntingTasksTabSelected(tab) then
         Tabs.updateResourceLabelsFromPlayer()
+        forwardTaskHuntingBasicData()
     end
 end
 
@@ -110,6 +137,7 @@ function Tabs.setup(preyWindow, config)
     end
 
     updateHuntingTasksResourceVisibility()
+    forwardTaskHuntingBasicData()
 end
 
 function Tabs.updateResourceLabelsFromPlayer()
@@ -181,6 +209,20 @@ function Tabs.terminate()
     Tabs.huntingTasksTabButton = nil
     Tabs.huntingTasksResource = nil
     Tabs.huntingTasksResourceText = nil
+    pendingTaskHuntingBasicData = nil
+end
+
+function Tabs.getTaskHuntingBasicData()
+    return pendingTaskHuntingBasicData
+end
+
+function g_game.taskHuntingBasicData(data)
+    pendingTaskHuntingBasicData = data
+    local module = getHuntingTasksModule()
+    if module and type(module.setBasicData) == 'function' then
+        module.setBasicData(pendingTaskHuntingBasicData)
+    end
+    forwardTaskHuntingBasicData()
 end
 
 return Tabs

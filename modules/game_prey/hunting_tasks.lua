@@ -9,6 +9,7 @@ local contentWidget
 local slotsContainer
 local placeholderWidget
 local slotWidgets = {}
+local cachedBasicData
 
 local function clearSlotWidgets()
     for index = #slotWidgets, 1, -1 do
@@ -187,7 +188,9 @@ local function setSlotsVisible(visible)
 end
 
 function Tasks.init(preyWindow, tabWidget)
+    local previousData = cachedBasicData
     Tasks.terminate()
+    cachedBasicData = previousData
 
     tasksTab = resolveTasksTab(preyWindow, tabWidget)
     if not tasksTab then
@@ -197,6 +200,11 @@ function Tasks.init(preyWindow, tabWidget)
     ensureContentWidget()
     ensureSlots()
     Tasks.showSlots()
+
+    -- Restore cached data for the newly initialized tab
+    if cachedBasicData then
+        Tasks.setBasicData(cachedBasicData)
+    end
 end
 
 function Tasks.terminate()
@@ -213,6 +221,7 @@ function Tasks.terminate()
 
     contentWidget = nil
     tasksTab = nil
+    cachedBasicData = nil
 end
 
 function Tasks.getTab()
@@ -335,6 +344,23 @@ function Tasks.getSlot(index)
 
     local slots = ensureSlots()
     return slots and slots[index] or nil
+end
+
+function Tasks.setBasicData(data)
+    cachedBasicData = data
+end
+
+function Tasks.getBasicData()
+    return cachedBasicData
+end
+
+function Tasks.onTabSelected()
+    -- Placeholder for future UI updates that depend on cached data
+    if not cachedBasicData then
+        return nil
+    end
+
+    return cachedBasicData
 end
 
 return Tasks

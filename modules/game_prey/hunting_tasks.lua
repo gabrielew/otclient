@@ -12,8 +12,7 @@ local placeholderWidget
 local slotWidgets = {}
 
 local CANCEL_BUTTON_STYLE = 'HuntingTaskCancelButton'
-local CANCEL_BUTTON_ID = 'huntingTaskCancelButton'
-local CANCEL_BUTTON_SIZE = { width = 65, height = 69 }
+local CANCEL_BUTTON_ID = 'HuntingTaskCancelButton'
 
 local cancelButtonStylesLoaded = false
 local cancelButtonStylesAttempted = false
@@ -80,8 +79,13 @@ local function ensureCancelButton(slotWidget)
         return nil, activePanel
     end
 
-    local selectWidget = activePanel:recursiveGetChildById('select')
-    if not selectWidget or selectWidget.isDestroyed and selectWidget:isDestroyed() then
+    local rerollPanel = activePanel:recursiveGetChildById('reroll')
+    if not rerollPanel or rerollPanel.isDestroyed and rerollPanel:isDestroyed() then
+        return nil, activePanel
+    end
+
+    local buttonContainer = rerollPanel:recursiveGetChildById('button') or rerollPanel
+    if not buttonContainer or buttonContainer.isDestroyed and buttonContainer:isDestroyed() then
         return nil, activePanel
     end
 
@@ -89,7 +93,16 @@ local function ensureCancelButton(slotWidget)
         return nil, activePanel
     end
 
-    cancelButton = g_ui.createWidget(CANCEL_BUTTON_STYLE, activePanel)
+    cancelButton = buttonContainer:recursiveGetChildById(CANCEL_BUTTON_ID)
+    if cancelButton and cancelButton.isDestroyed and cancelButton:isDestroyed() then
+        cancelButton = nil
+    end
+
+    if cancelButton then
+        return cancelButton, activePanel
+    end
+
+    cancelButton = g_ui.createWidget(CANCEL_BUTTON_STYLE, buttonContainer)
     if not cancelButton then
         return nil, activePanel
     end
@@ -98,29 +111,14 @@ local function ensureCancelButton(slotWidget)
     cancelButton:setVisible(false)
     cancelButton:setFocusable(false)
 
-    if cancelButton.setWidth then
-        cancelButton:setWidth(CANCEL_BUTTON_SIZE.width)
-    end
-    if cancelButton.setHeight then
-        cancelButton:setHeight(CANCEL_BUTTON_SIZE.height)
-    end
-
-    if cancelButton.breakAnchors then
+    if cancelButton.fill then
+        cancelButton:fill('parent')
+    elseif cancelButton.breakAnchors then
         cancelButton:breakAnchors()
-        cancelButton:addAnchor(AnchorVerticalCenter, selectWidget:getId(), AnchorVerticalCenter)
-        cancelButton:addAnchor(AnchorRight, selectWidget:getId(), AnchorLeft)
-    end
-
-    if cancelButton.setMarginRight then
-        cancelButton:setMarginRight(2)
-    end
-
-    if cancelButton.setMarginTop then
-        cancelButton:setMarginTop(0)
-    end
-
-    if cancelButton.setMarginBottom then
-        cancelButton:setMarginBottom(0)
+        cancelButton:addAnchor(AnchorTop, 'parent', AnchorTop)
+        cancelButton:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+        cancelButton:addAnchor(AnchorRight, 'parent', AnchorRight)
+        cancelButton:addAnchor(AnchorBottom, 'parent', AnchorBottom)
     end
 
     return cancelButton, activePanel
@@ -145,9 +143,21 @@ local function setCancelButtonVisible(slotWidget, visible)
     end
 
     local rerollPanel = activePanel:recursiveGetChildById('reroll')
-    if rerollPanel then
-        local shouldHideReroll = visible and cancelButton ~= nil
-        rerollPanel:setVisible(not shouldHideReroll)
+    if not rerollPanel or rerollPanel.isDestroyed and rerollPanel:isDestroyed() then
+        return
+    end
+
+    local rerollButton = rerollPanel:recursiveGetChildById('rerollButton')
+    if rerollButton and not rerollButton:isDestroyed() then
+        rerollButton:setVisible(not visible)
+        if rerollButton.setEnabled then
+            rerollButton:setEnabled(not visible)
+        end
+    end
+
+    local progressBar = rerollPanel:recursiveGetChildById('time')
+    if progressBar and not progressBar:isDestroyed() then
+        progressBar:setVisible(not visible)
     end
 end
 

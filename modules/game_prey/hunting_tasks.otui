@@ -33,3 +33,103 @@ HuntingTaskClaimRewardButton < UIButton
 
   $disabled:
     image-clip: 0 182 65 91
+
+HuntingTaskClaimRewardPanel < FlatPanel
+  padding: 2
+  size: 70 95
+  focusable: false
+
+  HuntingTaskClaimRewardButton
+    id: selectPrey
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-top: 0
+    enabled: false
+    @onHoverChange: modules.game_prey.onHover(self)
+
+HuntingTaskActivePanel < Panel
+  size: 195 312
+
+  CreatureAndBonus
+    id: creatureAndBonus
+    anchors.left: parent.left
+    anchors.top: parent.top
+    margin-top: 20
+
+  HuntingTaskClaimRewardPanel
+    id: choose
+    anchors.right: parent.right
+    anchors.top: prev.bottom
+
+  SelectPreyCreature
+    id: select
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.right: prev.left
+    margin-right: 2
+
+  RerollButton
+    id: reroll
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.right: prev.left
+    margin-right: 2
+
+  FlatPanel
+    id: autoReroll
+    size: 160 20
+    anchors.top: prev.bottom
+    margin-top: 5
+    anchors.left: parent.left
+
+    CheckBox
+      id: autoRerollCheck
+      margin-top: 2
+      anchors.verticalCenter: parent.verticalCenter
+      anchors.left: parent.left
+      anchors.right: parent.right
+      size: 155 15
+      font: verdana-11px-rounded
+      text: Automatic Bonus Rer...
+      margin-left: 5
+      text-offset: 20 1
+
+  CardLabel
+    id: autoRerollPrice
+    anchors.top: prev.top
+    anchors.left: prev.right
+    margin-left: 2
+    anchors.bottom: prev.bottom
+    anchors.right: parent.right
+
+  FlatPanel
+    id: lockPrey
+    size: 160 20
+    anchors.top: prev.bottom
+    margin-top: 5
+    anchors.left: parent.left
+
+    CheckBox
+      id: lockPreyCheck
+      margin-top: 2
+      anchors.verticalCenter: parent.verticalCenter
+      anchors.left: parent.left
+      anchors.right: parent.right
+      size: 155 15
+      font: verdana-11px-rounded
+      text: Lock Prey
+      margin-left: 5
+      text-offset: 20 1
+
+  CardLabel
+    id: lockPreyPrice
+    anchors.top: prev.top
+    anchors.left: prev.right
+    margin-left: 2
+    anchors.bottom: prev.bottom
+    anchors.right: parent.right
+
+HuntingTaskSlotPanel < SlotPanel
+  HuntingTaskActivePanel
+    id: active
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    visible: false

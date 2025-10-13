@@ -233,52 +233,6 @@ local function setCancelButtonVisible(slotWidget, visible)
     end
 end
 
-local function updateClaimRewardButton(activePanel)
-    if not activePanel or activePanel:isDestroyed() then
-        return
-    end
-
-    local styleLoaded = ensureCancelButtonStyle()
-
-    local choosePanel = activePanel:recursiveGetChildById('choose')
-    if not choosePanel or choosePanel:isDestroyed() then
-        return
-    end
-
-    local button = choosePanel:recursiveGetChildById('selectPrey')
-    if not button or button:isDestroyed() then
-        return
-    end
-
-    if choosePanel.setSize then
-        choosePanel:setSize('70 95')
-    end
-
-    if styleLoaded and button.setStyle then
-        button:setStyle('HuntingTaskClaimRewardButton')
-    elseif button.setImageSource then
-        button:setImageSource('/images/game/prey/prey_hunting_task_claim_reward')
-        if button.setImageClip then
-            button:setImageClip('0 0 65 91')
-        end
-    end
-
-    if button.setSize then
-        button:setSize('65 91')
-    end
-
-    if button.disable then
-        button:disable()
-    elseif button.setEnabled then
-        button:setEnabled(false)
-    end
-
-    local priceLabel = choosePanel:recursiveGetChildById('price')
-    if priceLabel and priceLabel.setVisible then
-        priceLabel:setVisible(false)
-    end
-end
-
 local function clearSlotWidgets()
     for index = #slotWidgets, 1, -1 do
         local widget = slotWidgets[index]
@@ -429,6 +383,14 @@ local function configureSlotWidget(slotWidget, index)
     end
 
     local activePanel = slotWidget:recursiveGetChildById('active')
+    if activePanel and not slotWidget.__huntingTaskActiveStyled then
+        ensureCancelButtonStyle()
+        if activePanel.setStyle then
+            activePanel:setStyle('HuntingTaskActivePanel')
+            activePanel = slotWidget:recursiveGetChildById('active')
+        end
+        slotWidget.__huntingTaskActiveStyled = true
+    end
     if activePanel then
         local creatureAndBonus = activePanel:recursiveGetChildById('creatureAndBonus')
         if creatureAndBonus and not creatureAndBonus.__huntingTaskAdjusted then
@@ -484,7 +446,8 @@ local function ensureSlots()
     for index = 1, SLOT_COUNT do
         local slotWidget = slotWidgets[index]
         if not slotWidget or (slotWidget.isDestroyed and slotWidget:isDestroyed()) then
-            slotWidget = g_ui and g_ui.createWidget('SlotPanel', container)
+            ensureCancelButtonStyle()
+            slotWidget = g_ui and g_ui.createWidget('HuntingTaskSlotPanel', container)
             slotWidgets[index] = slotWidget
             configureSlotWidget(slotWidget, index)
         end
@@ -623,8 +586,6 @@ local function applyActiveTask(slotWidget, activeData)
     if not activePanel then
         return
     end
-
-    updateClaimRewardButton(activePanel)
 
     local creatureAndBonus = activePanel:recursiveGetChildById('creatureAndBonus')
     if creatureAndBonus and not creatureAndBonus:isDestroyed() then
@@ -775,14 +736,6 @@ function onHuntingTaskPrices(data)
     Tasks.prices.taskHuntingBonusRerollPriceInCards = bonusRerollCards
     Tasks.prices.rerollSelectionListInCards = data.taskHuntingSelectionListPriceInCards or 5
 
-    for _, slotWidget in ipairs(slotWidgets) do
-        if slotWidget and not slotWidget:isDestroyed() then
-            local activePanel = slotWidget:recursiveGetChildById('active')
-            if activePanel and not activePanel:isDestroyed() and activePanel:isVisible() then
-                updateClaimRewardButton(activePanel)
-            end
-        end
-    end
 end
 
 function taskHuntingBasicData(data)

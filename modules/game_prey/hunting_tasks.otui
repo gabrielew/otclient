@@ -9,3 +9,15 @@ HuntingTaskCancelButton < UIButton
 
   $disabled:
     image-clip: 0 138 65 69
+
+HuntingTaskHigherStarsButton < UIButton
+  size: 64 69
+  focusable: false
+  image-source: /images/game/prey/prey_hunting_task_higher_stars
+  image-clip: 0 0 64 69
+
+  $pressed:
+    image-clip: 0 69 64 69
+
+  $disabled:
+    image-clip: 0 138 64 69

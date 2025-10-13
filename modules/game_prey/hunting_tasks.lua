@@ -288,6 +288,18 @@ local function updateHigherStarsButton(activePanel)
         requiredCards = Tasks.prices.taskHuntingBonusRerollPriceInCards or Tasks.prices.bonusRerollInCards or 0
     end
 
+    local priceLabel = selectPanel:recursiveGetChildById('price')
+    if priceLabel and not priceLabel:isDestroyed() then
+        local textWidget = priceLabel:recursiveGetChildById('text')
+        if textWidget and textWidget.setText then
+            if requiredCards and requiredCards > 0 then
+                textWidget:setText(tostring(requiredCards))
+            else
+                textWidget:setText(tr('Free'))
+            end
+        end
+    end
+
     local hasEnoughCards = true
     if requiredCards and requiredCards > 0 then
         hasEnoughCards = getTaskHuntingCardBalance() >= requiredCards

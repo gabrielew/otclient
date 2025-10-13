@@ -8,6 +8,64 @@ local msgWindow
 local preyTabBar
 local preyCreaturesTab
 local bankGold = 0
+
+local huntingTasksTabButton
+local function isHuntingTasksTabSelected(selectedTab)
+    if selectedTab then
+        return huntingTasksTabButton and selectedTab == huntingTasksTabButton or false
+    end
+    return preyTabBar and huntingTasksTabButton and preyTabBar:getCurrentTab() == huntingTasksTabButton or false
+end
+
+local function updateHuntingTasksResourceVisibility(selectedTab)
+    if not preyWindow or not preyWindow.huntingTasksResource then
+        return
+    end
+
+    preyWindow.huntingTasksResource:setVisible(isHuntingTasksTabSelected(selectedTab))
+end
+
+local function updateResourceLabelsFromPlayer()
+    if not preyWindow then
+        return
+    end
+
+    local player = g_game.getLocalPlayer()
+    if not player then
+        if preyWindow.gold then
+            preyWindow.gold:setText('0')
+        end
+        if preyWindow.wildCards then
+            preyWindow.wildCards:setText('0')
+        end
+        if preyWindow.huntingTasksResourceText then
+            preyWindow.huntingTasksResourceText:setText('0')
+        end
+        return
+    end
+
+    if preyWindow.gold then
+        preyWindow.gold:setText(comma_value(player:getTotalMoney()))
+    end
+
+    if preyWindow.wildCards and ResourceTypes and ResourceTypes.PREY_WILDCARDS then
+        local wildcardsBalance = player:getResourceBalance(ResourceTypes.PREY_WILDCARDS)
+        preyWindow.wildCards:setText(tostring(wildcardsBalance))
+    end
+
+    if preyWindow.huntingTasksResourceText and ResourceTypes and ResourceTypes.TASK_HUNTING then
+        local huntingBalance = player:getResourceBalance(ResourceTypes.TASK_HUNTING)
+        preyWindow.huntingTasksResourceText:setText(tostring(huntingBalance))
+    end
+end
+
+local function onPreyTabChange(tabBar, tab)
+    updateHuntingTasksResourceVisibility(tab)
+    if isHuntingTasksTabSelected(tab) then
+        updateResourceLabelsFromPlayer()
+    end
+end
+
 local inventoryGold = 0
 local rerollPrice = 0
 local bonusRerolls = 0
@@ -111,10 +169,29 @@ function init()
     preyTabBar = preyWindow:getChildById('preyTabBar')
     local preyTabContent = preyWindow:getChildById('preyTabContent')
     preyCreaturesTab = preyWindow:recursiveGetChildById('preyCreaturesTab')
+    local huntingTasksTabPanel = preyWindow:recursiveGetChildById('huntingTasksTab')
 
     local descriptionWidget = preyWindow:recursiveGetChildById('description')
     if descriptionWidget then
         preyWindow.description = descriptionWidget
+    end
+
+    local huntingTasksResource = preyWindow:recursiveGetChildById('huntingTasksResource')
+    if huntingTasksResource then
+        preyWindow.huntingTasksResource = huntingTasksResource
+        local cardsIcon = huntingTasksResource:getChildById('cards') or
+            huntingTasksResource:recursiveGetChildById('cards')
+        if cardsIcon then
+            cardsIcon:setTooltip(tr('Hunting Task Points'))
+        end
+
+        local textWidget = huntingTasksResource:getChildById('text') or
+            huntingTasksResource:recursiveGetChildById('text')
+        if textWidget then
+            preyWindow.huntingTasksResourceText = textWidget
+        end
+
+        huntingTasksResource:setVisible(false)
     end
 
     if preyCreaturesTab then
@@ -131,12 +208,13 @@ function init()
     if preyTabBar and preyTabContent then
         preyTabBar:setContentWidget(preyTabContent)
 
-        local huntingTasksTab = preyWindow:recursiveGetChildById('huntingTasksTab')
-
         local creaturesTab = preyTabBar:addTab(tr('Prey Creatures'), detachWidget(preyCreaturesTab))
-        preyTabBar:addTab(tr('Hunting Tasks'), detachWidget(huntingTasksTab))
+        huntingTasksTabButton = preyTabBar:addTab(tr('Hunting Tasks'), detachWidget(huntingTasksTabPanel))
+        connect(preyTabBar, { onTabChange = onPreyTabChange })
         preyTabBar:selectTab(creaturesTab)
     end
+
+    updateHuntingTasksResourceVisibility()
 
     preyTracker = g_ui.createWidget('PreyTracker', modules.game_interface.getRightPanel())
     preyTracker:setup()
@@ -190,6 +268,7 @@ function init()
         check()
     end
     setUnsupportedSettings()
+    updateResourceLabelsFromPlayer()
 end
 
 local pickSpecificPreyBonusBySlot = {}
@@ -316,11 +395,16 @@ function terminate()
     if preyTrackerButton then
         preyTrackerButton:destroy()
     end
-    preyWindow.description = nil
+    if preyWindow then
+        preyWindow.description = nil
+        preyWindow.huntingTasksResource = nil
+        preyWindow.huntingTasksResourceText = nil
+    end
     preyWindow:destroy()
     preyTracker:destroy()
     preyTabBar = nil
     preyCreaturesTab = nil
+    huntingTasksTabButton = nil
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil
@@ -410,6 +494,11 @@ local function resetPreyWindowState()
     setDescriptionText('')
     preyWindow.gold:setText('0')
     preyWindow.wildCards:setText('0')
+
+    if preyWindow.huntingTasksResourceText then
+        preyWindow.huntingTasksResourceText:setText('0')
+    end
+    updateHuntingTasksResourceVisibility()
 
     for slot = 0, 2 do
         onPreyInactive(slot, 0, 0)
@@ -1710,7 +1799,6 @@ end
 
 function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, bonusValue, bonusGrade, timeLeft,
                       timeUntilFreeReroll, wildcards, option) -- locktype always 0 for protocols <12
-    
     local tracker = preyTracker.contentsPanel['slot' .. (slot + 1)]
     currentHolderName = capitalFormatStr(currentHolderName)
     local percent = (timeLeft / (2 * 60 * 60)) * 100
@@ -1984,12 +2072,8 @@ function Prey.onResourcesBalanceChange(balance, oldBalance, type)
             updatePickSpecificPreyButton(slot, balance)
         end
     end
-    local player = g_game.getLocalPlayer()
     g_logger.debug('' .. tostring(type) .. ', ' .. tostring(balance))
-    if player then
-        preyWindow.wildCards:setText(tostring(player:getResourceBalance(ResourceTypes.PREY_WILDCARDS)))
-        preyWindow.gold:setText(comma_value(player:getTotalMoney()))
-    end
+    updateResourceLabelsFromPlayer()
 
     if type == ResourceTypes.BANK_BALANCE or type == ResourceTypes.GOLD_EQUIPPED then
         for slot = 0, 2 do

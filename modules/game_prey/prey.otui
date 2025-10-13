@@ -754,6 +754,14 @@ MainWindow
       image-clip: 0 0 26 20
       image-source: /images/game/prey/prey_smallstore_clicked
       image-clip: -1 -1 27 21
+      
+  CardLabel
+    id: huntingTasksResource
+    anchors.left: prev.right
+    margin-left: 10
+    anchors.verticalCenter: closeButton.verticalCenter
+    size: 70 20
+    visible: false
 
 PreyCreature < Panel
   height: 22

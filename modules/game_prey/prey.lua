@@ -92,7 +92,13 @@ function init()
         onPreyWildcardSelection = onPreyWildcardSelection
     })
 
-    preyWindow = g_ui.displayUI('prey')
+    g_ui.importStyle('prey')
+
+    preyWindow = PreyWindowTabs.createWindow()
+    if not preyWindow then
+        return
+    end
+
     preyWindow:hide()
     local preyTabContent = preyWindow:getChildById('preyTabContent')
     local preyCreaturesTab = preyWindow:recursiveGetChildById('preyCreaturesTab')

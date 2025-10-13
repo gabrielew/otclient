@@ -2,6 +2,13 @@ PreyWindowTabs = PreyWindowTabs or {}
 
 local Tabs = PreyWindowTabs
 
+local PREY_WINDOW_TABS_FILE = 'prey_window_tabs'
+
+function Tabs.createWindow(parent)
+    local targetParent = parent or g_ui.getRootWidget()
+    return g_ui.loadUI(PREY_WINDOW_TABS_FILE, targetParent)
+end
+
 local CREATURES_TAB_STYLE = 'PreyCreaturesTabButton'
 local TASKS_TAB_STYLE = 'PreyTasksTabButton'
 

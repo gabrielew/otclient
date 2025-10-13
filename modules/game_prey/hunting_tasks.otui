@@ -48,7 +48,7 @@ HuntingTaskClaimRewardPanel < FlatPanel
     @onHoverChange: modules.game_prey.onHover(self)
 
 HuntingTaskActivePanel < Panel
-  size: 202 312
+  size: 220 312
 
   CreatureAndBonus
     id: creatureAndBonus

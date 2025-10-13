@@ -35,6 +35,19 @@ local selectedRaceEntryBySlot = {}
 local selectedRaceWidgetBySlot = {}
 local raceSearchTextsBySlot = {}
 
+local function detachWidget(widget)
+    if not widget then
+        return nil
+    end
+
+    local parent = widget:getParent()
+    if parent then
+        parent:removeChild(widget)
+    end
+
+    return widget
+end
+
 local refreshRaceList
 local setRaceSelection
 local updateRaceSelectionDisplay
@@ -120,8 +133,8 @@ function init()
 
         local huntingTasksTab = preyWindow:recursiveGetChildById('huntingTasksTab')
 
-        local creaturesTab = preyTabBar:addTab(tr('Prey Creatures'), preyCreaturesTab)
-        preyTabBar:addTab(tr('Hunting Tasks'), huntingTasksTab)
+        local creaturesTab = preyTabBar:addTab(tr('Prey Creatures'), detachWidget(preyCreaturesTab))
+        preyTabBar:addTab(tr('Hunting Tasks'), detachWidget(huntingTasksTab))
         preyTabBar:selectTab(creaturesTab)
     end
 

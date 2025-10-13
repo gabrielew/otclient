@@ -3,7 +3,7 @@ HuntingTaskCancelButton < UIButton
   focusable: false
   image-source: /images/game/prey/prey_hunting_task_cancel
   image-clip: 0 0 65 69
-  background-color: red
+  background-color: alpha
 
   $pressed:
     image-clip: 0 69 65 69
@@ -16,7 +16,7 @@ HuntingTaskHigherStarsButton < UIButton
   focusable: false
   image-source: /images/game/prey/prey_hunting_task_higher_stars
   image-clip: 0 0 64 69
-  background-color: yellow
+  background-color: alpha
 
   $pressed:
     image-clip: 0 69 64 69
@@ -29,7 +29,7 @@ HuntingTaskClaimRewardButton < UIButton
   focusable: false
   image-source: /images/game/prey/prey_hunting_task_claim_reward
   image-clip: 0 0 65 91
-  background-color: green
+  background-color: alpha
 
   $pressed:
     image-clip: 0 91 65 91
@@ -37,44 +37,127 @@ HuntingTaskClaimRewardButton < UIButton
   $disabled:
     image-clip: 0 182 65 91
 
+HuntingTaskPreviewPanel < Panel
+  height: 120
+  padding: 6
+  image-source: /images/ui/panel_flat
+  image-border: 1
+  background-color: #1b1b1b
 
-HuntingTaskActivePanel < Panel
-  size: 215 335
-
-  CreatureAndBonus
-    id: creatureAndBonus
-    anchors.left: parent.left
-    anchors.top: parent.top
+  UICreature
+    id: creature
     anchors.horizontalCenter: parent.horizontalCenter
-    margin-top: 25
-    background-color: blue
-
-  HuntingTaskClaimRewardPanel
-    id: choose
-    anchors.right: parent.right
-    anchors.top: prev.bottom
-    background-color: red
-
-  HuntingTaskSelectPreyPanel
-    id: select
-    anchors.verticalCenter: prev.verticalCenter
-    anchors.right: prev.left
-    margin-right: 2
-    background-color: blue
-
-  HuntingTaskRerollButton
-    id: reroll
-    anchors.verticalCenter: prev.verticalCenter
-    anchors.right: prev.left
-    margin-right: 2
-    background-color: yellow
-
-HuntingTaskSlotPanel < SlotPanel
-  HuntingTaskActivePanel
-    id: active
     anchors.top: parent.top
-    anchors.horizontalCenter: parent.horizontalCenter
+    size: 72 72
+    phantom: true
     visible: false
+
+  Label
+    id: placeholder
+    anchors.centerIn: parent
+    font: verdana-11px-rounded
+    color: #b4b4b4
+    text-align: center
+    !text: tr('Select a creature')
+
+  Label
+    id: info
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-top: 6
+    text-align: center
+    font: verdana-10px-rounded
+    color: #cfcfcf
+    !text: tr('Select a creature to view details')
+
+HuntingTaskListPanel < Panel
+  image-source: /images/ui/panel_flat
+  image-border: 1
+  padding: 6
+  background-color: #191919
+
+  Label
+    id: header
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    font: verdana-11px-bold
+    color: #f0f0f0
+    !text: tr('Available targets')
+
+  UIScrollArea
+    id: entries
+    anchors.top: header.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-top: 6
+    padding-right: 4
+
+    UIWidget
+      id: entriesContainer
+      layout:
+        type: vertical
+        fit-children: true
+        cell-spacing: 4
+
+  Label
+    id: empty
+    anchors.centerIn: parent
+    font: verdana-11px-rounded
+    color: #9b9b9b
+    !text: tr('No creatures available')
+    visible: false
+
+HuntingTaskListItem < UICheckBox
+  height: 48
+  padding: 6
+  margin-bottom: 2
+  focusable: false
+  background-color: #2f2f2f
+  border-width: 1
+  border-color: #242424
+  size-policy-horizontal: expanding
+  @onClick: modules.game_prey.hunting_tasks.onListItemClicked(self)
+  @onHoverChange: modules.game_prey.hunting_tasks.onListItemHoverChange(self)
+
+  UICreature
+    id: creature
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    size: 32 32
+    phantom: true
+    visible: false
+
+  Label
+    id: name
+    anchors.top: parent.top
+    anchors.left: creature.right
+    margin-left: 8
+    anchors.right: parent.right
+    margin-right: 6
+    font: verdana-11px-rounded
+    color: #e3e3e3
+    text: Creature
+
+  Label
+    id: info
+    anchors.left: name.left
+    anchors.right: parent.right
+    margin-right: 6
+    anchors.bottom: parent.bottom
+    font: verdana-10px-rounded
+    color: #b5b5b5
+    text: Difficulty
+
+  $checked on:
+    background-color: #3a4a39
+    border-color: #4a8d2c
+
+  $!checked:
+    background-color: #2f2f2f
+    border-color: #242424
 
 HuntingTaskSelectPreyPanel < UIWidget
   size: 70 92
@@ -87,7 +170,7 @@ HuntingTaskSelectPreyPanel < UIWidget
     size: 64 69
     focusable: false
     @onHoverChange: modules.game_prey.onHover(self)
-    background-color: red
+    background-color: alpha
 
   CardLabel
     id: price
@@ -139,49 +222,125 @@ HuntingTaskRerollButton < UIWidget
     anchors.right: parent.right
     anchors.bottom: parent.bottom
 
-PreyCreatureBox < UICheckBox
-  border-width: 1
-  border-color: #ffffff
-  padding: 3
-  @onClick: modules.game_prey.onItemBoxChecked(self)
-
-  UICreature
-    id: creature
-    phantom: true
-    anchors.fill: parent
-    image-color: #ffffffff
-    margin-top: 3
-
-  $checked on:
-    border-color: #ffffff
-
-  $!checked:
-    border-color: alpha
-
-  $!on:
-    image-color: #ffffff88
-    color: #aaaaaa88
-
-PreyCreatureListItem < UICheckBox
-  height: 22
-  margin-bottom: 2
-  padding: 3
+HuntingTaskClaimRewardPanel < UIWidget
+  size: 70 92
   focusable: false
-  text-align: left
-  font: verdana-11px-rounded
-  color: #c0c0c0
-  border-width: 1
-  border-color: alpha
-  background-color: alpha
-  text-offset: 4 0
-  size-policy-horizontal: expanding
-  @onClick: modules.game_prey.onPreyRaceListItemClicked(self)
-  @onHoverChange: modules.game_prey.onPreyRaceListItemHoverChange(self)
 
-  $checked on:
-    background-color: #1c4d75ff
-    border-color: #6fb1e9ff
-    color: #ffffff
+  HuntingTaskClaimRewardButton
+    id: claimButton
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
 
-  $!checked:
-    border-color: alpha
+  Label
+    id: info
+    anchors.top: claimButton.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-top: 4
+    text-align: center
+    font: verdana-10px-rounded
+    color: #d5d5d5
+    !text: tr('Claim')
+
+HuntingTaskActivePanel < Panel
+  size: 215 335
+  padding: 6
+
+  CreatureAndBonus
+    id: creatureAndBonus
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: parent.top
+    margin-top: 10
+
+  HuntingTaskClaimRewardPanel
+    id: choose
+    anchors.right: parent.right
+    anchors.top: creatureAndBonus.bottom
+    margin-top: 6
+
+  HuntingTaskSelectPreyPanel
+    id: select
+    anchors.right: choose.left
+    anchors.verticalCenter: choose.verticalCenter
+    margin-right: 4
+
+  HuntingTaskRerollButton
+    id: reroll
+    anchors.right: select.left
+    anchors.verticalCenter: select.verticalCenter
+    margin-right: 4
+
+HuntingTaskInactivePanel < Panel
+  size: 215 335
+
+  HuntingTaskPreviewPanel
+    id: preview
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+
+  HuntingTaskListPanel
+    id: listSelection
+    anchors.top: preview.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-top: 8
+
+HuntingTaskLockedPanel < Panel
+  size: 215 335
+  image-source: /images/ui/panel_flat
+  image-border: 1
+  padding: 10
+
+  Label
+    anchors.centerIn: parent
+    font: verdana-11px-rounded
+    color: #c6c6c6
+    text-align: center
+    !text: tr('Locked slot')
+
+HuntingTaskSlotPanel < Panel
+  size: 230 360
+  image-source: /images/ui/panel_flat
+  image-border: 2
+  padding: 10
+  background-color: #121212
+
+  Label
+    id: title
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    text-align: center
+    font: verdana-11px-bold
+    color: #f5f5f5
+    !text: tr('Select a hunting task')
+
+  HuntingTaskInactivePanel
+    id: inactive
+    anchors.top: title.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-top: 6
+
+  HuntingTaskActivePanel
+    id: active
+    anchors.top: title.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-top: 6
+    visible: false
+
+  HuntingTaskLockedPanel
+    id: locked
+    anchors.top: title.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-top: 6
+    visible: false

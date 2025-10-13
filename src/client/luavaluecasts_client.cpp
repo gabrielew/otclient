@@ -1708,18 +1708,24 @@ int push_luavalue(const TaskHuntingOption& v) {
     g_lua.pushInteger(v.secondReward); g_lua.setField("secondReward");
     return 1;
 }
-
 int push_luavalue(const TaskHuntingBasicData& data) {
-    g_lua.createTable(0, 3); // preys, options, optionsByDifficulty
+    g_lua.createTable(0, 4); // preys, options, optionsByDifficulty, difficultyByRaceId
 
     // preys[]
     g_lua.createTable(data.preys.size(), 0);
     for (size_t i = 0; i < data.preys.size(); ++i) {
-        // Qualifique com :: caso exista outro push_luavalue em namespace diferente
         push_luavalue(data.preys[i]);
         g_lua.rawSeti(i + 1);
     }
     g_lua.setField("preys");
+
+    // difficultyByRaceId (custom table)
+    g_lua.createTable(0, data.preys.size());
+    for (const auto& prey : data.preys) {
+        g_lua.pushInteger(prey.difficulty);
+        g_lua.rawSeti(prey.raceId); // key = raceId, value = difficulty
+    }
+    g_lua.setField("difficultyByRaceId");
 
     // options[]
     g_lua.createTable(data.options.size(), 0);
@@ -1729,7 +1735,7 @@ int push_luavalue(const TaskHuntingBasicData& data) {
     }
     g_lua.setField("options");
 
-    // optionsByDifficulty (opcional)
+    // optionsByDifficulty  (custom table)
     g_lua.createTable(0, 0);
     for (uint8_t diff = 1; diff <= 3; ++diff) {
         g_lua.createTable(6, 0);

@@ -1,6 +1,7 @@
 HuntingTasks = HuntingTasks or {}
 
 local Tasks = HuntingTasks
+Tasks.BasicData = Tasks.BasicData or {}
 
 local SLOT_COUNT = 3
 
@@ -197,9 +198,89 @@ function Tasks.init(preyWindow, tabWidget)
     ensureContentWidget()
     ensureSlots()
     Tasks.showSlots()
+
+    connect(g_game, { taskHuntingBasicData = taskHuntingBasicData, onTaskHuntingData = onTaskHuntingData })
+end
+
+function taskHuntingBasicData(data)
+    Tasks.BasicData.difficultyByRaceId = Tasks.BasicData.difficultyByRaceId or data.difficultyByRaceId or {}
+    g_logger.info(("taskHuntingBasicData: preys=%d, options=%d")
+        :format(#(data.preys or {}), #(data.options or {})))
+
+    local d1 = Tasks.BasicData.difficultyByRaceId[1938]
+    if d1 then
+        g_logger.info(("  raceId=1938 has difficulty=%d"):format(d1))
+    end
+    Tasks.BasicData.optionsByDifficulty = Tasks.BasicData.optionsByDifficulty or data.optionsByDifficulty or {}
+    -- Acesso fácil por dificuldade/estrela:
+    -- ex.: pegar os dados de difficulty=2, stars=4:
+    local d2 = Tasks.BasicData.optionsByDifficulty[d1]
+    local star4 = d2 and d2[5]
+    if star4 then
+        g_logger.info(("  D2*5 = firstKill=%d secondKill=%d"):format(star4.firstKill, star4.secondKill))
+    end
+end
+
+-- [[
+-- TaskHuntingData received: slotId=0, state=4, freeRerollRemainingSeconds=-75743
+--   [Active] selectedRaceId=2539, upgrade=false, requiredKills=400, currentKills=0, rarity=2
+-- TaskHuntingData received: slotId=1, state=2, freeRerollRemainingSeconds=-2932635
+--   [Selection] 9 entries
+--     [1] raceId=570, unlocked=false
+--     [2] raceId=1659, unlocked=true
+--     [3] raceId=1938, unlocked=true
+--     [4] raceId=880, unlocked=false
+--     [5] raceId=2343, unlocked=false
+--     [6] raceId=211, unlocked=false
+--     [7] raceId=2447, unlocked=true
+--     [8] raceId=961, unlocked=true
+--     [9] raceId=63, unlocked=false
+-- TaskHuntingData received: slotId=2, state=0, freeRerollRemainingSeconds=-9
+-- ]]
+function onTaskHuntingData(data)
+    g_logger.info(("TaskHuntingData received: slotId=%d, state=%d, freeRerollRemainingSeconds=%d")
+        :format(data.slotId, data.state, data.freeRerollRemainingSeconds or 0))
+
+    -- Locked
+    if data.isPremium ~= nil then
+        g_logger.info(("  [Locked] isPremium=%s"):format(tostring(data.isPremium)))
+    end
+
+    -- Selection
+    if data.selection then
+        g_logger.info(("  [Selection] %d entries"):format(#data.selection))
+        for i, entry in ipairs(data.selection) do
+            g_logger.info(("    [%d] raceId=%d, unlocked=%s")
+                :format(i, entry.raceId, tostring(entry.unlocked)))
+        end
+    end
+
+    -- ListSelection
+    if data.listSelection then
+        g_logger.info(("  [ListSelection] %d entries"):format(#data.listSelection))
+        for i, entry in ipairs(data.listSelection) do
+            g_logger.info(("    [%d] raceId=%d, unlocked=%s")
+                :format(i, entry.raceId, tostring(entry.unlocked)))
+        end
+    end
+
+    -- Active
+    if data.active then
+        local a = data.active
+        g_logger.info(("  [Active] selectedRaceId=%d, upgrade=%s, requiredKills=%d, currentKills=%d, rarity=%d")
+            :format(a.selectedRaceId, tostring(a.upgrade), a.requiredKills, a.currentKills, a.rarity))
+    end
+
+    -- Completed
+    if data.completed then
+        local c = data.completed
+        g_logger.info(("  [Completed] selectedRaceId=%d, upgrade=%s, requiredKills=%d, achievedKills=%d, rarity=%d")
+            :format(c.selectedRaceId, tostring(c.upgrade), c.requiredKills, c.achievedKills, c.rarity))
+    end
 end
 
 function Tasks.terminate()
+    disconnect(g_game, { taskHuntingBasicData = taskHuntingBasicData, onTaskHuntingData = onTaskHuntingData })
     clearSlotWidgets()
     destroyWidget(slotsContainer)
     slotsContainer = nil

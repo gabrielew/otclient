@@ -34,10 +34,203 @@ HuntingTaskClaimRewardButton < UIButton
   $disabled:
     image-clip: 0 182 65 91
 
-HuntingTaskClaimRewardPanel < FlatPanel
-  padding: 2
-  size: 70 95
+HuntingTaskStar < UIWidget
+  size: 12 12
+  image-source: /images/game/prey/prey_star
+
+HuntingTaskNoStar < UIWidget
+  size: 12 12
+  image-source: /images/game/prey/prey_nostar
+
+HuntingTaskActionPanel < FlatPanel
+  size: 76 110
   focusable: false
+  image-source: /images/ui/backdrop-dark-grey
+  image-border: 5
+  padding: 4
+
+HuntingTaskCardLabel < FlatPanel
+  focusable: false
+  height: 26
+  padding: 3
+  image-source: /images/ui/backdrop-dark-grey
+  image-border: 5
+
+  UIWidget
+    id: icon
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    size: 20 20
+    image-source: /images/game/prey/prey_hunting_task_points
+    margin-right: 4
+
+  Label
+    id: text
+    anchors.left: prev.right
+    anchors.right: parent.right
+    anchors.verticalCenter: parent.verticalCenter
+    text-align: right
+    font: verdana-11px-rounded
+    color: #ffffcc
+
+HuntingTaskGoldLabel < FlatPanel
+  focusable: false
+  height: 26
+  padding: 3
+  image-source: /images/ui/backdrop-dark-grey
+  image-border: 5
+
+  UIWidget
+    id: icon
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    size: 20 20
+    image-source: /images/game/prey/prey_gold
+    margin-right: 4
+
+  Label
+    id: text
+    anchors.left: prev.right
+    anchors.right: parent.right
+    anchors.verticalCenter: parent.verticalCenter
+    text-align: right
+    font: verdana-11px-rounded
+    color: #ffffcc
+
+HuntingTaskCreatureAndBonus < Panel
+  size: 195 214
+  focusable: false
+
+  FlatPanel
+    id: creatureFrame
+    anchors.top: parent.top
+    anchors.left: parent.left
+    size: 118 176
+    padding: 6
+    image-source: /images/ui/backdrop-dark-grey
+    image-border: 5
+
+    UICreature
+      id: creature
+      anchors.fill: parent
+      margin: 2
+      phantom: true
+      visible: false
+
+  FlatPanel
+    id: bonus
+    anchors.top: parent.top
+    anchors.left: prev.right
+    anchors.right: parent.right
+    margin-left: 10
+    height: 176
+    padding-top: 8
+    padding-left: 8
+    padding-right: 8
+    image-source: /images/ui/backdrop-dark-grey
+    image-border: 5
+
+    UIWidget
+      id: icon
+      anchors.top: parent.top
+      anchors.horizontalCenter: parent.horizontalCenter
+      image-source: /images/game/prey/prey_hunting_task_prey_token
+      margin-top: 2
+
+    UIWidget
+      anchors.top: prev.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      margin-top: 6
+      height: 1
+      background-color: #00000099
+
+    Panel
+      id: grade
+      anchors.top: prev.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: parent.bottom
+      margin-top: 6
+      margin-bottom: 8
+      layout:
+        type: grid
+        cell-size: 12 12
+        cell-spacing: 2
+        num-columns: 5
+
+  ProgressBar
+    id: timeLeft
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: prev.bottom
+    anchors.bottom: parent.bottom
+    margin-top: 8
+    height: 20
+    text-align: center
+    background-color: #C28400
+
+HuntingTaskSelectPreyPanel < HuntingTaskActionPanel
+
+  HuntingTaskHigherStarsButton
+    id: pickSpecificPrey
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    focusable: false
+    @onHoverChange: modules.game_prey.onHover(self)
+
+  HuntingTaskCardLabel
+    id: price
+    anchors.top: prev.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-top: 4
+
+HuntingTaskRerollButton < HuntingTaskActionPanel
+
+  UIWidget
+    id: button
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    height: 70
+    focusable: false
+
+    ProgressBar
+      id: time
+      anchors.bottom: parent.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: 18
+      text-align: center
+      background-color: #C28400
+
+    UIButton
+      id: rerollButton
+      anchors.top: parent.top
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: prev.top
+      margin-bottom: 2
+      image-source: /images/game/prey/prey_reroll
+      image-clip: 1 0 58 45
+      focusable: false
+      @onHoverChange: modules.game_prey.onHover(self)
+
+      $pressed:
+        image-clip: 0 46 60 47
+
+  HuntingTaskGoldLabel
+    id: price
+    anchors.top: prev.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-top: 4
+
+HuntingTaskClaimRewardPanel < HuntingTaskActionPanel
+  size: 76 124
 
   HuntingTaskClaimRewardButton
     id: selectPrey
@@ -47,35 +240,95 @@ HuntingTaskClaimRewardPanel < FlatPanel
     enabled: false
     @onHoverChange: modules.game_prey.onHover(self)
 
-HuntingTaskActivePanel < Panel
-  size: 220 312
+HuntingTaskInactivePanel < Panel
+  size: 195 240
+  focusable: false
 
-  CreatureAndBonus
+  Label
+    anchors.centerIn: parent
+    width: 170
+    text-align: center
+    font: verdana-11px-rounded
+    color: #cfcfcf
+    !text: tr('No hunting task available')
+
+HuntingTaskLockedPanel < Panel
+  size: 195 240
+  focusable: false
+
+  Label
+    anchors.centerIn: parent
+    width: 170
+    text-align: center
+    font: verdana-11px-rounded
+    color: #cfcfcf
+    !text: tr('Unlock hunting tasks to continue')
+
+HuntingTaskActivePanel < Panel
+  size: 215 312
+  padding-top: 12
+  padding-left: 10
+  padding-right: 10
+  padding-bottom: 12
+
+  HuntingTaskCreatureAndBonus
     id: creatureAndBonus
-    anchors.left: parent.left
     anchors.top: parent.top
-    margin-top: 20
+    anchors.left: parent.left
+    anchors.right: parent.right
 
   HuntingTaskClaimRewardPanel
     id: choose
-    anchors.right: parent.right
     anchors.top: prev.bottom
+    anchors.left: parent.left
+    margin-top: 12
 
-  SelectPreyCreature
+  HuntingTaskSelectPreyPanel
     id: select
-    anchors.verticalCenter: prev.verticalCenter
-    anchors.right: prev.left
-    margin-right: 2
+    anchors.top: choose.top
+    anchors.left: prev.right
+    margin-left: 6
 
-  RerollButton
+  HuntingTaskRerollButton
     id: reroll
-    anchors.verticalCenter: prev.verticalCenter
-    anchors.right: prev.left
-    margin-right: 2
+    anchors.top: choose.top
+    anchors.left: prev.right
+    anchors.right: parent.right
+    margin-left: 6
 
-HuntingTaskSlotPanel < SlotPanel
+HuntingTaskSlotPanel < Panel
+  size: 215 320
+  focusable: false
+  image-source: /images/ui/window
+  image-border: 25
+  padding-top: 8
+  padding-bottom: 10
+  padding-left: 8
+  padding-right: 8
+
+  Label
+    id: title
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    text-align: center
+    margin-bottom: 6
+    font: verdana-11px-rounded
+    color: #ffffcc
+
+  HuntingTaskInactivePanel
+    id: inactive
+    anchors.top: prev.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+
+  HuntingTaskLockedPanel
+    id: locked
+    anchors.top: prev.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+    visible: false
+
   HuntingTaskActivePanel
     id: active
-    anchors.top: parent.top
+    anchors.top: prev.bottom
     anchors.horizontalCenter: parent.horizontalCenter
     visible: false

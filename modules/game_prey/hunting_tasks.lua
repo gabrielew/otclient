@@ -17,6 +17,93 @@ local CANCEL_BUTTON_ID = 'HuntingTaskCancelButton'
 local cancelButtonStylesLoaded = false
 local cancelButtonStylesAttempted = false
 
+local STAR_WIDGET = 'HuntingTaskStar'
+local EMPTY_STAR_WIDGET = 'HuntingTaskNoStar'
+
+local widgetDefaultWidths = setmetatable({}, { __mode = 'k' })
+
+local function isWidgetAvailable(widget)
+    return widget and not (widget.isDestroyed and widget:isDestroyed())
+end
+
+local function applyWidgetWidth(widget, width)
+    if not isWidgetAvailable(widget) then
+        return
+    end
+
+    if not widget.setWidth or not widget.getWidth then
+        return
+    end
+
+    if not widgetDefaultWidths[widget] then
+        widgetDefaultWidths[widget] = widget:getWidth()
+    end
+
+    if width and width > 0 then
+        widget:setWidth(width)
+        return
+    end
+
+    local defaultWidth = widgetDefaultWidths[widget]
+    if defaultWidth and defaultWidth > 0 then
+        widget:setWidth(defaultWidth)
+    end
+end
+
+local function anchorPriceLabel(priceLabel, topWidget, alignWidget)
+    if not isWidgetAvailable(priceLabel) then
+        return
+    end
+
+    if not priceLabel.breakAnchors or not priceLabel.addAnchor then
+        return
+    end
+
+    local marginTop
+    if priceLabel.getMarginTop then
+        marginTop = priceLabel:getMarginTop()
+    end
+
+    priceLabel:breakAnchors()
+
+    if isWidgetAvailable(topWidget) then
+        priceLabel:addAnchor(AnchorTop, topWidget, AnchorBottom)
+    else
+        priceLabel:addAnchor(AnchorTop, 'parent', AnchorTop)
+    end
+
+    if isWidgetAvailable(alignWidget) then
+        priceLabel:addAnchor(AnchorLeft, alignWidget, AnchorLeft)
+        priceLabel:addAnchor(AnchorRight, alignWidget, AnchorRight)
+    else
+        priceLabel:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+        priceLabel:addAnchor(AnchorRight, 'parent', AnchorRight)
+    end
+
+    priceLabel:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+
+    if marginTop and priceLabel.setMarginTop then
+        priceLabel:setMarginTop(marginTop)
+    end
+end
+
+local function setWidgetText(widget, text)
+    if not isWidgetAvailable(widget) then
+        return
+    end
+
+    if widget.setText then
+        widget:setText(text)
+    end
+
+    if widget.recursiveGetChildById then
+        local textWidget = widget:recursiveGetChildById('text')
+        if textWidget and textWidget ~= widget and textWidget.setText then
+            textWidget:setText(text)
+        end
+    end
+end
+
 local function formatFreeRerollText(seconds)
     local remainingSeconds = math.max(0, math.floor(tonumber(seconds) or 0))
     if remainingSeconds <= 0 then
@@ -106,7 +193,7 @@ local function applyPriceToCancel(slotWidget, data)
     end
 
     local cancelText = handleFormatPrice(data.cancelProgress or 0)
-    timerWidget:setText(cancelText)
+    setWidgetText(timerWidget, cancelText)
 end
 
 local function ensureCancelButtonStyle()
@@ -194,7 +281,8 @@ local function ensureCancelButton(slotWidget)
         return cancelButton, activePanel
     end
 
-    cancelButton = g_ui.createWidget(CANCEL_BUTTON_STYLE, buttonContainer)
+    local parentWidget = rerollPanel
+    cancelButton = g_ui.createWidget(CANCEL_BUTTON_STYLE, parentWidget)
     if not cancelButton then
         return nil, activePanel
     end
@@ -203,14 +291,23 @@ local function ensureCancelButton(slotWidget)
     cancelButton:setVisible(false)
     cancelButton:setFocusable(false)
 
-    if cancelButton.fill then
-        cancelButton:fill('parent')
-    elseif cancelButton.breakAnchors then
+    if cancelButton.breakAnchors then
         cancelButton:breakAnchors()
-        cancelButton:addAnchor(AnchorTop, 'parent', AnchorTop)
-        cancelButton:addAnchor(AnchorLeft, 'parent', AnchorLeft)
-        cancelButton:addAnchor(AnchorRight, 'parent', AnchorRight)
-        cancelButton:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+        if buttonContainer and not buttonContainer:isDestroyed() then
+            cancelButton:addAnchor(AnchorTop, buttonContainer, AnchorTop)
+            cancelButton:addAnchor(AnchorLeft, buttonContainer, AnchorLeft)
+            cancelButton:addAnchor(AnchorRight, buttonContainer, AnchorRight)
+            cancelButton:addAnchor(AnchorBottom, buttonContainer, AnchorBottom)
+        else
+            cancelButton:addAnchor(AnchorTop, 'parent', AnchorTop)
+            cancelButton:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+            cancelButton:addAnchor(AnchorRight, 'parent', AnchorRight)
+            cancelButton:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+        end
+    end
+
+    if cancelButton.raise then
+        cancelButton:raise()
     end
 
     return cancelButton, activePanel
@@ -244,11 +341,34 @@ local function setCancelButtonVisible(slotWidget, visible)
     end
 
     local rerollButton = rerollPanel:recursiveGetChildById('rerollButton')
+    local buttonContainer = rerollPanel:recursiveGetChildById('button')
+    local priceLabel = rerollPanel:recursiveGetChildById('price')
     local rerollVisible = not visible or not cancelButton
     if rerollButton and not rerollButton:isDestroyed() then
         rerollButton:setVisible(rerollVisible)
         if rerollButton.setEnabled then
             rerollButton:setEnabled(rerollVisible)
+        end
+    end
+
+    if buttonContainer and not buttonContainer:isDestroyed() then
+        buttonContainer:setVisible(rerollVisible)
+        if cancelButton and cancelButton.getWidth then
+            applyWidgetWidth(buttonContainer, visible and cancelButton:getWidth() or nil)
+        end
+    end
+
+    if rerollPanel and not rerollPanel:isDestroyed() then
+        if cancelButton and cancelButton.getWidth then
+            applyWidgetWidth(rerollPanel, visible and cancelButton:getWidth() or nil)
+        end
+    end
+
+    if priceLabel and not priceLabel:isDestroyed() then
+        if visible and cancelButton and cancelButton.getWidth then
+            anchorPriceLabel(priceLabel, cancelButton, cancelButton)
+        else
+            anchorPriceLabel(priceLabel, buttonContainer or rerollButton, nil)
         end
     end
 end
@@ -290,14 +410,12 @@ local function updateHigherStarsButton(activePanel)
 
     local priceLabel = selectPanel:recursiveGetChildById('price')
     if priceLabel and not priceLabel:isDestroyed() then
-        local textWidget = priceLabel:recursiveGetChildById('text')
-        if textWidget and textWidget.setText then
-            if requiredCards and requiredCards > 0 then
-                textWidget:setText(tostring(requiredCards))
-            else
-                textWidget:setText(tr('Free'))
-            end
+        local priceText = tr('Free')
+        if requiredCards and requiredCards > 0 then
+            priceText = tostring(requiredCards)
         end
+
+        setWidgetText(priceLabel, priceText)
     end
 
     local hasEnoughCards = true
@@ -601,7 +719,7 @@ local function updateTaskRarity(gradePanel, rarity)
     end
 
     for index = 1, maxStars do
-        local widgetName = index <= effectiveRarity and 'Star' or 'NoStar'
+        local widgetName = index <= effectiveRarity and STAR_WIDGET or EMPTY_STAR_WIDGET
         g_ui.createWidget(widgetName, gradePanel)
     end
 

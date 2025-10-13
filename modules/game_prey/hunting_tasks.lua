@@ -32,7 +32,7 @@ local function ensureCancelButtonStyle()
         return false
     end
 
-    cancelButtonStylesLoaded = g_ui.importStyle('modules/game_prey/hunting_tasks') or false
+    cancelButtonStylesLoaded = g_ui.importStyle('hunting_tasks') or false
 
     return cancelButtonStylesLoaded
 end
@@ -130,6 +130,10 @@ local function setCancelButtonVisible(slotWidget, visible)
         cancelButton, activePanel = ensureCancelButton(slotWidget)
     end
 
+    if not cancelButton then
+        visible = false
+    end
+
     if cancelButton then
         cancelButton:setVisible(visible)
         if cancelButton.setEnabled then
@@ -148,16 +152,17 @@ local function setCancelButtonVisible(slotWidget, visible)
     end
 
     local rerollButton = rerollPanel:recursiveGetChildById('rerollButton')
+    local rerollVisible = not visible or not cancelButton
     if rerollButton and not rerollButton:isDestroyed() then
-        rerollButton:setVisible(not visible)
+        rerollButton:setVisible(rerollVisible)
         if rerollButton.setEnabled then
-            rerollButton:setEnabled(not visible)
+            rerollButton:setEnabled(rerollVisible)
         end
     end
 
     local progressBar = rerollPanel:recursiveGetChildById('time')
     if progressBar and not progressBar:isDestroyed() then
-        progressBar:setVisible(not visible)
+        progressBar:setVisible(rerollVisible)
     end
 end
 

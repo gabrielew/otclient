@@ -376,6 +376,70 @@ local function applyActiveTask(slotWidget, activeData)
         local progressBar = creatureAndBonus:recursiveGetChildById('timeLeft')
         updateTaskProgress(progressBar, activeData.currentKills, activeData.requiredKills)
     end
+
+    local activeCardsHeight = 0
+    local cardSpacing = 4
+
+    local function accumulateCardBounds(widget)
+        if not widget or widget:isDestroyed() then
+            return
+        end
+
+        if widget.getMarginTop and widget.setMarginTop and widget:getId() == 'choose' then
+            widget:setMarginTop(cardSpacing)
+        end
+
+        local marginTop = widget.getMarginTop and widget:getMarginTop() or 0
+        local marginBottom = widget.getMarginBottom and widget:getMarginBottom() or 0
+        local height = widget.getHeight and widget:getHeight() or 0
+
+        activeCardsHeight = math.max(activeCardsHeight, marginTop + height + marginBottom)
+    end
+
+    accumulateCardBounds(activePanel:recursiveGetChildById('choose'))
+    accumulateCardBounds(activePanel:recursiveGetChildById('select'))
+    accumulateCardBounds(activePanel:recursiveGetChildById('reroll'))
+
+    local creatureMarginTop = 0
+    local creatureMarginBottom = 0
+    local creatureHeight = 0
+    if creatureAndBonus and not creatureAndBonus:isDestroyed() then
+        creatureMarginTop = creatureAndBonus.getMarginTop and creatureAndBonus:getMarginTop() or 0
+        creatureMarginBottom = creatureAndBonus.getMarginBottom and creatureAndBonus:getMarginBottom() or 0
+        creatureHeight = creatureAndBonus.getHeight and creatureAndBonus:getHeight() or 0
+    end
+
+    local panelPaddingTop = activePanel.getPaddingTop and activePanel:getPaddingTop() or 0
+    local panelPaddingBottom = activePanel.getPaddingBottom and activePanel:getPaddingBottom() or 0
+
+    local desiredActiveHeight = creatureMarginTop + creatureHeight + creatureMarginBottom + activeCardsHeight +
+        panelPaddingTop + panelPaddingBottom
+
+    if desiredActiveHeight > 0 and activePanel.setHeight then
+        local currentHeight = activePanel:getHeight() or 0
+        if desiredActiveHeight > currentHeight then
+            activePanel:setHeight(desiredActiveHeight)
+        end
+    end
+
+    local titleWidget = slotWidget:recursiveGetChildById('title')
+    local titleHeight = 0
+    if titleWidget and not titleWidget:isDestroyed() then
+        local titleMarginTop = titleWidget.getMarginTop and titleWidget:getMarginTop() or 0
+        local titleMarginBottom = titleWidget.getMarginBottom and titleWidget:getMarginBottom() or 0
+        titleHeight = titleMarginTop + (titleWidget.getHeight and titleWidget:getHeight() or 0) + titleMarginBottom
+    end
+
+    local slotPaddingTop = slotWidget.getPaddingTop and slotWidget:getPaddingTop() or 0
+    local slotPaddingBottom = slotWidget.getPaddingBottom and slotWidget:getPaddingBottom() or 0
+    local desiredSlotHeight = desiredActiveHeight + titleHeight + slotPaddingTop + slotPaddingBottom
+
+    if desiredSlotHeight > 0 and slotWidget.setHeight then
+        local currentSlotHeight = slotWidget:getHeight() or 0
+        if desiredSlotHeight > currentSlotHeight then
+            slotWidget:setHeight(desiredSlotHeight)
+        end
+    end
 end
 
 local function applyInactiveTask(slotWidget, title)

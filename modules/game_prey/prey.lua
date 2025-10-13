@@ -82,7 +82,7 @@ function init()
         onResourcesBalanceChange = Prey.onResourcesBalanceChange,
         onPreyFreeRerolls = onPreyFreeRerolls,
         onPreyTimeLeft = onPreyTimeLeft,
-        onPreyRerollPrice = onPreyRerollPrice,
+        onPreyRerollPrice = onPreyPrices,
         onPreyLocked = onPreyLocked,
         onPreyInactive = onPreyInactive,
         onPreyActive = onPreyActive,
@@ -286,7 +286,7 @@ function terminate()
         onResourcesBalanceChange = Prey.onResourcesBalanceChange,
         onPreyFreeRerolls = onPreyFreeRerolls,
         onPreyTimeLeft = onPreyTimeLeft,
-        onPreyRerollPrice = onPreyRerollPrice,
+        onPreyRerollPrice = onPreyPrices,
         onPreyLocked = onPreyLocked,
         onPreyInactive = onPreyInactive,
         onPreyActive = onPreyActive,
@@ -546,7 +546,7 @@ function onPreyTimeLeft(slot, timeLeft)
     progressbar:setText(desc)
 end
 
-function onPreyRerollPrice(data)
+function onPreyPrices(data)
     rerollPrice = data.preyRerollPriceInGold or 0
     local t = { 'slot1', 'slot2', 'slot3' }
     for index, slot in ipairs(t) do

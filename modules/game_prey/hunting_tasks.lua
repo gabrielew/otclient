@@ -815,7 +815,7 @@ function Tasks.terminate()
     disconnect(g_game, {
         taskHuntingBasicData = taskHuntingBasicData,
         onTaskHuntingData = onTaskHuntingData,
-        onPreyRerollPrice = onPreyRerollPrice
+        onPreyRerollPrice = onHuntingTaskPrices
     })
     clearSlotWidgets()
     destroyWidget(slotsContainer)

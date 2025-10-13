@@ -458,6 +458,11 @@ function setUnsupportedSettings()
             end
         end
     end
+
+    local huntingTaskModule = modules and modules.game_hunting_task
+    if huntingTaskModule and huntingTaskModule.setUnsupportedSettings then
+        huntingTaskModule.setUnsupportedSettings()
+    end
 end
 
 function check()

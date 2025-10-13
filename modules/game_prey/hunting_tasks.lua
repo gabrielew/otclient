@@ -11,6 +11,90 @@ local slotsContainer
 local placeholderWidget
 local slotWidgets = {}
 
+local function configureHuntingTaskResource(preyWindow)
+    if not preyWindow then
+        return
+    end
+
+    local resourceWidget = preyWindow:recursiveGetChildById('huntingTasksResource')
+    if not resourceWidget or resourceWidget.__huntingTaskResourceConfigured then
+        return
+    end
+
+    resourceWidget.__huntingTaskResourceConfigured = true
+
+    local titleWidget = resourceWidget:recursiveGetChildById('preyHuntingTaskPointsTitle')
+    if not titleWidget and g_ui then
+        titleWidget = g_ui.createWidget('UILabel', resourceWidget)
+        titleWidget:setId('preyHuntingTaskPointsTitle')
+    end
+
+    if titleWidget then
+        titleWidget:setText(tr('Hunting Task Points'))
+        titleWidget:setTextAlign(AlignCenter)
+        if titleWidget.breakAnchors then
+            titleWidget:breakAnchors()
+        end
+        titleWidget:addAnchor(AnchorTop, 'parent', AnchorTop)
+        titleWidget:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+        titleWidget:addAnchor(AnchorRight, 'parent', AnchorRight)
+    end
+
+    local rowWidget = resourceWidget:recursiveGetChildById('preyHuntingTaskPointsRow')
+    if not rowWidget and g_ui then
+        rowWidget = g_ui.createWidget('UIWidget', resourceWidget)
+        rowWidget:setId('preyHuntingTaskPointsRow')
+        rowWidget:setFocusable(false)
+        rowWidget:setPhantom(true)
+    end
+
+    if rowWidget and rowWidget.breakAnchors then
+        rowWidget:breakAnchors()
+        if titleWidget then
+            rowWidget:addAnchor(AnchorTop, titleWidget:getId(), AnchorBottom)
+        else
+            rowWidget:addAnchor(AnchorTop, 'parent', AnchorTop)
+        end
+        rowWidget:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+        rowWidget:addAnchor(AnchorRight, 'parent', AnchorRight)
+        rowWidget:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+    end
+
+    local valueWidget = resourceWidget:recursiveGetChildById('text')
+    local iconWidget = resourceWidget:recursiveGetChildById('huntingTaskPoints')
+
+    if iconWidget then
+        if rowWidget then
+            iconWidget:setParent(rowWidget)
+        end
+        if iconWidget.breakAnchors then
+            iconWidget:breakAnchors()
+        end
+        iconWidget:addAnchor(AnchorRight, 'parent', AnchorRight)
+        iconWidget:addAnchor(AnchorVerticalCenter, 'parent', AnchorVerticalCenter)
+        iconWidget:setImageSource('/images/game/prey/prey_hunting_task_points')
+    end
+
+    if valueWidget then
+        if rowWidget then
+            valueWidget:setParent(rowWidget)
+        end
+        if valueWidget.breakAnchors then
+            valueWidget:breakAnchors()
+        end
+        valueWidget:setText('0')
+        valueWidget:setTextAlign(AlignRight)
+        valueWidget:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+        valueWidget:addAnchor(AnchorVerticalCenter, 'parent', AnchorVerticalCenter)
+        if iconWidget then
+            valueWidget:addAnchor(AnchorRight, iconWidget:getId(), AnchorLeft)
+            valueWidget:setMarginRight(4)
+        else
+            valueWidget:addAnchor(AnchorRight, 'parent', AnchorRight)
+        end
+    end
+end
+
 local CANCEL_BUTTON_STYLE = 'HuntingTaskCancelButton'
 local CANCEL_BUTTON_ID = 'HuntingTaskCancelButton'
 
@@ -800,6 +884,8 @@ function Tasks.init(preyWindow, tabWidget)
     if not tasksTab then
         return
     end
+
+    configureHuntingTaskResource(preyWindow)
 
     ensureContentWidget()
     ensureSlots()

@@ -2,6 +2,9 @@ PreyWindowTabs = PreyWindowTabs or {}
 
 local Tabs = PreyWindowTabs
 
+local CREATURES_TAB_STYLE = 'PreyCreaturesTabButton'
+local TASKS_TAB_STYLE = 'PreyTasksTabButton'
+
 local function detachWidget(widget)
     if not widget then
         return nil
@@ -87,12 +90,16 @@ function Tabs.setup(preyWindow, config)
 
         local creaturesTab
         if creaturesTabWidget then
-            creaturesTab = Tabs.tabBar:addTab(tr('Prey Creatures'), creaturesTabWidget)
+            creaturesTab = Tabs.tabBar:addTab('', creaturesTabWidget)
+            creaturesTab:setStyle(CREATURES_TAB_STYLE)
+            creaturesTab:setTooltip(tr('Prey Creatures'))
         end
 
         if huntingTasksWidget then
             Tabs.huntingTasksTabButton =
-                Tabs.tabBar:addTab(tr('Hunting Tasks'), huntingTasksWidget)
+                Tabs.tabBar:addTab('', huntingTasksWidget)
+            Tabs.huntingTasksTabButton:setStyle(TASKS_TAB_STYLE)
+            Tabs.huntingTasksTabButton:setTooltip(tr('Hunting Tasks'))
         end
 
         connect(Tabs.tabBar, { onTabChange = Tabs.onTabChange })

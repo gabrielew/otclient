@@ -17,6 +17,73 @@ local CANCEL_BUTTON_ID = 'HuntingTaskCancelButton'
 local cancelButtonStylesLoaded = false
 local cancelButtonStylesAttempted = false
 
+local widgetDefaultWidths = setmetatable({}, { __mode = 'k' })
+
+local function isWidgetAvailable(widget)
+    return widget and not (widget.isDestroyed and widget:isDestroyed())
+end
+
+local function applyWidgetWidth(widget, width)
+    if not isWidgetAvailable(widget) then
+        return
+    end
+
+    if not widget.setWidth or not widget.getWidth then
+        return
+    end
+
+    if not widgetDefaultWidths[widget] then
+        widgetDefaultWidths[widget] = widget:getWidth()
+    end
+
+    if width and width > 0 then
+        widget:setWidth(width)
+        return
+    end
+
+    local defaultWidth = widgetDefaultWidths[widget]
+    if defaultWidth and defaultWidth > 0 then
+        widget:setWidth(defaultWidth)
+    end
+end
+
+local function anchorPriceLabel(priceLabel, topWidget, alignWidget)
+    if not isWidgetAvailable(priceLabel) then
+        return
+    end
+
+    if not priceLabel.breakAnchors or not priceLabel.addAnchor then
+        return
+    end
+
+    local marginTop
+    if priceLabel.getMarginTop then
+        marginTop = priceLabel:getMarginTop()
+    end
+
+    priceLabel:breakAnchors()
+
+    if isWidgetAvailable(topWidget) then
+        priceLabel:addAnchor(AnchorTop, topWidget, AnchorBottom)
+    else
+        priceLabel:addAnchor(AnchorTop, 'parent', AnchorTop)
+    end
+
+    if isWidgetAvailable(alignWidget) then
+        priceLabel:addAnchor(AnchorLeft, alignWidget, AnchorLeft)
+        priceLabel:addAnchor(AnchorRight, alignWidget, AnchorRight)
+    else
+        priceLabel:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+        priceLabel:addAnchor(AnchorRight, 'parent', AnchorRight)
+    end
+
+    priceLabel:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+
+    if marginTop and priceLabel.setMarginTop then
+        priceLabel:setMarginTop(marginTop)
+    end
+end
+
 local function formatFreeRerollText(seconds)
     local remainingSeconds = math.max(0, math.floor(tonumber(seconds) or 0))
     if remainingSeconds <= 0 then
@@ -255,6 +322,7 @@ local function setCancelButtonVisible(slotWidget, visible)
 
     local rerollButton = rerollPanel:recursiveGetChildById('rerollButton')
     local buttonContainer = rerollPanel:recursiveGetChildById('button')
+    local priceLabel = rerollPanel:recursiveGetChildById('price')
     local rerollVisible = not visible or not cancelButton
     if rerollButton and not rerollButton:isDestroyed() then
         rerollButton:setVisible(rerollVisible)
@@ -265,6 +333,23 @@ local function setCancelButtonVisible(slotWidget, visible)
 
     if buttonContainer and not buttonContainer:isDestroyed() then
         buttonContainer:setVisible(rerollVisible)
+        if cancelButton and cancelButton.getWidth then
+            applyWidgetWidth(buttonContainer, visible and cancelButton:getWidth() or nil)
+        end
+    end
+
+    if rerollPanel and not rerollPanel:isDestroyed() then
+        if cancelButton and cancelButton.getWidth then
+            applyWidgetWidth(rerollPanel, visible and cancelButton:getWidth() or nil)
+        end
+    end
+
+    if priceLabel and not priceLabel:isDestroyed() then
+        if visible and cancelButton and cancelButton.getWidth then
+            anchorPriceLabel(priceLabel, cancelButton, cancelButton)
+        else
+            anchorPriceLabel(priceLabel, buttonContainer or rerollButton, nil)
+        end
     end
 end
 

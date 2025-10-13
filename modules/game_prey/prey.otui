@@ -549,67 +549,6 @@ RerollButton < FlatPanel
     anchors.right: parent.right
     anchors.bottom: parent.bottom
 
-CardLabel < FlatPanel
-  padding: 5
-  image-source: /images/ui/backdrop-dark-grey
-  image-border: 5
-
-  UIWidget
-    id: cards
-    anchors.right: parent.right
-    anchors.verticalCenter: parent.verticalCenter
-    image-source: /images/game/prey/prey_wildcard
-    tooltip: Prey Wildcards
-
-  UIWidget
-    id: text
-    anchors.right: prev.left
-    margin-right: 5
-    anchors.left: parent.left
-    anchors.verticalCenter: parent.verticalCenter
-    text-align: right
-
-HuntingTaskLabel < FlatPanel
-  padding: 5
-  image-source: /images/ui/backdrop-dark-grey
-  image-border: 5
-
-  UIWidget
-    id: huntingTaskPoints
-    anchors.right: parent.right
-    anchors.verticalCenter: parent.verticalCenter
-    image-source: /images/game/prey/prey_hunting_task_points
-    tooltip: Hunting Task Points
-
-  UIWidget
-    id: text
-    anchors.right: prev.left
-    margin-right: 5
-    anchors.left: parent.left
-    anchors.verticalCenter: parent.verticalCenter
-    text-align: right
-
-GoldLabel < FlatPanel
-  image-source: /images/ui/backdrop-dark-grey
-  image-border: 5
-  margin: 1
-  
-  UIWidget
-    id: gold
-    anchors.right: parent.right
-    anchors.verticalCenter: parent.verticalCenter
-    image-source: /images/game/prey/prey_gold
-    tooltip: Gold Coins
-    margin-right: 5
-
-  UIWidget
-    id: text
-    anchors.right: prev.left
-    margin-right: 5
-    anchors.left: parent.left
-    anchors.verticalCenter: parent.verticalCenter
-    text-align: right
-
 PreyCreatureBox < UICheckBox
   border-width: 1
   border-color: #ffffff

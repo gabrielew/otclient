@@ -1,5 +1,7 @@
 -- sponsored by kivera-global.com
 -- remade by Vithrax#5814
+local Helper = require('helper.lua')
+
 Prey = {}
 preyWindow = nil
 preyButton = nil
@@ -593,7 +595,8 @@ function setTimeUntilFreeReroll(slot, timeUntilFreeReroll) -- minutes
             if timeUntilFreeReroll > 0 then
                 price:setText(comma_value(rerollPrice))
             else
-                price:setText('Free')
+                reroll:setPercent(0)
+                price:setText(Helper.handleFormatPrice(rerollPrice))
             end
         end
     end

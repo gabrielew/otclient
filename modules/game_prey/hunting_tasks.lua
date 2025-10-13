@@ -1,3 +1,4 @@
+local Helper = require('helper.lua')
 HuntingTasks = HuntingTasks or {}
 
 local Tasks = HuntingTasks
@@ -27,37 +28,6 @@ local function formatFreeRerollText(seconds)
     local minutes = math.floor((remainingSeconds % 3600) / 60)
 
     return string.format('%02d:%02d', hours, minutes)
-end
-
-local function handleFormatPrice(price)
-    local priceText = "Free"
-    if price > 0 then
-        if price >= 1000000 then
-            local millions = math.floor(price / 1000000)
-            local remainder = price % 1000000
-            if remainder >= 500000 then
-                priceText = string.format('%d.5M', millions)
-            elseif remainder >= 100000 then
-                priceText = string.format('%dM', millions)
-            else
-                priceText = string.format('%dM', math.max(1, millions))
-            end
-        elseif price >= 100000 then
-            local thousands = math.floor(price / 1000)
-            local remainder = price % 1000
-            if remainder >= 500 then
-                priceText = string.format('%d.5k', thousands)
-            elseif remainder >= 100 then
-                priceText = string.format('%dk', thousands)
-            else
-                priceText = string.format('%dk', math.max(1, thousands))
-            end
-        else
-            priceText = tostring(price)
-        end
-    end
-
-    return priceText
 end
 
 local function getTaskHuntingCardBalance()
@@ -105,7 +75,7 @@ local function applyPriceToCancel(slotWidget, data)
         return
     end
 
-    local cancelText = handleFormatPrice(data.cancelProgress or 0)
+    local cancelText = Helper.handleFormatPrice(data.cancelProgress or 0)
     timerWidget:setText(cancelText)
 end
 
@@ -194,7 +164,8 @@ local function ensureCancelButton(slotWidget)
         return cancelButton, activePanel
     end
 
-    cancelButton = g_ui.createWidget(CANCEL_BUTTON_STYLE, buttonContainer)
+    local parentWidget = rerollPanel
+    cancelButton = g_ui.createWidget(CANCEL_BUTTON_STYLE, parentWidget)
     if not cancelButton then
         return nil, activePanel
     end
@@ -203,14 +174,23 @@ local function ensureCancelButton(slotWidget)
     cancelButton:setVisible(false)
     cancelButton:setFocusable(false)
 
-    if cancelButton.fill then
-        cancelButton:fill('parent')
-    elseif cancelButton.breakAnchors then
+    if cancelButton.breakAnchors then
         cancelButton:breakAnchors()
-        cancelButton:addAnchor(AnchorTop, 'parent', AnchorTop)
-        cancelButton:addAnchor(AnchorLeft, 'parent', AnchorLeft)
-        cancelButton:addAnchor(AnchorRight, 'parent', AnchorRight)
-        cancelButton:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+        if buttonContainer and not buttonContainer:isDestroyed() then
+            cancelButton:addAnchor(AnchorTop, buttonContainer, AnchorTop)
+            cancelButton:addAnchor(AnchorLeft, buttonContainer, AnchorLeft)
+            cancelButton:addAnchor(AnchorRight, buttonContainer, AnchorRight)
+            cancelButton:addAnchor(AnchorBottom, buttonContainer, AnchorBottom)
+        else
+            cancelButton:addAnchor(AnchorTop, 'parent', AnchorTop)
+            cancelButton:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+            cancelButton:addAnchor(AnchorRight, 'parent', AnchorRight)
+            cancelButton:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+        end
+    end
+
+    if cancelButton.raise then
+        cancelButton:raise()
     end
 
     return cancelButton, activePanel
@@ -244,12 +224,17 @@ local function setCancelButtonVisible(slotWidget, visible)
     end
 
     local rerollButton = rerollPanel:recursiveGetChildById('rerollButton')
+    local buttonContainer = rerollPanel:recursiveGetChildById('button')
     local rerollVisible = not visible or not cancelButton
     if rerollButton and not rerollButton:isDestroyed() then
         rerollButton:setVisible(rerollVisible)
         if rerollButton.setEnabled then
             rerollButton:setEnabled(rerollVisible)
         end
+    end
+
+    if buttonContainer and not buttonContainer:isDestroyed() then
+        buttonContainer:setVisible(rerollVisible)
     end
 end
 
@@ -641,6 +626,10 @@ local function resolveRaceData(raceId)
     return data
 end
 
+local function selectListTask(slotWidget, list)
+
+end
+
 local function applyActiveTask(slotWidget, activeData)
     if not slotWidget or slotWidget:isDestroyed() or not activeData then
         return
@@ -892,6 +881,9 @@ function onTaskHuntingData(data)
     -- ListSelection
     if data.listSelection then
         g_logger.info(("  [ListSelection] %d entries"):format(#data.listSelection))
+
+        selectListTask(slotWidget, data.listSelection)
+
         for i, entry in ipairs(data.listSelection) do
             g_logger.info(("    [%d] raceId=%d, unlocked=%s")
                 :format(i, entry.raceId, tostring(entry.unlocked)))

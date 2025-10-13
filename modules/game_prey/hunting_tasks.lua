@@ -164,6 +164,14 @@ local function setCancelButtonVisible(slotWidget, visible)
     if progressBar and not progressBar:isDestroyed() then
         progressBar:setVisible(rerollVisible)
     end
+
+    local priceLabel = rerollPanel:recursiveGetChildById('price')
+    if priceLabel and not priceLabel:isDestroyed() then
+        priceLabel:setVisible(rerollVisible)
+        if priceLabel.setEnabled then
+            priceLabel:setEnabled(rerollVisible)
+        end
+    end
 end
 
 local function clearSlotWidgets()

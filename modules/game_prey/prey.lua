@@ -374,9 +374,16 @@ function toggleTracker()
   if preyTracker:isVisible() then
     preyTracker:close()
   else
-    if not m_interface.addToPanels(preyTracker) then
-      modules.game_sidebuttons.setButtonVisible("preyWidget", false)
-      return false
+    if not preyTracker:getParent() then
+      local panel = modules.game_interface and modules.game_interface.findContentPanelAvailable(preyTracker, preyTracker:getMinimumHeight())
+      if not panel then
+        if modules.game_sidebuttons then
+          modules.game_sidebuttons.setButtonVisible("preyWidget", false)
+        end
+        return false
+      end
+
+      panel:addChild(preyTracker)
     end
     preyTracker:open()
     preyTracker:getParent():moveChildToIndex(preyTracker, #preyTracker:getParent():getChildren())

@@ -76,7 +76,7 @@ function init()
 	onHuntingExhaustedState = onHuntingExhaustedState
   })
 
-  preyTracker = modules.game_prey.preyTracker
+  preyTracker = modules.game_prey and modules.game_prey.preyTracker or nil
   huntingWindowButton = huntingWindow:recursiveGetChildById("huntingTaskButton")
 
   for i = 1, 3 do
@@ -1137,11 +1137,14 @@ function storeRedirect(offerType)
 end
 
 function updatePreyWidget(slot, state)
-	local preyTrackerSlot = preyTracker.contentsPanel["hslot" .. (slot + 1)]
-	if state == PREY_HUNTING_STATE_LOCKED then
-	  preyTrackerSlot:setVisible(false)
-	  return
-	end
+        if not preyTracker or not preyTracker.contentsPanel then
+                return
+        end
+        local preyTrackerSlot = preyTracker.contentsPanel["hslot" .. (slot + 1)]
+        if state == PREY_HUNTING_STATE_LOCKED then
+          preyTrackerSlot:setVisible(false)
+          return
+        end
 
 	if slot == 2 then
 		preyTrackerSlot:setVisible(true)

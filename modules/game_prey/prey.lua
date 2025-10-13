@@ -43,6 +43,12 @@ local setWidgetTreePhantom
 local updatePickSpecificPreyButton
 local refreshRerollButtonState
 
+local function setDescriptionText(text)
+    if preyWindow and preyWindow.description then
+        preyWindow.description:setText(text or '')
+    end
+end
+
 function bonusDescription(bonusType, bonusValue, bonusGrade)
     if bonusType == PREY_BONUS_DAMAGE_BOOST then
         return 'Damage bonus (' .. bonusGrade .. '/10)'
@@ -91,24 +97,28 @@ function init()
     preyWindow:hide()
     preyTabBar = preyWindow:getChildById('preyTabBar')
     local preyTabContent = preyWindow:getChildById('preyTabContent')
-    preyCreaturesTab = preyWindow:getChildById('preyCreaturesTab')
+    preyCreaturesTab = preyWindow:recursiveGetChildById('preyCreaturesTab')
+
+    local descriptionWidget = preyWindow:recursiveGetChildById('description')
+    if descriptionWidget then
+        preyWindow.description = descriptionWidget
+    end
+
     if preyCreaturesTab then
         for slotIndex = 1, 3 do
             local slotWidget = preyCreaturesTab:getChildById('slot' .. slotIndex)
+            if not slotWidget then
+                slotWidget = preyCreaturesTab:recursiveGetChildById('slot' .. slotIndex)
+            end
             if slotWidget then
                 preyWindow['slot' .. slotIndex] = slotWidget
             end
-        end
-
-        local descriptionWidget = preyCreaturesTab:getChildById('description')
-        if descriptionWidget then
-            preyWindow.description = descriptionWidget
         end
     end
     if preyTabBar and preyTabContent then
         preyTabBar:setContentWidget(preyTabContent)
 
-        local huntingTasksTab = preyWindow:getChildById('huntingTasksTab')
+        local huntingTasksTab = preyWindow:recursiveGetChildById('huntingTasksTab')
 
         local creaturesTab = preyTabBar:addTab(tr('Prey Creatures'), preyCreaturesTab)
         preyTabBar:addTab(tr('Hunting Tasks'), huntingTasksTab)
@@ -243,27 +253,29 @@ end
 
 function onHover(widget)
     if type(widget) == 'string' then
-        return preyWindow.description:setText(descriptionTable[widget])
+        setDescriptionText(descriptionTable[widget])
+        return
     elseif type(widget) == 'number' then
         local slot = 'slot' .. (widget + 1)
         local tracker = preyTracker.contentsPanel[slot]
         local desc = tracker.time:getTooltip()
         desc = desc:sub(1, desc:len() - 46)
-        return preyWindow.description:setText(desc)
+        setDescriptionText(desc)
+        return
     end
     if widget and widget:isVisible() then
         local id = widget:getId()
         if id == 'pickSpecificPrey' then
             local slot = getSlotIndexFromWidget(widget)
             if slot then
-                preyWindow.description:setText(getPickSpecificPreyDescription(slot))
+                setDescriptionText(getPickSpecificPreyDescription(slot))
                 return
             end
         end
 
         local desc = descriptionTable[id]
         if desc then
-            preyWindow.description:setText(desc)
+            setDescriptionText(desc)
         end
     end
 end
@@ -291,6 +303,7 @@ function terminate()
     if preyTrackerButton then
         preyTrackerButton:destroy()
     end
+    preyWindow.description = nil
     preyWindow:destroy()
     preyTracker:destroy()
     preyTabBar = nil
@@ -381,7 +394,7 @@ local function resetPreyWindowState()
         return
     end
 
-    preyWindow.description:setText('')
+    setDescriptionText('')
     preyWindow.gold:setText('0')
     preyWindow.wildCards:setText('0')
 

@@ -241,7 +241,7 @@ local function updateTaskRarity(gradePanel, rarity)
         g_ui.createWidget(widgetName, gradePanel)
     end
 
-    gradePanel:setTooltip(tr('Rarity: %d'):format(effectiveRarity))
+    gradePanel:setTooltip(tr('Rarity: %d', effectiveRarity))
 end
 
 local function updateTaskProgress(progressBar, currentKills, requiredKills)
@@ -261,7 +261,7 @@ local function updateTaskProgress(progressBar, currentKills, requiredKills)
 
     progressBar:setPercent(percent)
     progressBar:setText(text)
-    progressBar:setTooltip(tr('Hunting task progress: %s'):format(text))
+    progressBar:setTooltip(tr('Hunting task progress: %s', text))
 end
 
 local function resolveRaceData(raceId)

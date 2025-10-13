@@ -160,11 +160,19 @@ local function configureSlotWidget(slotWidget, index)
         titleWidget:setText(tr('Hunting Task Slot %d', index))
     end
 
-    local inactivePanel = slotWidget:recursiveGetChildById('inactive')
-    if inactivePanel then
-        local raceListPanel = inactivePanel:recursiveGetChildById('list')
-        if raceListPanel then
-            raceListPanel:setHeight(230)
+    local activePanel = slotWidget:recursiveGetChildById('active')
+    if activePanel then
+        local creatureAndBonus = activePanel:recursiveGetChildById('creatureAndBonus')
+        if creatureAndBonus then
+            local creatureHeight = 230
+            local creatureWidget = creatureAndBonus:recursiveGetChildById('creature')
+            if creatureWidget then
+                creatureWidget:setHeight(creatureHeight)
+            end
+
+            -- Allow enough room for the enlarged creature and the progress bar.
+            local minimumPanelHeight = creatureHeight + 40
+            creatureAndBonus:setHeight(minimumPanelHeight)
         end
     end
 

@@ -5,66 +5,9 @@ preyWindow = nil
 preyButton = nil
 local preyTrackerButton
 local msgWindow
-local preyTabBar
-local preyCreaturesTab
 local bankGold = 0
 
-local huntingTasksTabButton
-local function isHuntingTasksTabSelected(selectedTab)
-    if selectedTab then
-        return huntingTasksTabButton and selectedTab == huntingTasksTabButton or false
-    end
-    return preyTabBar and huntingTasksTabButton and preyTabBar:getCurrentTab() == huntingTasksTabButton or false
-end
-
-local function updateHuntingTasksResourceVisibility(selectedTab)
-    if not preyWindow or not preyWindow.huntingTasksResource then
-        return
-    end
-
-    preyWindow.huntingTasksResource:setVisible(isHuntingTasksTabSelected(selectedTab))
-end
-
-local function updateResourceLabelsFromPlayer()
-    if not preyWindow then
-        return
-    end
-
-    local player = g_game.getLocalPlayer()
-    if not player then
-        if preyWindow.gold then
-            preyWindow.gold:setText('0')
-        end
-        if preyWindow.wildCards then
-            preyWindow.wildCards:setText('0')
-        end
-        if preyWindow.huntingTasksResourceText then
-            preyWindow.huntingTasksResourceText:setText('0')
-        end
-        return
-    end
-
-    if preyWindow.gold then
-        preyWindow.gold:setText(comma_value(player:getTotalMoney()))
-    end
-
-    if preyWindow.wildCards and ResourceTypes and ResourceTypes.PREY_WILDCARDS then
-        local wildcardsBalance = player:getResourceBalance(ResourceTypes.PREY_WILDCARDS)
-        preyWindow.wildCards:setText(tostring(wildcardsBalance))
-    end
-
-    if preyWindow.huntingTasksResourceText and ResourceTypes and ResourceTypes.TASK_HUNTING then
-        local huntingBalance = player:getResourceBalance(ResourceTypes.TASK_HUNTING)
-        preyWindow.huntingTasksResourceText:setText(tostring(huntingBalance))
-    end
-end
-
-local function onPreyTabChange(tabBar, tab)
-    updateHuntingTasksResourceVisibility(tab)
-    if isHuntingTasksTabSelected(tab) then
-        updateResourceLabelsFromPlayer()
-    end
-end
+local PreyWindowTabs = dofile('modules/game_prey/prey_window_tabs.lua')
 
 local inventoryGold = 0
 local rerollPrice = 0
@@ -92,19 +35,6 @@ local raceEntriesBySlot = {}
 local selectedRaceEntryBySlot = {}
 local selectedRaceWidgetBySlot = {}
 local raceSearchTextsBySlot = {}
-
-local function detachWidget(widget)
-    if not widget then
-        return nil
-    end
-
-    local parent = widget:getParent()
-    if parent then
-        parent:removeChild(widget)
-    end
-
-    return widget
-end
 
 local refreshRaceList
 local setRaceSelection
@@ -166,33 +96,14 @@ function init()
 
     preyWindow = g_ui.displayUI('prey')
     preyWindow:hide()
-    preyTabBar = preyWindow:getChildById('preyTabBar')
     local preyTabContent = preyWindow:getChildById('preyTabContent')
-    preyCreaturesTab = preyWindow:recursiveGetChildById('preyCreaturesTab')
+    local preyCreaturesTab = preyWindow:recursiveGetChildById('preyCreaturesTab')
     local huntingTasksTabPanel = preyWindow:recursiveGetChildById('huntingTasksTab')
 
     local descriptionWidget = preyWindow:recursiveGetChildById('description')
     if descriptionWidget then
         preyWindow.description = descriptionWidget
         descriptionWidget:setHeight(80)
-    end
-
-    local huntingTasksResource = preyWindow:recursiveGetChildById('huntingTasksResource')
-    if huntingTasksResource then
-        preyWindow.huntingTasksResource = huntingTasksResource
-        local huntingTaskIcon = huntingTasksResource:getChildById('huntingTaskPoints') or
-            huntingTasksResource:recursiveGetChildById('huntingTaskPoints')
-        if huntingTaskIcon then
-            huntingTaskIcon:setTooltip(tr('Hunting Task Points'))
-        end
-
-        local textWidget = huntingTasksResource:getChildById('text') or
-            huntingTasksResource:recursiveGetChildById('text')
-        if textWidget then
-            preyWindow.huntingTasksResourceText = textWidget
-        end
-
-        huntingTasksResource:setVisible(false)
     end
 
     if preyCreaturesTab then
@@ -206,16 +117,11 @@ function init()
             end
         end
     end
-    if preyTabBar and preyTabContent then
-        preyTabBar:setContentWidget(preyTabContent)
-
-        local creaturesTab = preyTabBar:addTab(tr('Prey Creatures'), detachWidget(preyCreaturesTab))
-        huntingTasksTabButton = preyTabBar:addTab(tr('Hunting Tasks'), detachWidget(huntingTasksTabPanel))
-        connect(preyTabBar, { onTabChange = onPreyTabChange })
-        preyTabBar:selectTab(creaturesTab)
-    end
-
-    updateHuntingTasksResourceVisibility()
+    PreyWindowTabs.setup(preyWindow, {
+        tabContent = preyTabContent,
+        creaturesTab = preyCreaturesTab,
+        huntingTasksTab = huntingTasksTabPanel
+    })
 
     preyTracker = g_ui.createWidget('PreyTracker', modules.game_interface.getRightPanel())
     preyTracker:setup()
@@ -269,7 +175,7 @@ function init()
         check()
     end
     setUnsupportedSettings()
-    updateResourceLabelsFromPlayer()
+    PreyWindowTabs.updateResourceLabelsFromPlayer()
 end
 
 local pickSpecificPreyBonusBySlot = {}
@@ -397,15 +303,15 @@ function terminate()
         preyTrackerButton:destroy()
     end
     if preyWindow then
+        PreyWindowTabs.terminate()
         preyWindow.description = nil
-        preyWindow.huntingTasksResource = nil
-        preyWindow.huntingTasksResourceText = nil
+        preyWindow:destroy()
+        preyWindow = nil
     end
-    preyWindow:destroy()
-    preyTracker:destroy()
-    preyTabBar = nil
-    preyCreaturesTab = nil
-    huntingTasksTabButton = nil
+    if preyTracker then
+        preyTracker:destroy()
+        preyTracker = nil
+    end
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil
@@ -493,13 +399,7 @@ local function resetPreyWindowState()
     end
 
     setDescriptionText('')
-    preyWindow.gold:setText('0')
-    preyWindow.wildCards:setText('0')
-
-    if preyWindow.huntingTasksResourceText then
-        preyWindow.huntingTasksResourceText:setText('0')
-    end
-    updateHuntingTasksResourceVisibility()
+    PreyWindowTabs.resetResourceDisplays()
 
     for slot = 0, 2 do
         onPreyInactive(slot, 0, 0)
@@ -2074,7 +1974,7 @@ function Prey.onResourcesBalanceChange(balance, oldBalance, type)
         end
     end
     g_logger.debug('' .. tostring(type) .. ', ' .. tostring(balance))
-    updateResourceLabelsFromPlayer()
+    PreyWindowTabs.updateResourceLabelsFromPlayer()
 
     if type == ResourceTypes.BANK_BALANCE or type == ResourceTypes.GOLD_EQUIPPED then
         for slot = 0, 2 do

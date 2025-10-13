@@ -2,6 +2,9 @@ PreyWindowTabs = PreyWindowTabs or {}
 
 local Tabs = PreyWindowTabs
 
+local TAB_BUTTON_WIDTH = 332
+local TAB_BUTTON_HEIGHT = 34
+
 local function detachWidget(widget)
     if not widget then
         return nil
@@ -13,6 +16,31 @@ local function detachWidget(widget)
     end
 
     return widget
+end
+
+local function applyTabButtonStyle(tabButton, imagePath)
+    if not tabButton then
+        return
+    end
+
+    local function updateTabImage(widget)
+        widget = widget or tabButton
+        local checked = widget:isChecked()
+        local offsetY = checked and TAB_BUTTON_HEIGHT or 0
+        widget:setImageClip(string.format('0 %d %d %d', offsetY, TAB_BUTTON_WIDTH, TAB_BUTTON_HEIGHT))
+    end
+
+    tabButton:setText('')
+    tabButton:setSize({ width = TAB_BUTTON_WIDTH, height = TAB_BUTTON_HEIGHT })
+    tabButton:setPadding(0)
+    tabButton:setImageSource(imagePath)
+    tabButton:setImageBorder(0)
+
+    tabButton.onCheckChange = function(widget)
+        updateTabImage(widget)
+    end
+
+    updateTabImage(tabButton)
 end
 
 local function isHuntingTasksTabSelected(selectedTab)
@@ -88,11 +116,13 @@ function Tabs.setup(preyWindow, config)
         local creaturesTab
         if creaturesTabWidget then
             creaturesTab = Tabs.tabBar:addTab(tr('Prey Creatures'), creaturesTabWidget)
+            applyTabButtonStyle(creaturesTab, '/images/game/prey/prey-button')
         end
 
         if huntingTasksWidget then
             Tabs.huntingTasksTabButton =
                 Tabs.tabBar:addTab(tr('Hunting Tasks'), huntingTasksWidget)
+            applyTabButtonStyle(Tabs.huntingTasksTabButton, '/images/game/prey/task-button')
         end
 
         connect(Tabs.tabBar, { onTabChange = Tabs.onTabChange })

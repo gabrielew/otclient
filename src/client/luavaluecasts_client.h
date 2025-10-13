@@ -106,3 +106,7 @@ int push_luavalue(const DailyRewardData& data);
 int push_luavalue(const ForgeOpenData& data);
 int push_luavalue(const ForgeTransferData& data);
 int push_luavalue(const ForgeItemInfo& data);
+
+// task hunting (prey window)
+int push_luavalue(const TaskHuntingBasicData& data);
+int push_luavalue(const TaskHuntingPacket& data);

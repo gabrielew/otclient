@@ -1,3 +1,21 @@
+PreyTabBarButton < TabBarButton
+  size: 332 34
+  padding: 0
+  image-border: 0
+  text: ''
+
+  $!checked:
+    image-clip: 0 0 332 34
+
+  $checked:
+    image-clip: 0 34 332 34
+
+PreyCreaturesTabButton < PreyTabBarButton
+  image-source: /images/game/prey/prey-button
+
+PreyTasksTabButton < PreyTabBarButton
+  image-source: /images/game/prey/task-button
+
 LockedPreyPanel < Panel
   size: 195 312
 

@@ -60,6 +60,26 @@ local function handleFormatPrice(price)
     return priceText
 end
 
+local function getTaskHuntingCardBalance()
+    if not g_game or not g_game.getLocalPlayer then
+        return 0
+    end
+
+    local player = g_game.getLocalPlayer()
+    if not player or not player.getResourceBalance then
+        return 0
+    end
+
+    if ResourceTypes and ResourceTypes.TASK_HUNTING then
+        local balance = player:getResourceBalance(ResourceTypes.TASK_HUNTING)
+        if type(balance) == 'number' then
+            return balance
+        end
+    end
+
+    return 0
+end
+
 local function applyPriceToCancel(slotWidget, data)
     if not slotWidget or slotWidget:isDestroyed() then
         return
@@ -229,6 +249,61 @@ local function setCancelButtonVisible(slotWidget, visible)
         rerollButton:setVisible(rerollVisible)
         if rerollButton.setEnabled then
             rerollButton:setEnabled(rerollVisible)
+        end
+    end
+end
+
+local function updateHigherStarsButton(activePanel)
+    if not activePanel or activePanel:isDestroyed() then
+        return
+    end
+
+    local styleLoaded = ensureCancelButtonStyle()
+
+    local selectPanel = activePanel:recursiveGetChildById('select')
+    if not selectPanel or selectPanel:isDestroyed() then
+        return
+    end
+
+    local button = selectPanel:recursiveGetChildById('pickSpecificPrey')
+    if not button or button:isDestroyed() then
+        return
+    end
+
+    if styleLoaded and button.setStyle then
+        button:setStyle('HuntingTaskHigherStarsButton')
+    elseif button.setImageSource then
+        button:setImageSource('/images/game/prey/prey_hunting_task_higher_stars')
+        if button.setImageClip then
+            button:setImageClip({0, 0, 64, 69})
+        end
+    end
+
+    if button.setSize then
+        button:setSize(64, 69)
+    end
+
+    local requiredCards = 0
+    if Tasks.prices then
+        requiredCards = Tasks.prices.taskHuntingBonusRerollPriceInCards or Tasks.prices.bonusRerollInCards or 0
+    end
+
+    local hasEnoughCards = true
+    if requiredCards and requiredCards > 0 then
+        hasEnoughCards = getTaskHuntingCardBalance() >= requiredCards
+    end
+
+    if hasEnoughCards then
+        if button.enable then
+            button:enable()
+        elseif button.setEnabled then
+            button:setEnabled(true)
+        end
+    else
+        if button.disable then
+            button:disable()
+        elseif button.setEnabled then
+            button:setEnabled(false)
         end
     end
 end
@@ -578,6 +653,8 @@ local function applyActiveTask(slotWidget, activeData)
         return
     end
 
+    updateHigherStarsButton(activePanel)
+
     local creatureAndBonus = activePanel:recursiveGetChildById('creatureAndBonus')
     if creatureAndBonus and not creatureAndBonus:isDestroyed() then
         local creatureWidget = creatureAndBonus:recursiveGetChildById('creature')
@@ -719,8 +796,22 @@ function onHuntingTaskPrices(data)
     Tasks.prices = Tasks.prices or {}
     Tasks.prices.cancelProgress = data.taskHuntingCancelProgressPriceInGold or 0
     Tasks.prices.rerollSelectionList = data.taskHuntingSelectionListPriceInGold or 0
-    Tasks.prices.bonusRerollInCards = data.taskHuntingBonusRerollPriceInCards or 1
+    local bonusRerollCards = data.taskHuntingBonusRerollPriceInCards
+    if bonusRerollCards == nil then
+        bonusRerollCards = 1
+    end
+    Tasks.prices.bonusRerollInCards = bonusRerollCards
+    Tasks.prices.taskHuntingBonusRerollPriceInCards = bonusRerollCards
     Tasks.prices.rerollSelectionListInCards = data.taskHuntingSelectionListPriceInCards or 5
+
+    for _, slotWidget in ipairs(slotWidgets) do
+        if slotWidget and not slotWidget:isDestroyed() then
+            local activePanel = slotWidget:recursiveGetChildById('active')
+            if activePanel and not activePanel:isDestroyed() and activePanel:isVisible() then
+                updateHigherStarsButton(activePanel)
+            end
+        end
+    end
 end
 
 function taskHuntingBasicData(data)

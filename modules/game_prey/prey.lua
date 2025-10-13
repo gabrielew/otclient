@@ -546,8 +546,8 @@ function onPreyTimeLeft(slot, timeLeft)
     progressbar:setText(desc)
 end
 
-function onPreyRerollPrice(price)
-    rerollPrice = price
+function onPreyRerollPrice(data)
+    rerollPrice = data.preyRerollPriceInGold or 0
     local t = { 'slot1', 'slot2', 'slot3' }
     for index, slot in ipairs(t) do
         local panel = preyWindow[slot]

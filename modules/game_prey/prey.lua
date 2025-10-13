@@ -98,6 +98,8 @@ function init()
     local preyCreaturesTab = preyWindow:recursiveGetChildById('preyCreaturesTab')
     local huntingTasksTabPanel = preyWindow:recursiveGetChildById('huntingTasksTab')
 
+    HuntingTasks.init(preyWindow, huntingTasksTabPanel)
+
     local descriptionWidget = preyWindow:recursiveGetChildById('description')
     if descriptionWidget then
         preyWindow.description = descriptionWidget
@@ -301,6 +303,7 @@ function terminate()
         preyTrackerButton:destroy()
     end
     if preyWindow then
+        HuntingTasks.terminate()
         PreyWindowTabs.terminate()
         preyWindow.description = nil
         preyWindow:destroy()

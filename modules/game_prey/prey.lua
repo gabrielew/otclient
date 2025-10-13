@@ -174,6 +174,7 @@ function init()
     local descriptionWidget = preyWindow:recursiveGetChildById('description')
     if descriptionWidget then
         preyWindow.description = descriptionWidget
+        descriptionWidget:setHeight(80)
     end
 
     local huntingTasksResource = preyWindow:recursiveGetChildById('huntingTasksResource')

@@ -676,7 +676,7 @@ SlotPanel < Panel
 
 MainWindow
   id: preyWindow
-  !text: tr('Preys')
+  !text: tr('Prey')
   size: 688 520
   @onEscape: modules.game_prey.hide()
   padding: 20

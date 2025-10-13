@@ -240,14 +240,18 @@ local function updateClaimRewardButton(activePanel)
 
     local styleLoaded = ensureCancelButtonStyle()
 
-    local selectPanel = activePanel:recursiveGetChildById('select')
-    if not selectPanel or selectPanel:isDestroyed() then
+    local choosePanel = activePanel:recursiveGetChildById('choose')
+    if not choosePanel or choosePanel:isDestroyed() then
         return
     end
 
-    local button = selectPanel:recursiveGetChildById('pickSpecificPrey')
+    local button = choosePanel:recursiveGetChildById('selectPrey')
     if not button or button:isDestroyed() then
         return
+    end
+
+    if choosePanel.setSize then
+        choosePanel:setSize('70 95')
     end
 
     if styleLoaded and button.setStyle then
@@ -269,7 +273,7 @@ local function updateClaimRewardButton(activePanel)
         button:setEnabled(false)
     end
 
-    local priceLabel = selectPanel:recursiveGetChildById('price')
+    local priceLabel = choosePanel:recursiveGetChildById('price')
     if priceLabel and priceLabel.setVisible then
         priceLabel:setVisible(false)
     end

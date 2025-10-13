@@ -160,6 +160,14 @@ local function configureSlotWidget(slotWidget, index)
         titleWidget:setText(tr('Hunting Task Slot %d', index))
     end
 
+    local inactivePanel = slotWidget:recursiveGetChildById('inactive')
+    if inactivePanel then
+        local raceListPanel = inactivePanel:recursiveGetChildById('list')
+        if raceListPanel then
+            raceListPanel:setHeight(230)
+        end
+    end
+
     return slotWidget
 end
 

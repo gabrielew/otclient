@@ -2,7 +2,7 @@ PreyWindowTabs = PreyWindowTabs or {}
 
 local Tabs = PreyWindowTabs
 
-local PREY_WINDOW_TABS_FILE = 'game_prey/prey_window_tabs'
+local PREY_WINDOW_TABS_FILE = 'prey_window_tabs'
 
 function Tabs.createWindow(parent)
     local targetParent = parent or g_ui.getRootWidget()

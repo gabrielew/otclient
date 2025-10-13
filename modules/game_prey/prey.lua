@@ -179,10 +179,10 @@ function init()
     local huntingTasksResource = preyWindow:recursiveGetChildById('huntingTasksResource')
     if huntingTasksResource then
         preyWindow.huntingTasksResource = huntingTasksResource
-        local cardsIcon = huntingTasksResource:getChildById('cards') or
-            huntingTasksResource:recursiveGetChildById('cards')
-        if cardsIcon then
-            cardsIcon:setTooltip(tr('Hunting Task Points'))
+        local huntingTaskIcon = huntingTasksResource:getChildById('huntingTaskPoints') or
+            huntingTasksResource:recursiveGetChildById('huntingTaskPoints')
+        if huntingTaskIcon then
+            huntingTaskIcon:setTooltip(tr('Hunting Task Points'))
         end
 
         local textWidget = huntingTasksResource:getChildById('text') or

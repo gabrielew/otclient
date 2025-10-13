@@ -534,6 +534,8 @@ RerollButton < FlatPanel
 
 CardLabel < FlatPanel
   padding: 5
+  image-source: /images/ui/backdrop-dark-grey
+  image-border: 5
 
   UIWidget
     id: cards
@@ -541,6 +543,26 @@ CardLabel < FlatPanel
     anchors.verticalCenter: parent.verticalCenter
     image-source: /images/game/prey/prey_wildcard
     tooltip: Prey Wildcards
+
+  UIWidget
+    id: text
+    anchors.right: prev.left
+    margin-right: 5
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    text-align: right
+
+HuntingTaskLabel < FlatPanel
+  padding: 5
+  image-source: /images/ui/backdrop-dark-grey
+  image-border: 5
+
+  UIWidget
+    id: huntingTaskPoints
+    anchors.right: parent.right
+    anchors.verticalCenter: parent.verticalCenter
+    image-source: /images/game/prey/prey_hunting_task_points
+    tooltip: Hunting Task Points
 
   UIWidget
     id: text
@@ -561,6 +583,7 @@ GoldLabel < FlatPanel
     anchors.verticalCenter: parent.verticalCenter
     image-source: /images/game/prey/prey_gold
     tooltip: Gold Coins
+    margin-right: 5
 
   UIWidget
     id: text
@@ -755,7 +778,7 @@ MainWindow
       image-source: /images/game/prey/prey_smallstore_clicked
       image-clip: -1 -1 27 21
       
-  CardLabel
+  HuntingTaskLabel
     id: huntingTasksResource
     anchors.left: prev.right
     margin-left: 10

@@ -658,7 +658,7 @@ PreyCreatureListItem < UICheckBox
     border-color: alpha
 
 SlotPanel < Panel
-  size: 210 320
+  size: 215 320
   image-source: /images/ui/window
   image-border: 25
   padding-top: 2

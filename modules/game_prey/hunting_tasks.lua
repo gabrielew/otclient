@@ -156,7 +156,7 @@ local function configureSlotWidget(slotWidget, index)
 
     local titleWidget = slotWidget:recursiveGetChildById('title')
     if titleWidget then
-        titleWidget:setText(tr('Hunting Task Slot %d'):format(index))
+        titleWidget:setText(tr('Hunting Task Slot %d', index))
     end
 
     return slotWidget

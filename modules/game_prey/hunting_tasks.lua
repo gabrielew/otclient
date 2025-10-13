@@ -166,7 +166,7 @@ local function configureSlotWidget(slotWidget, index)
         if creatureAndBonus and not creatureAndBonus.__huntingTaskAdjusted then
             creatureAndBonus.__huntingTaskAdjusted = true
 
-            local creatureHeight = 200
+            local creatureHeight = 160
             local creatureWidget = creatureAndBonus:recursiveGetChildById('creature')
             local originalCreatureHeight = creatureWidget and creatureWidget:getHeight() or 0
             if creatureWidget then
@@ -338,7 +338,8 @@ local function applyActiveTask(slotWidget, activeData)
     local raceName = raceData and raceData.name or ''
 
     if not raceName or raceName:len() == 0 then
-        raceName = activeData.selectedRaceId and tr('Unknown Creature (%d)', activeData.selectedRaceId) or tr('Hunting Task')
+        raceName = activeData.selectedRaceId and tr('Unknown Creature (%d)', activeData.selectedRaceId) or
+            tr('Hunting Task')
     end
 
     if titleWidget then

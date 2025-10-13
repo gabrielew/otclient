@@ -275,12 +275,12 @@ local function updateHigherStarsButton(activePanel)
     elseif button.setImageSource then
         button:setImageSource('/images/game/prey/prey_hunting_task_higher_stars')
         if button.setImageClip then
-            button:setImageClip({0, 0, 64, 69})
+            button:setImageClip('0 0 64 69')
         end
     end
 
     if button.setSize then
-        button:setSize(64, 69)
+        button:setSize('64 69')
     end
 
     local requiredCards = 0

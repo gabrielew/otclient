@@ -287,7 +287,7 @@ CreatureAndBonus < Panel
       id: icon
       anchors.top: parent.top
       anchors.horizontalCenter: parent.horizontalCenter
-      image-source: /images/game/prey/prey_hunting_task_prey_token
+      image-source: /images/game/prey/prey_bignobonus
       margin-top: 3
 
     HorizontalSeparator

@@ -320,6 +320,11 @@ local function applyActiveTask(slotWidget, activeData)
 
         local bonusPanel = creatureAndBonus:recursiveGetChildById('bonus')
         if bonusPanel then
+            local iconWidget = bonusPanel:recursiveGetChildById('icon')
+            if iconWidget then
+                iconWidget:setImageSource('/images/game/prey/prey_hunting_task_prey_token')
+            end
+
             local gradePanel = bonusPanel:recursiveGetChildById('grade')
             updateTaskRarity(gradePanel, activeData.rarity)
         end

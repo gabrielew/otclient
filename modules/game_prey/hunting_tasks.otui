@@ -21,3 +21,15 @@ HuntingTaskHigherStarsButton < UIButton
 
   $disabled:
     image-clip: 0 138 64 69
+
+HuntingTaskClaimRewardButton < UIButton
+  size: 65 91
+  focusable: false
+  image-source: /images/game/prey/prey_hunting_task_claim_reward
+  image-clip: 0 0 65 91
+
+  $pressed:
+    image-clip: 0 91 65 91
+
+  $disabled:
+    image-clip: 0 182 65 91

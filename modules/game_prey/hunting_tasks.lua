@@ -194,7 +194,8 @@ local function ensureCancelButton(slotWidget)
         return cancelButton, activePanel
     end
 
-    cancelButton = g_ui.createWidget(CANCEL_BUTTON_STYLE, buttonContainer)
+    local parentWidget = rerollPanel
+    cancelButton = g_ui.createWidget(CANCEL_BUTTON_STYLE, parentWidget)
     if not cancelButton then
         return nil, activePanel
     end
@@ -203,14 +204,23 @@ local function ensureCancelButton(slotWidget)
     cancelButton:setVisible(false)
     cancelButton:setFocusable(false)
 
-    if cancelButton.fill then
-        cancelButton:fill('parent')
-    elseif cancelButton.breakAnchors then
+    if cancelButton.breakAnchors then
         cancelButton:breakAnchors()
-        cancelButton:addAnchor(AnchorTop, 'parent', AnchorTop)
-        cancelButton:addAnchor(AnchorLeft, 'parent', AnchorLeft)
-        cancelButton:addAnchor(AnchorRight, 'parent', AnchorRight)
-        cancelButton:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+        if buttonContainer and not buttonContainer:isDestroyed() then
+            cancelButton:addAnchor(AnchorTop, buttonContainer, AnchorTop)
+            cancelButton:addAnchor(AnchorLeft, buttonContainer, AnchorLeft)
+            cancelButton:addAnchor(AnchorRight, buttonContainer, AnchorRight)
+            cancelButton:addAnchor(AnchorBottom, buttonContainer, AnchorBottom)
+        else
+            cancelButton:addAnchor(AnchorTop, 'parent', AnchorTop)
+            cancelButton:addAnchor(AnchorLeft, 'parent', AnchorLeft)
+            cancelButton:addAnchor(AnchorRight, 'parent', AnchorRight)
+            cancelButton:addAnchor(AnchorBottom, 'parent', AnchorBottom)
+        end
+    end
+
+    if cancelButton.raise then
+        cancelButton:raise()
     end
 
     return cancelButton, activePanel
@@ -244,12 +254,17 @@ local function setCancelButtonVisible(slotWidget, visible)
     end
 
     local rerollButton = rerollPanel:recursiveGetChildById('rerollButton')
+    local buttonContainer = rerollPanel:recursiveGetChildById('button')
     local rerollVisible = not visible or not cancelButton
     if rerollButton and not rerollButton:isDestroyed() then
         rerollButton:setVisible(rerollVisible)
         if rerollButton.setEnabled then
             rerollButton:setEnabled(rerollVisible)
         end
+    end
+
+    if buttonContainer and not buttonContainer:isDestroyed() then
+        buttonContainer:setVisible(rerollVisible)
     end
 end
 

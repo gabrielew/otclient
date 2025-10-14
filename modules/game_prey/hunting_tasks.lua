@@ -1031,7 +1031,7 @@ local function applyActiveTask(slotWidget, activeData)
         end
 
         if widget.getMarginTop and widget.setMarginTop then
-            local widgetId = widget:getId and widget:getId() or nil
+            local widgetId = widget.getId and widget:getId() or nil
             if widgetId == 'choose' or widgetId == 'select' or widgetId == 'reroll' then
                 widget:setMarginTop(buttonTopMargin)
             end

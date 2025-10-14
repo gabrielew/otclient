@@ -53,7 +53,7 @@ HuntingTaskClaimRewardPanel < FlatPanel
 
 HuntingTaskAmountRadio < CheckBox
   image-source: /images/ui/outfits/checkbox_round
-  text-offset: 18 0
+  text-offset: 18 2
 
 HuntingTaskActivePanel < Panel
   size: 215 335
@@ -114,8 +114,22 @@ HuntingTaskInactivePanel < InactivePreyPanel
       id: amountOptionTwo
       text: --
 
-HuntingTaskSlotPanel < SlotPanel
+HuntingTaskSlotPanel < Panel
   size: 215 348
+  image-source: /images/ui/window
+  image-border: 25
+  padding-top: 2
+  padding-bottom: 6
+  padding-left: 8
+  padding-right: 8
+
+  Label
+    id: title
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    text-align: center
+
   HuntingTaskInactivePanel
     id: inactive
     anchors.top: parent.top
@@ -123,6 +137,13 @@ HuntingTaskSlotPanel < SlotPanel
 
   HuntingTaskActivePanel
     id: active
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    visible: false
+
+  LockedPreyPanel
+    id: locked
+    margin-top: 20
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
     visible: false

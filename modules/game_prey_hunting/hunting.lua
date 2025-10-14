@@ -60,59 +60,82 @@ local DESC_TYPE = {
 	TYPE_SLOT_REROLL = 14
 }
 
+function short_text(text, chars_limit)
+	if #text > chars_limit then
+		local newstring = ''
+		for char in (text):gmatch(".") do
+			newstring = string.format("%s%s", newstring, char)
+			if #newstring >= chars_limit then
+				break
+			end
+		end
+		return newstring .. '...'
+	else
+		return text
+	end
+end
+
 function init()
-  huntingWindow = g_ui.displayUI('hunting')
-  connect(g_game, {
-    onGameStart = online,
-    onGameEnd = offline,
-	onPreyHuntingPrice = onPreyHuntingPrice,
-	onUpdateRerrolTime = onUpdateRerrolTime,
-	onResourceBalance = onPreyResourceBalance,
-	onHuntingLockedState = onHuntingLockedState,
-	onHuntingSelectState = onHuntingSelectState,
-	onHuntingActiveState = onHuntingActiveState,
-	onPreyHuntingBaseData = onPreyHuntingBaseData,
-	onHuntingWildcardState = onHuntingWildcardState,
-	onHuntingExhaustedState = onHuntingExhaustedState
-  })
+	huntingWindow = g_ui.displayUI('hunting')
+	connect(g_game, {
+		onGameStart = online,
+		onGameEnd = offline,
+		onPreyHuntingPrice = onPreyHuntingPrice,
+		onUpdateRerrolTime = onUpdateRerrolTime,
+		onResourceBalance = onPreyResourceBalance,
+		onHuntingLockedState = onHuntingLockedState,
+		onHuntingSelectState = onHuntingSelectState,
+		onHuntingActiveState = onHuntingActiveState,
+		onPreyHuntingBaseData = onPreyHuntingBaseData,
+		onHuntingWildcardState = onHuntingWildcardState,
+		onHuntingExhaustedState = onHuntingExhaustedState
+	})
 
-  preyTracker = modules.game_prey and modules.game_prey.preyTracker or nil
-  huntingWindowButton = huntingWindow:recursiveGetChildById("huntingTaskButton")
+	preyTracker = modules.game_prey and modules.game_prey.preyTracker or nil
+	huntingWindowButton = huntingWindow:recursiveGetChildById("huntingTaskButton")
 
-  for i = 1, 3 do
-	local slot = huntingWindow:recursiveGetChildById("slot" .. i)
-	local inactiveWindow = slot:recursiveGetChildById("inactive")
-	local activeWindow = slot:recursiveGetChildById("active")
-	local lockedWindow = slot:recursiveGetChildById("locked")
-	local wildcardSelection = slot:recursiveGetChildById("selection")
-	local exhaustWindow = slot:recursiveGetChildById("exhaust")
-	huntingSlots[i] = {window = slot, inactive = inactiveWindow, active = activeWindow, locked = lockedWindow, selection = wildcardSelection, exhaust = exhaustWindow}
-  end
+	for i = 1, 3 do
+		local slot = huntingWindow:recursiveGetChildById("slot" .. i)
+		local inactiveWindow = slot:recursiveGetChildById("inactive")
+		local activeWindow = slot:recursiveGetChildById("active")
+		local lockedWindow = slot:recursiveGetChildById("locked")
+		local wildcardSelection = slot:recursiveGetChildById("selection")
+		local exhaustWindow = slot:recursiveGetChildById("exhaust")
+		huntingSlots[i] = {
+			window = slot,
+			inactive = inactiveWindow,
+			active = activeWindow,
+			locked = lockedWindow,
+			selection =
+				wildcardSelection,
+			exhaust = exhaustWindow
+		}
+	end
 
-  huntingWindow:hide()
+	huntingWindow:hide()
 end
 
 function terminate()
-  disconnect(g_game, {
-    onGameStart = online,
-    onGameEnd = offline,
-	onResourceBalance = onPreyResourceBalance,
-	onPreyHuntingBaseData = onPreyHuntingBaseData,
-	onPreyHuntingPrice = onPreyHuntingPrice,
-	onUpdateRerrolTime = onUpdateRerrolTime,
-	onHuntingLockedState = onHuntingLockedState,
-	onHuntingSelectState = onHuntingSelectState,
-	onHuntingActiveState = onHuntingActiveState,
-	onHuntingWildcardState = onHuntingWildcardState,
-	onHuntingExhaustedState = onHuntingExhaustedState
-  })
+	disconnect(g_game, {
+		onGameStart = online,
+		onGameEnd = offline,
+		onResourceBalance = onPreyResourceBalance,
+		onPreyHuntingBaseData = onPreyHuntingBaseData,
+		onPreyHuntingPrice = onPreyHuntingPrice,
+		onUpdateRerrolTime = onUpdateRerrolTime,
+		onHuntingLockedState = onHuntingLockedState,
+		onHuntingSelectState = onHuntingSelectState,
+		onHuntingActiveState = onHuntingActiveState,
+		onHuntingWildcardState = onHuntingWildcardState,
+		onHuntingExhaustedState = onHuntingExhaustedState
+	})
 
-  g_keyboard.unbindKeyPress('Tab', onSelectPrey, huntingWindow)
+	g_keyboard.unbindKeyPress('Tab', onSelectPrey, huntingWindow)
 end
 
 function close()
-  hide()
-  g_client.setInputLockWidget(nil)
+	hide()
+	-- g_client.setInputLockWidget(nil)
 end
 
 function show(position)
@@ -150,39 +173,39 @@ function show(position)
 end
 
 function hide()
-  for i = 1, 3 do
-    for i, widget in pairs(huntingSlots[i].inactive.list:getChildren()) do
-	  widget:setChecked(false)
-    end
-  end
+	for i = 1, 3 do
+		for i, widget in pairs(huntingSlots[i].inactive.list:getChildren()) do
+			widget:setChecked(false)
+		end
+	end
 
-  g_keyboard.unbindKeyPress('Tab', onSelectPrey, huntingWindow)
-  huntingWindow:hide()
-  g_client.setInputLockWidget(nil)
-  huntingWindowButton:setChecked(false)
-  huuntingMessageWindow = nil
+	g_keyboard.unbindKeyPress('Tab', onSelectPrey, huntingWindow)
+	huntingWindow:hide()
+	-- g_client.setInputLockWidget(nil)
+	huntingWindowButton:setChecked(false)
+	huuntingMessageWindow = nil
 
-  if updateRerollEvent then
-	removeEvent(updateRerollEvent)
-	updateRerollEvent = nil
-  end
+	if updateRerollEvent then
+		removeEvent(updateRerollEvent)
+		updateRerollEvent = nil
+	end
 end
 
 function online()
-  local benchmark = g_clock.millis()
-  huntingWindow:hide()
-  consoleln("Prey Hunting loaded in " .. (g_clock.millis() - benchmark) / 1000 .. " seconds.")
+	local benchmark = g_clock.millis()
+	huntingWindow:hide()
+	consoleln("Prey Hunting loaded in " .. (g_clock.millis() - benchmark) / 1000 .. " seconds.")
 end
 
 function offline()
-  huntingWindow:hide()
-  g_client.setInputLockWidget(nil)
-  huuntingMessageWindow = nil
+	huntingWindow:hide()
+	-- g_client.setInputLockWidget(nil)
+	huuntingMessageWindow = nil
 end
 
 function onSelectPrey()
 	hide()
-	g_client.setInputLockWidget(nil)
+	-- g_client.setInputLockWidget(nil)
 	modules.game_prey.show(huntingWindow:getPosition())
 end
 
@@ -257,7 +280,8 @@ function updateWidgetDescription(slot, type, widget)
 
 		local kills = getHuntingKills(raceID, bestiaryUnlocked)
 		local minReward, maxReward = getMinMaxReward(raceID, bestiaryUnlocked)
-		text = tr("Creature: %s\nAmount: %s\nReward: %s (^;;;;;) - %s (^^^^^) Hunting Task Points", inactiveSelections[slot]:recursiveGetChildById("creature"):getTooltip(), kills, minReward, maxReward)
+		text = tr("Creature: %s\nAmount: %s\nReward: %s (^;;;;;) - %s (^^^^^) Hunting Task Points",
+			inactiveSelections[slot]:recursiveGetChildById("creature"):getTooltip(), kills, minReward, maxReward)
 	elseif type == DESC_TYPE.TYPE_MONSTER_SELECTED then
 		local slotInfo = selectedMonster[slot]
 		if not slotInfo then
@@ -269,11 +293,15 @@ function updateWidgetDescription(slot, type, widget)
 			starText = starText:sub(1, i - 1) .. "^" .. starText:sub(i + 1)
 		end
 
-		text = tr("Creature: %s\nAmount: %s / %s\nReward: %s / %s Hunting Task Points\nThere is a 10%s chance that you will get 50%s or even 100%s more Hunting Task Points.", slotInfo.currentRace, slotInfo.currentKills, slotInfo.maxKills, starText, slotInfo.reward, "%", "%", "%")
+		text = tr(
+			"Creature: %s\nAmount: %s / %s\nReward: %s / %s Hunting Task Points\nThere is a 10%s chance that you will get 50%s or even 100%s more Hunting Task Points.",
+			slotInfo.currentRace, slotInfo.currentKills, slotInfo.maxKills, starText, slotInfo.reward, "%", "%", "%")
 	elseif type == DESC_TYPE.TYPE_CANCEL_MONSTER then
-		text = "Click here to cancel the currently active Hunting Task to free the slot. Note that you lose possible\nhigher rewards which you have purchased using Prey Wildcards."
+		text =
+		"Click here to cancel the currently active Hunting Task to free the slot. Note that you lose possible\nhigher rewards which you have purchased using Prey Wildcards."
 	elseif type == DESC_TYPE.TYPE_REWARD_INCREASE then
-		text = "Click here to get higher rewards. While higher rewards are selected, you will get a chance to win\nadditional Hunting Task Points."
+		text =
+		"Click here to get higher rewards. While higher rewards are selected, you will get a chance to win\nadditional Hunting Task Points."
 	elseif type == DESC_TYPE.TYPE_SELECT_WILDCARD then
 		text = "Click here to choose a new Hunting Task creature from the list of available creatures."
 	elseif type == DESC_TYPE.TYPE_LIST_REROLL then
@@ -294,11 +322,14 @@ function updateWidgetDescription(slot, type, widget)
 			local name = g_things.getMonsterList()[raceID][1]
 			local kills = getHuntingKills(raceID, bestiaryUnlocked)
 			local minReward, maxReward = getMinMaxReward(raceID, bestiaryUnlocked)
-			text = tr("Confirm the selected Hunting Task creature and amount to start your Hunting Task.\n\nCreature: %s\nAmount: %s\nReward: %s (^;;;;;) - %s (^^^^^) Hunting Task Points", string.capitalize(name), kills, minReward, maxReward)
+			text = tr(
+				"Confirm the selected Hunting Task creature and amount to start your Hunting Task.\n\nCreature: %s\nAmount: %s\nReward: %s (^;;;;;) - %s (^^^^^) Hunting Task Points",
+				string.capitalize(name), kills, minReward, maxReward)
 		else
 			slotInfo = wildcardSelectedMonster[slot]
 			if not slotInfo then
-				huntingWindow.description:setText("Confirm the selected Hunting Task creature and amount to start your Hunting Task.")
+				huntingWindow.description:setText(
+					"Confirm the selected Hunting Task creature and amount to start your Hunting Task.")
 				return
 			end
 
@@ -308,20 +339,24 @@ function updateWidgetDescription(slot, type, widget)
 			local kills = getHuntingKills(raceID, bestiaryUnlocked)
 			local minReward, maxReward = getMinMaxReward(raceID, bestiaryUnlocked)
 			local header = (type == DESC_TYPE.TYPE_WILDCARD_LIST and "" or "Confirm the selected Hunting Task creature and amount to start your Hunting Task.\n\n")
-			text = tr("%sCreature: %s\nAmount: %s\nReward: %s (^;;;;;) - %s (^^^^^) Hunting Task Points", header, string.capitalize(name), kills, minReward, maxReward)
+			text = tr("%sCreature: %s\nAmount: %s\nReward: %s (^;;;;;) - %s (^^^^^) Hunting Task Points", header,
+				string.capitalize(name), kills, minReward, maxReward)
 		end
 	elseif type == DESC_TYPE.TYPE_CLAIM_REWARD then
 		text = "Finish the Hunting Task to claim your reward."
 	elseif type == DESC_TYPE.TYPE_SLOT_EXHAUSTED then
 		text = "Exhausted.\n\nyou have to wait until next to use this Hunting Task slot again."
 	elseif type == DESC_TYPE.TYPE_SLOT_LOCKED then
-		text = "This Hunting Task is not available for your character yet.\nMove the mouse over the large blue button(s) to learn how to unlock this Hunting Task slot."
+		text =
+		"This Hunting Task is not available for your character yet.\nMove the mouse over the large blue button(s) to learn how to unlock this Hunting Task slot."
 	elseif type == DESC_TYPE.TYPE_SLOT_REROLL then
 		local widgetText = widget:getText()
 		if widgetText == "Free" then
 			text = "Your next List Reroll is free of charge.\nYou get a Free List Reroll every 20 hours for each slot."
 		else
-			text = tr("You will get your next Free List Reroll in %s.\nYou get a Free List Reroll every 20 hours for each slot.", widgetText)
+			text = tr(
+				"You will get your next Free List Reroll in %s.\nYou get a Free List Reroll every 20 hours for each slot.",
+				widgetText)
 		end
 	end
 
@@ -402,49 +437,99 @@ function sendHuntingMessageBox(slot, type)
 	end
 
 	huntingWindow:hide()
-	g_client.setInputLockWidget(nil)
+	-- g_client.setInputLockWidget(nil)
 
 	if type == "cancel" then
-		local yesFunction = function() activeMonsterList[slot + 1] = nil g_game.preyHuntingAction(slot, PREY_HUNTING_ACTION_REMOVE, false, 0) huntingWindow:show() huuntingMessageWindow:destroy() huuntingMessageWindow = nil g_client.setInputLockWidget(huntingWindow) end
-		local noFunction = function() huntingWindow:show() huuntingMessageWindow:destroy() huuntingMessageWindow = nil g_client.setInputLockWidget(huntingWindow) end
+		local yesFunction = function()
+			activeMonsterList[slot + 1] = nil
+			g_game.preyHuntingAction(slot, PREY_HUNTING_ACTION_REMOVE, false, 0)
+			huntingWindow:show()
+			huuntingMessageWindow:destroy()
+			huuntingMessageWindow = nil
+			g_client.setInputLockWidget(huntingWindow)
+		end
+		local noFunction = function()
+			huntingWindow:show()
+			huuntingMessageWindow:destroy()
+			huuntingMessageWindow = nil
+			g_client.setInputLockWidget(huntingWindow)
+		end
 
-		huuntingMessageWindow = displayGeneralBox(tr('Confirmation of Task Cancellation'), tr("Do you want to spend %s gold to cancel the Hunting Task?\nYou currently have %s gold available.", comma_value(goldRemovePrice), comma_value(bankBalance + invetoryMoney)),
-			{ { text=tr('Yes'), callback=yesFunction },
-			{ text=tr('No'), callback=noFunction }
-		}, yesFunction, noFunction)
+		huuntingMessageWindow = displayGeneralBox(tr('Confirmation of Task Cancellation'),
+			tr("Do you want to spend %s gold to cancel the Hunting Task?\nYou currently have %s gold available.",
+				comma_value(goldRemovePrice), comma_value(bankBalance + invetoryMoney)),
+			{ { text = tr('Yes'), callback = yesFunction },
+				{ text = tr('No'),  callback = noFunction }
+			}, yesFunction, noFunction)
 	elseif type == "upgrade" or type == "wildcard" then
 		local action = (type == "upgrade" and PREY_HUNTING_ACTION_BONUSREROLL or PREY_HUNTING_ACTION_SELECT_WILDCARD)
 		local required = (type == "upgrade" and rerollWildcardPrice or wildcardSelectPrice)
 
-		local yesFunction = function() g_game.preyHuntingAction(slot, action, false, 0) huntingWindow:show() huuntingMessageWindow:destroy() huuntingMessageWindow = nil g_client.setInputLockWidget(huntingWindow) end
-		local noFunction = function() huntingWindow:show() huuntingMessageWindow:destroy() huuntingMessageWindow = nil g_client.setInputLockWidget(huntingWindow) end
+		local yesFunction = function()
+			g_game.preyHuntingAction(slot, action, false, 0)
+			huntingWindow:show()
+			huuntingMessageWindow:destroy()
+			huuntingMessageWindow = nil
+			g_client.setInputLockWidget(huntingWindow)
+		end
+		local noFunction = function()
+			huntingWindow:show()
+			huuntingMessageWindow:destroy()
+			huuntingMessageWindow = nil
+			g_client.setInputLockWidget(huntingWindow)
+		end
 
-		huuntingMessageWindow = displayGeneralBox(tr('Confirmation of Using Prey Wildcards'), tr("Are you sure you want to use %s of your remaning %s Prey Wildcards?", required, wildcardBalance),
-			{ { text=tr('Yes'), callback=yesFunction },
-			{ text=tr('No'), callback=noFunction }
-		}, yesFunction, noFunction)
+		huuntingMessageWindow = displayGeneralBox(tr('Confirmation of Using Prey Wildcards'),
+			tr("Are you sure you want to use %s of your remaning %s Prey Wildcards?", required, wildcardBalance),
+			{ { text = tr('Yes'), callback = yesFunction },
+				{ text = tr('No'),  callback = noFunction }
+			}, yesFunction, noFunction)
 	elseif type == "select" then
-		local yesFunction = function() selectWildcardCreature(slot) huntingWindow:show() huuntingMessageWindow:destroy() huuntingMessageWindow = nil g_client.setInputLockWidget(huntingWindow) end
-		local noFunction = function() huntingWindow:show() huuntingMessageWindow:destroy() huuntingMessageWindow = nil g_client.setInputLockWidget(huntingWindow) end
-		huuntingMessageWindow = displayGeneralBox(tr('Confirmation of Starting Hunting Task'), "Do you want to start the selected Hunting Task?",
-			{ { text=tr('Yes'), callback=yesFunction },
-			{ text=tr('No'), callback=noFunction }
-		}, yesFunction, noFunction)
+		local yesFunction = function()
+			selectWildcardCreature(slot)
+			huntingWindow:show()
+			huuntingMessageWindow:destroy()
+			huuntingMessageWindow = nil
+			g_client.setInputLockWidget(huntingWindow)
+		end
+		local noFunction = function()
+			huntingWindow:show()
+			huuntingMessageWindow:destroy()
+			huuntingMessageWindow = nil
+			g_client.setInputLockWidget(huntingWindow)
+		end
+		huuntingMessageWindow = displayGeneralBox(tr('Confirmation of Starting Hunting Task'),
+			"Do you want to start the selected Hunting Task?",
+			{ { text = tr('Yes'), callback = yesFunction },
+				{ text = tr('No'),  callback = noFunction }
+			}, yesFunction, noFunction)
 	elseif type == "reroll" then
-		local yesFunction = function() g_game.preyHuntingAction(slot, PREY_HUNTING_ACTION_LISTREROLL, false, 0) huntingWindow:show() huuntingMessageWindow:destroy() huuntingMessageWindow = nil g_client.setInputLockWidget(huntingWindow) end
-		local noFunction = function() huntingWindow:show() huuntingMessageWindow:destroy() huuntingMessageWindow = nil g_client.setInputLockWidget(huntingWindow) end
+		local yesFunction = function()
+			g_game.preyHuntingAction(slot, PREY_HUNTING_ACTION_LISTREROLL, false, 0)
+			huntingWindow:show()
+			huuntingMessageWindow:destroy()
+			huuntingMessageWindow = nil
+			g_client.setInputLockWidget(huntingWindow)
+		end
+		local noFunction = function()
+			huntingWindow:show()
+			huuntingMessageWindow:destroy()
+			huuntingMessageWindow = nil
+			g_client.setInputLockWidget(huntingWindow)
+		end
 
 		local tmp = "Are you sure you want to use the Free List Reroll?"
 		local time = nextRerollTime[slot + 1]
 		if time and time.timeLeft > 0 then
-			tmp = tr("Do you want to spend %s gold for a List Reroll?\nYou currently have %s gold available for the purchase.", comma_value(goldUpdatePrice), comma_value(bankBalance + invetoryMoney))
+			tmp = tr(
+				"Do you want to spend %s gold for a List Reroll?\nYou currently have %s gold available for the purchase.",
+				comma_value(goldUpdatePrice), comma_value(bankBalance + invetoryMoney))
 		end
 
 		huuntingMessageWindow = displayGeneralBox(tr('Confirmation of Using List Reroll'), tmp,
-			{ { text=tr('Yes'), callback=yesFunction },
-			{ text=tr('No'), callback=noFunction }
-		}, yesFunction, noFunction)
-
+			{ { text = tr('Yes'), callback = yesFunction },
+				{ text = tr('No'),  callback = noFunction }
+			}, yesFunction, noFunction)
 	end
 	return true
 end
@@ -492,7 +577,16 @@ function onWildcardHuntingChange(panel, selected)
 
 	local creature = g_things.getMonsterList()[tonumber(selected:getId())]
 	panel.window:recursiveGetChildById('title'):setText(short_text(tr("Selected: %s", string.capitalize(creature[1])), 28))
-	panel.selection.panel.creature:setOutfit({type = creature[2], auxType = creature[3], head = creature[4], body = creature[5], legs = creature[6], feet = creature[7], addons = creature[8]})
+	panel.selection.panel.creature:setOutfit({
+		type = creature[2],
+		auxType = creature[3],
+		head = creature[4],
+		body =
+			creature[5],
+		legs = creature[6],
+		feet = creature[7],
+		addons = creature[8]
+	})
 	panel.selection.panel.creature:show()
 
 	local bestiaryUnlocked = currentWildcardList[slot][tonumber(selected:getId())]
@@ -521,12 +615,17 @@ function onWildcardHuntingChange(panel, selected)
 	wildcardSelectedMonster[slot]:setColor("#f4f4f4")
 end
 
+function setStringColor(t, text, color)
+	table.insert(t, text)
+	table.insert(t, color)
+end
+
 function onPreyResourceBalance(type, amount)
 	if type == nil then
 		return
 	end
 
-	if type == 0 then -- bank gold
+	if type == 0 then   -- bank gold
 		bankBalance = amount
 	elseif type == 1 then -- inventory gold
 		invetoryMoney = amount
@@ -568,7 +667,7 @@ function onPreyHuntingPrice(rerollPrice, removePrice, wildcardSelect, rerollWild
 end
 
 function onUpdateRerrolTime(slot, time)
-	nextRerollTime[slot + 1] = {timeLeft = time, startTime = os.time()}
+	nextRerollTime[slot + 1] = { timeLeft = time, startTime = os.time() }
 	onUpdate()
 end
 
@@ -640,7 +739,7 @@ function onHuntingSelectState(slot, creatureList, state)
 	rerollButton:setOn(true)
 
 	local rerollTime = panel.inactive.reroll:recursiveGetChildById('time')
-	local nextTime = (nextRerollTime[slot + 1] or {timeLeft = 0, startTime = 0})
+	local nextTime = (nextRerollTime[slot + 1] or { timeLeft = 0, startTime = 0 })
 	if nextTime.timeLeft == 0 then
 		rerollTime:setText("Free")
 		panel.inactive.select.price.text:setColor("#c0c0c0")
@@ -669,12 +768,21 @@ function onHuntingSelectState(slot, creatureList, state)
 	local firstSelected = false
 	local monsterList = panel.inactive.list
 	monsterList:destroyChildren()
-  	local monsters = g_things.getMonsterList()
+	local monsters = g_things.getMonsterList()
 	for raceId, _ in pairs(creatureList) do
 		local box = g_ui.createWidget("PreyHuntingCreatureBox", monsterList)
 		local monster = monsters[raceId]
 		if monster then
-			box.creature:setOutfit({type = monster[2], auxType = monster[3], head = monster[4], body = monster[5], legs = monster[6], feet = monster[7], addons = monster[8]})
+			box.creature:setOutfit({
+				type = monster[2],
+				auxType = monster[3],
+				head = monster[4],
+				body = monster[5],
+				legs =
+					monster[6],
+				feet = monster[7],
+				addons = monster[8]
+			})
 			box.creature:setRaceID(raceId)
 			box:setActionId(slot + 1)
 			box.creature:setTooltip(string.capitalize(monster[1]))
@@ -685,7 +793,8 @@ function onHuntingSelectState(slot, creatureList, state)
 			if not firstSelected and not inactiveSelections[slot + 1] then
 				onItemBoxChecked(box)
 				firstSelected = true
-				panel.window:recursiveGetChildById('title'):setText(short_text(tr("Selected: %s", string.capitalize(monster[1])), 28))
+				panel.window:recursiveGetChildById('title'):setText(short_text(
+					tr("Selected: %s", string.capitalize(monster[1])), 28))
 			end
 		end
 	end
@@ -694,7 +803,8 @@ function onHuntingSelectState(slot, creatureList, state)
 		local selection = inactiveSelections[slot + 1]
 		if selection and selection:isChecked() and selection.creature then
 			local bestiaryUnlocked = huntingSlots[slot + 1].inactive.maxCount:isChecked() and true or false
-			return g_game.preyHuntingAction(slot, PREY_HUNTING_ACTION_SELECT, bestiaryUnlocked, selection.creature:getRaceID())
+			return g_game.preyHuntingAction(slot, PREY_HUNTING_ACTION_SELECT, bestiaryUnlocked,
+				selection.creature:getRaceID())
 		end
 	end
 end
@@ -759,7 +869,10 @@ function onHuntingActiveState(slot, currentMonster, unlocked, toKill, killed, st
 		panel.active.pick.inactivePickReward:setVisible(false)
 		panel.active.pick.pickReward:setVisible(true)
 		panel.active.pick.pickReward:setActionId(slot + 1)
-		panel.active.pick.pickReward.onClick = function() g_game.preyHuntingAction(slot, PREY_HUNTING_ACTION_COLLECT, false, 0) end
+		panel.active.pick.pickReward.onClick = function()
+			g_game.preyHuntingAction(slot, PREY_HUNTING_ACTION_COLLECT,
+				false, 0)
+		end
 	else
 		panel.active.pick.inactivePickReward:setVisible(true)
 		panel.active.pick.pickReward:setVisible(false)
@@ -767,16 +880,32 @@ function onHuntingActiveState(slot, currentMonster, unlocked, toKill, killed, st
 
 	local creatureWidget = panel.active:recursiveGetChildById('creature')
 	local monster = g_things.getMonsterList()[currentMonster]
-  	creatureWidget:setOutfit({type = monster[2], auxType = monster[3], head = monster[4], body = monster[5], legs = monster[6], feet = monster[7], addons = monster[8]})
-  	creatureWidget:setCenter(true)
-  	creatureWidget:setActionId(slot + 1)
+	creatureWidget:setOutfit({
+		type = monster[2],
+		auxType = monster[3],
+		head = monster[4],
+		body = monster[5],
+		legs =
+			monster[6],
+		feet = monster[7],
+		addons = monster[8]
+	})
+	creatureWidget:setCenter(true)
+	creatureWidget:setActionId(slot + 1)
 
 	local titleLabel = panel.window:recursiveGetChildById('title')
 	titleLabel:setText(short_text(tr("Currently hunting: %s", string.capitalize(monster[1])), 29))
 	titleLabel:setTextAutoResize(true)
 
-	selectedMonster[slot + 1] = {currentRace = monster[1], maxKills = toKill, currentKills = killed, reward = rewardCount, grade = stars}
-  	activeMonsterList[slot + 1] = monster[1]
+	selectedMonster[slot + 1] = {
+		currentRace = monster[1],
+		maxKills = toKill,
+		currentKills = killed,
+		reward =
+			rewardCount,
+		grade = stars
+	}
+	activeMonsterList[slot + 1] = monster[1]
 
 	-- Stars
 	local starGrade = panel.active:recursiveGetChildById('grade')
@@ -820,7 +949,7 @@ function onHuntingWildcardState(slot, monsterList, state)
 	panel.selection.panel.creature:setActionId(slot + 1)
 
 	local count = 0
-  	local creatures = g_things.getMonsterList()
+	local creatures = g_things.getMonsterList()
 	for k, v in pairs(monsterList) do
 		local monster = g_ui.createWidget("Panel", monsterListWidget)
 		monster:setId(k)
@@ -833,7 +962,7 @@ function onHuntingWildcardState(slot, monsterList, state)
 		if creature then
 			monster:setText(string.capitalize(creature[1]))
 			monster:setColor("#c0c0c0")
-			monster:setFont("Verdana Bold-11px")
+			monster:setFont("verdana-11px-bold")
 		end
 	end
 
@@ -860,7 +989,7 @@ function onHuntingExhaustedState(slot, state)
 	rerollButton:setActionId(slot)
 
 	local rerollTime = panel.exhaust.exhaustReroll:recursiveGetChildById('time')
-	local nextTime = nextRerollTime[slot + 1] or {timeLeft = 0, startTime = 0}
+	local nextTime = nextRerollTime[slot + 1] or { timeLeft = 0, startTime = 0 }
 	if nextTime.timeLeft == 0 then
 		rerollTime:setText("Free")
 	else
@@ -1033,7 +1162,7 @@ function onUpdate()
 				wildcardButton:setOn(true)
 			end
 
-			local nextTime = (nextRerollTime[i] or {timeLeft = 0, startTime = 0})
+			local nextTime = (nextRerollTime[i] or { timeLeft = 0, startTime = 0 })
 			local rerollButton = panel.inactive:recursiveGetChildById('rerollButton')
 			if nextTime.timeLeft > 0 and (bankBalance + invetoryMoney < goldUpdatePrice) then
 				panel.inactive.reroll.price.text:setColor("#d33c3c")
@@ -1054,7 +1183,6 @@ function onUpdate()
 				rerollTime:setText(modules.game_prey.timeleftTranslation(nextTime.timeLeft))
 				rerollTime:setPercent(percent)
 			end
-
 		elseif panel.active:isVisible() then
 			local cancelButton = panel.active:recursiveGetChildById('removeButton')
 			if bankBalance + invetoryMoney < goldRemovePrice then
@@ -1083,7 +1211,6 @@ function onUpdate()
 				upgradeButton:setEnabled(true)
 				upgradeButton:setOn(true)
 			end
-
 		elseif panel.exhaust:isVisible() then
 			if bankBalance + invetoryMoney < goldUpdatePrice then
 				panel.exhaust.exhaustReroll.price:setColor("#d33c3c")
@@ -1098,7 +1225,7 @@ function onUpdate()
 			end
 
 			local rerollTime = panel.exhaust.exhaustReroll:recursiveGetChildById('time')
-			local nextTime = (nextRerollTime[i] or {timeLeft = 0, startTime = 0})
+			local nextTime = (nextRerollTime[i] or { timeLeft = 0, startTime = 0 })
 			if nextTime.timeLeft == 0 then
 				rerollTime:setText("Free")
 			else
@@ -1113,13 +1240,13 @@ function onUpdate()
 end
 
 function getActiveMonsters()
-  local monsterList = {}
-  for i = 1, 3 do
-    if activeMonsterList[i] then
-      monsterList[#monsterList + 1] = activeMonsterList[i]:lower()
-    end
-  end
-  return monsterList
+	local monsterList = {}
+	for i = 1, 3 do
+		if activeMonsterList[i] then
+			monsterList[#monsterList + 1] = activeMonsterList[i]:lower()
+		end
+	end
+	return monsterList
 end
 
 function isHuntingActive(name)
@@ -1130,21 +1257,21 @@ function isHuntingActive(name)
 end
 
 function storeRedirect(offerType)
-	g_client.setInputLockWidget(nil)
+	-- g_client.setInputLockWidget(nil)
 	huntingWindow:hide()
 	g_game.openStore()
 	g_game.requestStoreOffers(3, "", offerType)
 end
 
 function updatePreyWidget(slot, state)
-        if not preyTracker or not preyTracker.contentsPanel then
-                return
-        end
-        local preyTrackerSlot = preyTracker.contentsPanel["hslot" .. (slot + 1)]
-        if state == PREY_HUNTING_STATE_LOCKED then
-          preyTrackerSlot:setVisible(false)
-          return
-        end
+	if not preyTracker or not preyTracker.contentsPanel then
+		return
+	end
+	local preyTrackerSlot = preyTracker.contentsPanel["hslot" .. (slot + 1)]
+	if state == PREY_HUNTING_STATE_LOCKED then
+		preyTrackerSlot:setVisible(false)
+		return
+	end
 
 	if slot == 2 then
 		preyTrackerSlot:setVisible(true)
@@ -1173,11 +1300,13 @@ function updatePreyWidget(slot, state)
 			end
 		end
 
-		local text = "Creature: %s\nAmount: %s\nReward: %s / %s Hunting Task Points\n\nClick in this window to open the prey dialog."
+		local text =
+		"Creature: %s\nAmount: %s\nReward: %s / %s Hunting Task Points\n\nClick in this window to open the prey dialog."
 		preyTrackerSlot:setTooltip(tr(text, preyName, counter:getText(), rewardText, reward))
 		preyTrackerSlot.onClick = function() show() end
 	else
-		preyTrackerSlot:setTooltip("Inactive Hunting Task. \n\nClick in this window to open the Prey dialog. Open the Hunting Tasks tab to select a new task.")
+		preyTrackerSlot:setTooltip(
+			"Inactive Hunting Task. \n\nClick in this window to open the Prey dialog. Open the Hunting Tasks tab to select a new task.")
 		preyTrackerSlot.noCreature:show()
 		preyTrackerSlot.creature:hide()
 		preyTrackerSlot.time:setPercent(0)
@@ -1211,7 +1340,7 @@ function setTimeUntilFreeReroll(slot, timeUntilFreeReroll)
 	local percent = (timeUntilFreeReroll / (20 * 60 * 60)) * 100
 	local desc = modules.game_prey.timeleftTranslation(timeUntilFreeReroll)
 
-	for i, panel in pairs({prey.inactive}) do
+	for i, panel in pairs({ prey.inactive }) do
 		local reroll = panel.reroll.button.time
 		reroll:setPercent(percent)
 		reroll:setText(desc)

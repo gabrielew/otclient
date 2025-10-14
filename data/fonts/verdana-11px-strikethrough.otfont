@@ -1,0 +1,6 @@
+Font
+  name: verdana-11px-strikethrough
+  texture: verdana-11px-strikethrough
+  height: 15
+  glyph-size: 22 15
+  space-width: 4

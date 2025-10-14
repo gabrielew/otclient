@@ -53,7 +53,7 @@ HuntingTaskClaimRewardPanel < FlatPanel
 
 HuntingTaskAmountRadio < CheckBox
   image-source: /images/ui/outfits/checkbox_round
-  text-offset: 18 0
+  text-offset: 18 2
 
 HuntingTaskActivePanel < Panel
   size: 215 335

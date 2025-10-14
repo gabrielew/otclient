@@ -38,6 +38,10 @@ HuntingTaskClaimRewardButton < UIButton
     image-clip: 0 182 65 91
 
 
+HuntingTaskAmountRadio < CheckBox
+  image-source: /images/ui/outfits/checkbox_round
+  text-offset: 20 -3
+
 HuntingTaskActivePanel < Panel
   size: 215 335
 
@@ -69,7 +73,39 @@ HuntingTaskActivePanel < Panel
     margin-right: 2
     background-color: yellow
 
+HuntingTaskInactivePanel < InactivePreyPanel
+  Panel
+    id: amountPanel
+    anchors.left: list.left
+    anchors.right: list.right
+    anchors.top: list.bottom
+    margin-top: 8
+    height: 26
+    layout:
+      type: horizontalBox
+      align: left
+      spacing: 12
+
+    Label
+      id: amountLabel
+      !text: tr('Amount:')
+      font: verdana-11px-rounded
+      text-offset: 0 2
+
+    HuntingTaskAmountRadio
+      id: amountOptionOne
+      text: --
+
+    HuntingTaskAmountRadio
+      id: amountOptionTwo
+      text: --
+
 HuntingTaskSlotPanel < SlotPanel
+  HuntingTaskInactivePanel
+    id: inactive
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+
   HuntingTaskActivePanel
     id: active
     anchors.top: parent.top

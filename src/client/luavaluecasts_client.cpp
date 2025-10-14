@@ -532,7 +532,7 @@ int push_luavalue(const StoreOffer& offer) {
             g_lua.pushString(offer.reasonIdDisable);
             g_lua.setField("reasonIdDisable");
         }
-    } else{
+    } else {
         g_lua.pushBoolean(offer.configurable);
         g_lua.setField("configurable");
     }
@@ -833,11 +833,11 @@ int push_luavalue(const CharmData& charm) {
     g_lua.pushInteger(charm.removeRuneCost);
     g_lua.setField("removeRuneCost");
     //if (g_game.getClientVersion() >= 1410) {
-        g_lua.pushInteger(charm.availableCharmSlots);
-        g_lua.setField("availableCharmSlots");
-        g_lua.pushInteger(charm.tier);
-        g_lua.setField("tier");
-   // }
+    g_lua.pushInteger(charm.availableCharmSlots);
+    g_lua.setField("availableCharmSlots");
+    g_lua.pushInteger(charm.tier);
+    g_lua.setField("tier");
+    // }
 
     return 1;
 }
@@ -1599,5 +1599,180 @@ int push_luavalue(const ForgeOpenData& data) {
 
     g_lua.pushInteger(data.dustLevel);
     g_lua.setField("dustLevel");
+    return 1;
+}
+
+int push_luavalue(const TaskHuntingPacket& data) {
+    // cria tabela principal
+    g_lua.createTable(0, 7);
+
+    g_lua.pushInteger(data.slotId);
+    g_lua.setField("slotId");
+
+    g_lua.pushInteger(static_cast<uint8_t>(data.state));
+    g_lua.setField("state");
+
+    // Locked
+    if (data.isPremium.has_value()) {
+        g_lua.pushBoolean(*data.isPremium);
+        g_lua.setField("isPremium");
+    }
+
+    // Selection
+    if (!data.selection.empty()) {
+        g_lua.createTable(data.selection.size(), 0);
+        for (size_t i = 0; i < data.selection.size(); ++i) {
+            const auto& entry = data.selection[i];
+            g_lua.createTable(0, 2);
+            g_lua.pushInteger(entry.raceId);
+            g_lua.setField("raceId");
+            g_lua.pushBoolean(entry.unlocked);
+            g_lua.setField("unlocked");
+            g_lua.rawSeti(i + 1);
+        }
+        g_lua.setField("selection");
+    }
+
+    // ListSelection
+    if (!data.listSelection.empty()) {
+        g_lua.createTable(data.listSelection.size(), 0);
+        for (size_t i = 0; i < data.listSelection.size(); ++i) {
+            const auto& entry = data.listSelection[i];
+            g_lua.createTable(0, 2);
+            g_lua.pushInteger(entry.raceId);
+            g_lua.setField("raceId");
+            g_lua.pushBoolean(entry.unlocked);
+            g_lua.setField("unlocked");
+            g_lua.rawSeti(i + 1);
+        }
+        g_lua.setField("listSelection");
+    }
+
+    // Active
+    if (data.active.has_value()) {
+        const auto& active = *data.active;
+        g_lua.createTable(0, 5);
+        g_lua.pushInteger(active.selectedRaceId);
+        g_lua.setField("selectedRaceId");
+        g_lua.pushBoolean(active.upgrade);
+        g_lua.setField("upgrade");
+        g_lua.pushInteger(active.requiredKills);
+        g_lua.setField("requiredKills");
+        g_lua.pushInteger(active.currentKills);
+        g_lua.setField("currentKills");
+        g_lua.pushInteger(active.rarity);
+        g_lua.setField("rarity");
+        g_lua.setField("active");
+    }
+
+    // Completed
+    if (data.completed.has_value()) {
+        const auto& completed = *data.completed;
+        g_lua.createTable(0, 5);
+        g_lua.pushInteger(completed.selectedRaceId);
+        g_lua.setField("selectedRaceId");
+        g_lua.pushBoolean(completed.upgrade);
+        g_lua.setField("upgrade");
+        g_lua.pushInteger(completed.requiredKills);
+        g_lua.setField("requiredKills");
+        g_lua.pushInteger(completed.achievedKills);
+        g_lua.setField("achievedKills");
+        g_lua.pushInteger(completed.rarity);
+        g_lua.setField("rarity");
+        g_lua.setField("completed");
+    }
+
+    // Sempre presente
+    g_lua.pushInteger(data.freeRerollRemainingSeconds);
+    g_lua.setField("freeRerollRemainingSeconds");
+
+    return 1;
+}
+
+// 1) Item Prey
+int push_luavalue(const TaskHuntingBasicPrey& v) {
+    g_lua.createTable(0, 2);
+    g_lua.pushInteger(v.raceId);     g_lua.setField("raceId");
+    g_lua.pushInteger(v.difficulty); g_lua.setField("difficulty");
+    return 1;
+}
+
+// 2) Item Option
+int push_luavalue(const TaskHuntingOption& v) {
+    g_lua.createTable(0, 6);
+    g_lua.pushInteger(v.difficulty);   g_lua.setField("difficulty");
+    g_lua.pushInteger(v.stars);        g_lua.setField("stars");
+    g_lua.pushInteger(v.firstKill);    g_lua.setField("firstKill");
+    g_lua.pushInteger(v.firstReward);  g_lua.setField("firstReward");
+    g_lua.pushInteger(v.secondKill);   g_lua.setField("secondKill");
+    g_lua.pushInteger(v.secondReward); g_lua.setField("secondReward");
+    return 1;
+}
+int push_luavalue(const TaskHuntingBasicData& data) {
+    g_lua.createTable(0, 4); // preys, options, optionsByDifficulty, difficultyByRaceId
+
+    // preys[]
+    g_lua.createTable(data.preys.size(), 0);
+    for (size_t i = 0; i < data.preys.size(); ++i) {
+        push_luavalue(data.preys[i]);
+        g_lua.rawSeti(i + 1);
+    }
+    g_lua.setField("preys");
+
+    // difficultyByRaceId (custom table)
+    g_lua.createTable(0, data.preys.size());
+    for (const auto& prey : data.preys) {
+        g_lua.pushInteger(prey.difficulty);
+        g_lua.rawSeti(prey.raceId); // key = raceId, value = difficulty
+    }
+    g_lua.setField("difficultyByRaceId");
+
+    // options[]
+    g_lua.createTable(data.options.size(), 0);
+    for (size_t i = 0; i < data.options.size(); ++i) {
+        push_luavalue(data.options[i]);
+        g_lua.rawSeti(i + 1);
+    }
+    g_lua.setField("options");
+
+    // optionsByDifficulty  (custom table)
+    g_lua.createTable(0, 0);
+    for (uint8_t diff = 1; diff <= 3; ++diff) {
+        g_lua.createTable(6, 0);
+        for (const auto& opt : data.options) {
+            if (opt.difficulty != diff) continue;
+            g_lua.createTable(0, 6);
+            g_lua.pushInteger(opt.difficulty);   g_lua.setField("difficulty");
+            g_lua.pushInteger(opt.stars);        g_lua.setField("stars");
+            g_lua.pushInteger(opt.firstKill);    g_lua.setField("firstKill");
+            g_lua.pushInteger(opt.firstReward);  g_lua.setField("firstReward");
+            g_lua.pushInteger(opt.secondKill);   g_lua.setField("secondKill");
+            g_lua.pushInteger(opt.secondReward); g_lua.setField("secondReward");
+            g_lua.rawSeti(opt.stars);
+        }
+        g_lua.rawSeti(diff);
+    }
+    g_lua.setField("optionsByDifficulty");
+
+    return 1;
+}
+
+int push_luavalue(const PreyRerollPriceData& data) {
+    g_lua.createTable(0, 7);
+    g_lua.pushInteger(data.preyRerollPriceInGold);
+    g_lua.setField("preyRerollPriceInGold");
+    g_lua.pushInteger(data.preyBonusRerollPriceInCards);
+    g_lua.setField("preyBonusRerollPriceInCards");
+    g_lua.pushInteger(data.preySelectionListPriceInCards);
+    g_lua.setField("preySelectionListPriceInCards");
+    g_lua.pushInteger(data.taskHuntingBonusRerollPriceInCards);
+    g_lua.setField("taskHuntingBonusRerollPriceInCards");
+    g_lua.pushInteger(data.taskHuntingSelectionListPriceInCards);
+    g_lua.setField("taskHuntingSelectionListPriceInCards");
+    g_lua.pushInteger(data.taskHuntingCancelProgressPriceInGold);
+    g_lua.setField("taskHuntingCancelProgressPriceInGold");
+    g_lua.pushInteger(data.taskHuntingSelectionListPriceInGold);
+    g_lua.setField("taskHuntingSelectionListPriceInGold");
+
     return 1;
 }

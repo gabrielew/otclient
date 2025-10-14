@@ -1,11 +1,15 @@
 -- sponsored by kivera-global.com
 -- remade by Vithrax#5814
+local Helper = require('helper.lua')
+
 Prey = {}
 preyWindow = nil
 preyButton = nil
+preyTracker = nil
 local preyTrackerButton
 local msgWindow
 local bankGold = 0
+
 local inventoryGold = 0
 local rerollPrice = 0
 local bonusRerolls = 0
@@ -41,6 +45,12 @@ local setWidgetTreePhantom
 local updatePickSpecificPreyButton
 local refreshRerollButtonState
 
+local function setDescriptionText(text)
+    if preyWindow and preyWindow.description then
+        preyWindow.description:setText(text or '')
+    end
+end
+
 function bonusDescription(bonusType, bonusValue, bonusGrade)
     if bonusType == PREY_BONUS_DAMAGE_BOOST then
         return 'Damage bonus (' .. bonusGrade .. '/10)'
@@ -75,7 +85,7 @@ function init()
         onResourcesBalanceChange = Prey.onResourcesBalanceChange,
         onPreyFreeRerolls = onPreyFreeRerolls,
         onPreyTimeLeft = onPreyTimeLeft,
-        onPreyRerollPrice = onPreyRerollPrice,
+        onPreyRerollPrice = onPreyPrices,
         onPreyLocked = onPreyLocked,
         onPreyInactive = onPreyInactive,
         onPreyActive = onPreyActive,
@@ -85,8 +95,43 @@ function init()
         onPreyWildcardSelection = onPreyWildcardSelection
     })
 
-    preyWindow = g_ui.displayUI('prey')
+    g_ui.importStyle('prey')
+
+    preyWindow = PreyWindowTabs.createWindow()
+    if not preyWindow then
+        return
+    end
+
     preyWindow:hide()
+    local preyTabContent = preyWindow:getChildById('preyTabContent')
+    local preyCreaturesTab = preyWindow:recursiveGetChildById('preyCreaturesTab')
+    local huntingTasksTabPanel = preyWindow:recursiveGetChildById('huntingTasksTab')
+
+    HuntingTasks.init(preyWindow, huntingTasksTabPanel)
+
+    local descriptionWidget = preyWindow:recursiveGetChildById('description')
+    if descriptionWidget then
+        preyWindow.description = descriptionWidget
+        descriptionWidget:setHeight(80)
+    end
+
+    if preyCreaturesTab then
+        for slotIndex = 1, 3 do
+            local slotWidget = preyCreaturesTab:getChildById('slot' .. slotIndex)
+            if not slotWidget then
+                slotWidget = preyCreaturesTab:recursiveGetChildById('slot' .. slotIndex)
+            end
+            if slotWidget then
+                preyWindow['slot' .. slotIndex] = slotWidget
+            end
+        end
+    end
+    PreyWindowTabs.setup(preyWindow, {
+        tabContent = preyTabContent,
+        creaturesTab = preyCreaturesTab,
+        huntingTasksTab = huntingTasksTabPanel
+    })
+
     preyTracker = g_ui.createWidget('PreyTracker', modules.game_interface.getRightPanel())
     preyTracker:setup()
     preyTracker:setContentMaximumHeight(110)
@@ -139,6 +184,7 @@ function init()
         check()
     end
     setUnsupportedSettings()
+    PreyWindowTabs.updateResourceLabelsFromPlayer()
 end
 
 local pickSpecificPreyBonusBySlot = {}
@@ -215,27 +261,29 @@ end
 
 function onHover(widget)
     if type(widget) == 'string' then
-        return preyWindow.description:setText(descriptionTable[widget])
+        setDescriptionText(descriptionTable[widget])
+        return
     elseif type(widget) == 'number' then
         local slot = 'slot' .. (widget + 1)
         local tracker = preyTracker.contentsPanel[slot]
         local desc = tracker.time:getTooltip()
         desc = desc:sub(1, desc:len() - 46)
-        return preyWindow.description:setText(desc)
+        setDescriptionText(desc)
+        return
     end
     if widget and widget:isVisible() then
         local id = widget:getId()
         if id == 'pickSpecificPrey' then
             local slot = getSlotIndexFromWidget(widget)
             if slot then
-                preyWindow.description:setText(getPickSpecificPreyDescription(slot))
+                setDescriptionText(getPickSpecificPreyDescription(slot))
                 return
             end
         end
 
         local desc = descriptionTable[id]
         if desc then
-            preyWindow.description:setText(desc)
+            setDescriptionText(desc)
         end
     end
 end
@@ -247,7 +295,7 @@ function terminate()
         onResourcesBalanceChange = Prey.onResourcesBalanceChange,
         onPreyFreeRerolls = onPreyFreeRerolls,
         onPreyTimeLeft = onPreyTimeLeft,
-        onPreyRerollPrice = onPreyRerollPrice,
+        onPreyRerollPrice = onPreyPrices,
         onPreyLocked = onPreyLocked,
         onPreyInactive = onPreyInactive,
         onPreyActive = onPreyActive,
@@ -263,8 +311,17 @@ function terminate()
     if preyTrackerButton then
         preyTrackerButton:destroy()
     end
-    preyWindow:destroy()
-    preyTracker:destroy()
+    if preyWindow then
+        HuntingTasks.terminate()
+        PreyWindowTabs.terminate()
+        preyWindow.description = nil
+        preyWindow:destroy()
+        preyWindow = nil
+    end
+    if preyTracker then
+        preyTracker:destroy()
+        preyTracker = nil
+    end
     if msgWindow then
         msgWindow:destroy()
         msgWindow = nil
@@ -274,14 +331,43 @@ end
 local n = 0
 function setUnsupportedSettings()
     local t = { 'slot1', 'slot2', 'slot3' }
-    for i, slot in pairs(t) do
-        local panel = preyWindow[slot]
-        for j, state in pairs({ panel.active, panel.inactive }) do
-            state.select.price.text:setText('5')
+    for _, slot in ipairs(t) do
+        local panel = preyWindow and preyWindow[slot]
+        if not panel and preyWindow and preyWindow.recursiveGetChildById then
+            panel = preyWindow:recursiveGetChildById(slot)
+            if panel then
+                preyWindow[slot] = panel
+            end
         end
-        panel.active.autoRerollPrice.text:setText('1')
-        panel.active.lockPreyPrice.text:setText('5')
-        panel.active.choose.price.text:setText(1)
+
+        if panel then
+            for _, state in ipairs({ panel.active, panel.inactive }) do
+                local selectWidget = state and state.select
+                local priceWidget = selectWidget and selectWidget.price
+                local priceText = priceWidget and priceWidget.text
+                if priceText then
+                    priceText:setText('5')
+                end
+            end
+
+            local active = panel.active
+            if active then
+                local autoRerollPrice = active.autoRerollPrice and active.autoRerollPrice.text
+                if autoRerollPrice then
+                    autoRerollPrice:setText('1')
+                end
+
+                local lockPreyPrice = active.lockPreyPrice and active.lockPreyPrice.text
+                if lockPreyPrice then
+                    lockPreyPrice:setText('5')
+                end
+
+                local choosePrice = active.choose and active.choose.price and active.choose.price.text
+                if choosePrice then
+                    choosePrice:setText(1)
+                end
+            end
+        end
     end
 end
 
@@ -322,9 +408,8 @@ local function resetPreyWindowState()
         return
     end
 
-    preyWindow.description:setText('')
-    preyWindow.gold:setText('0')
-    preyWindow.wildCards:setText('0')
+    setDescriptionText('')
+    PreyWindowTabs.resetResourceDisplays()
 
     for slot = 0, 2 do
         onPreyInactive(slot, 0, 0)
@@ -470,8 +555,8 @@ function onPreyTimeLeft(slot, timeLeft)
     progressbar:setText(desc)
 end
 
-function onPreyRerollPrice(price)
-    rerollPrice = price
+function onPreyPrices(data)
+    rerollPrice = data.preyRerollPriceInGold or 0
     local t = { 'slot1', 'slot2', 'slot3' }
     for index, slot in ipairs(t) do
         local panel = preyWindow[slot]
@@ -511,7 +596,8 @@ function setTimeUntilFreeReroll(slot, timeUntilFreeReroll) -- minutes
             if timeUntilFreeReroll > 0 then
                 price:setText(comma_value(rerollPrice))
             else
-                price:setText('Free')
+                reroll:setPercent(0)
+                price:setText(Helper.handleFormatPrice(rerollPrice))
             end
         end
     end
@@ -1329,7 +1415,7 @@ updateRaceSelectionDisplay = function(slot)
             elseif scale > 100 then
                 scale = 100
             end
-            creatureWidget:setCreatureSize(size)
+            creatureWidget:setCreatureSize(scale)
             creatureWidget:setOutfit(entry.outfit)
             creatureWidget:setVisible(true)
             if placeholder then
@@ -1625,7 +1711,6 @@ end
 
 function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, bonusValue, bonusGrade, timeLeft,
                       timeUntilFreeReroll, wildcards, option) -- locktype always 0 for protocols <12
-    
     local tracker = preyTracker.contentsPanel['slot' .. (slot + 1)]
     currentHolderName = capitalFormatStr(currentHolderName)
     local percent = (timeLeft / (2 * 60 * 60)) * 100
@@ -1899,12 +1984,8 @@ function Prey.onResourcesBalanceChange(balance, oldBalance, type)
             updatePickSpecificPreyButton(slot, balance)
         end
     end
-    local player = g_game.getLocalPlayer()
     g_logger.debug('' .. tostring(type) .. ', ' .. tostring(balance))
-    if player then
-        preyWindow.wildCards:setText(tostring(player:getResourceBalance(ResourceTypes.PREY_WILDCARDS)))
-        preyWindow.gold:setText(comma_value(player:getTotalMoney()))
-    end
+    PreyWindowTabs.updateResourceLabelsFromPlayer()
 
     if type == ResourceTypes.BANK_BALANCE or type == ResourceTypes.GOLD_EQUIPPED then
         for slot = 0, 2 do

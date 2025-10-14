@@ -1,0 +1,187 @@
+HuntingTaskCancelButton < UIButton
+  size: 65 69
+  focusable: false
+  image-source: /images/game/prey/prey_hunting_task_cancel
+  image-clip: 0 0 65 69
+  background-color: red
+
+  $pressed:
+    image-clip: 0 69 65 69
+
+  $disabled:
+    image-clip: 0 138 65 69
+
+HuntingTaskHigherStarsButton < UIButton
+  size: 64 69
+  focusable: false
+  image-source: /images/game/prey/prey_hunting_task_higher_stars
+  image-clip: 0 0 64 69
+  background-color: yellow
+
+  $pressed:
+    image-clip: 0 69 64 69
+
+  $disabled:
+    image-clip: 0 138 64 69
+
+HuntingTaskClaimRewardButton < UIButton
+  size: 65 91
+  focusable: false
+  image-source: /images/game/prey/prey_hunting_task_claim_reward
+  image-clip: 0 0 65 91
+  background-color: green
+
+  $pressed:
+    image-clip: 0 91 65 91
+
+  $disabled:
+    image-clip: 0 182 65 91
+
+
+HuntingTaskActivePanel < Panel
+  size: 215 335
+
+  CreatureAndBonus
+    id: creatureAndBonus
+    anchors.left: parent.left
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-top: 25
+    background-color: blue
+
+  HuntingTaskClaimRewardPanel
+    id: choose
+    anchors.right: parent.right
+    anchors.top: prev.bottom
+    background-color: red
+
+  HuntingTaskSelectPreyPanel
+    id: select
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.right: prev.left
+    margin-right: 2
+    background-color: blue
+
+  HuntingTaskRerollButton
+    id: reroll
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.right: prev.left
+    margin-right: 2
+    background-color: yellow
+
+HuntingTaskSlotPanel < SlotPanel
+  HuntingTaskActivePanel
+    id: active
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    visible: false
+
+HuntingTaskSelectPreyPanel < UIWidget
+  size: 70 92
+  focusable: false
+
+  UIButton
+    id: pickSpecificPrey
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    size: 64 69
+    focusable: false
+    @onHoverChange: modules.game_prey.onHover(self)
+    background-color: red
+
+  CardLabel
+    id: price
+    anchors.bottom: parent.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: prev.bottom
+    margin-top: 2
+
+HuntingTaskRerollButton < UIWidget
+  size: 70 92
+  focusable: false
+
+  UIWidget
+    id: button
+    size: 66 66
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    focusable: false
+
+    ProgressBar
+      id: time
+      anchors.bottom: parent.bottom
+      anchors.left: parent.left
+      anchors.right: parent.right
+      height: 15
+      text-align: center
+      background-color: #C28400
+
+    UIButton
+      id: rerollButton
+      anchors.top: parent.top
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.bottom: prev.top
+      image-source: /images/game/prey/prey_reroll
+      image-clip: 1 0 58 45
+      focusable: false
+      @onHoverChange: modules.game_prey.onHover(self)
+
+      $pressed:
+        image-clip: 0 46 60 47
+
+  GoldLabel
+    id: price
+    anchors.top: prev.bottom
+    margin-top: 2
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+
+PreyCreatureBox < UICheckBox
+  border-width: 1
+  border-color: #ffffff
+  padding: 3
+  @onClick: modules.game_prey.onItemBoxChecked(self)
+
+  UICreature
+    id: creature
+    phantom: true
+    anchors.fill: parent
+    image-color: #ffffffff
+    margin-top: 3
+
+  $checked on:
+    border-color: #ffffff
+
+  $!checked:
+    border-color: alpha
+
+  $!on:
+    image-color: #ffffff88
+    color: #aaaaaa88
+
+PreyCreatureListItem < UICheckBox
+  height: 22
+  margin-bottom: 2
+  padding: 3
+  focusable: false
+  text-align: left
+  font: verdana-11px-rounded
+  color: #c0c0c0
+  border-width: 1
+  border-color: alpha
+  background-color: alpha
+  text-offset: 4 0
+  size-policy-horizontal: expanding
+  @onClick: modules.game_prey.onPreyRaceListItemClicked(self)
+  @onHoverChange: modules.game_prey.onPreyRaceListItemHoverChange(self)
+
+  $checked on:
+    background-color: #1c4d75ff
+    border-color: #6fb1e9ff
+    color: #ffffff
+
+  $!checked:
+    border-color: alpha

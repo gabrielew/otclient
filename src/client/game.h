@@ -582,6 +582,90 @@ struct ForgeOpenData
     uint16_t dustLevel{ 0 };
 };
 
+struct TaskSelectionEntry
+{
+    uint16_t raceId = 0;
+    bool unlocked = false; // 1 = já liberado para Task Hunting, 0 = não
+};
+
+struct TaskActiveData
+{
+    uint16_t selectedRaceId = 0;
+    bool     upgrade = false;      // 1 => usa secondKills; 0 => firstKills
+    uint16_t requiredKills = 0;    // firstKills ou secondKills conforme upgrade
+    uint16_t currentKills = 0;
+    uint8_t  rarity = 0;           // mapeia diretamente slot->rarity
+};
+
+struct TaskCompletedData
+{
+    uint16_t selectedRaceId = 0;
+    bool     upgrade = false;      // 1 => usa secondKills; 0 => firstKills
+    uint16_t requiredKills = 0;    // firstKills ou secondKills conforme upgrade
+    uint16_t achievedKills = 0;    // min(currentKills, requiredKills)
+    uint8_t  rarity = 0;
+};
+
+struct TaskHuntingPacket
+{
+    uint8_t slotId = 0;
+    Otc::PreyTaskstate_t state = Otc::PreyTaskstate_t::PREY_TASK_STATE_LOCKED;
+
+    // Payloads possíveis (preencha apenas o correspondente ao estado):
+    // Locked
+    std::optional<bool> isPremium; // presente quando state == Locked
+
+    // Inactive: (sem payload)
+
+    // Selection
+    std::vector<TaskSelectionEntry> selection; // state == Selection
+
+    // ListSelection
+    std::vector<TaskSelectionEntry> listSelection; // state == ListSelection
+
+    // Active
+    std::optional<TaskActiveData> active; // state == Active
+
+    // Completed
+    std::optional<TaskCompletedData> completed; // state == Completed
+
+    // Sempre no final do pacote
+    uint32_t freeRerollRemainingSeconds = 0;
+};
+
+struct TaskHuntingBasicPrey
+{
+    uint16_t raceId = 0;
+    uint8_t  difficulty = 0; // 1..3 (pelo seu log)
+};
+
+struct TaskHuntingOption
+{
+    uint8_t  difficulty = 0;   // 1..3
+    uint8_t  stars = 0;        // 1..5
+    uint16_t firstKill = 0;
+    uint16_t firstReward = 0;
+    uint16_t secondKill = 0;
+    uint16_t secondReward = 0;
+};
+
+struct TaskHuntingBasicData
+{
+    std::vector<TaskHuntingBasicPrey> preys;   // lista de criaturas com dificuldade
+    std::vector<TaskHuntingOption>    options; // tabela de kills/rewards por (difficulty, stars)
+};
+
+struct PreyRerollPriceData
+{
+    uint32_t preyRerollPriceInGold{ 0 };
+    uint8_t preyBonusRerollPriceInCards{ 0 };
+    uint8_t preySelectionListPriceInCards{ 0 };
+    uint8_t taskHuntingBonusRerollPriceInCards{ 0 };
+    uint8_t taskHuntingSelectionListPriceInCards{ 0 };
+    uint32_t taskHuntingCancelProgressPriceInGold{ 0 };
+    uint32_t taskHuntingSelectionListPriceInGold{ 0 };
+};
+
 //@bindsingleton g_game
 class Game
 {

@@ -940,12 +940,12 @@ end
 
 function taskHuntingBasicData(data)
     Tasks.BasicData.difficultyByRaceId = Tasks.BasicData.difficultyByRaceId or data.difficultyByRaceId or {}
-    g_logger.info(("taskHuntingBasicData: preys=%d, options=%d")
-        :format(#(data.preys or {}), #(data.options or {})))
+    -- g_logger.info(("taskHuntingBasicData: preys=%d, options=%d")
+    --     :format(#(data.preys or {}), #(data.options or {})))
 
     local d1 = Tasks.BasicData.difficultyByRaceId[1938]
     if d1 then
-        g_logger.info(("  raceId=1938 has difficulty=%d"):format(d1))
+        -- g_logger.info(("  raceId=1938 has difficulty=%d"):format(d1))
     end
     Tasks.BasicData.optionsByDifficulty = Tasks.BasicData.optionsByDifficulty or data.optionsByDifficulty or {}
     -- Acesso fácil por dificuldade/estrela:
@@ -953,7 +953,7 @@ function taskHuntingBasicData(data)
     local d2 = Tasks.BasicData.optionsByDifficulty[d1]
     local star4 = d2 and d2[5]
     if star4 then
-        g_logger.info(("  D2*5 = firstKill=%d secondKill=%d"):format(star4.firstKill, star4.secondKill))
+        -- g_logger.info(("  D2*5 = firstKill=%d secondKill=%d"):format(star4.firstKill, star4.secondKill))
     end
 end
 
@@ -974,8 +974,8 @@ end
 -- TaskHuntingData received: slotId=2, state=0, freeRerollRemainingSeconds=-9
 -- ]]
 function onTaskHuntingData(data)
-    g_logger.info(("TaskHuntingData received: slotId=%d, state=%d, freeRerollRemainingSeconds=%d")
-        :format(data.slotId, data.state, data.freeRerollRemainingSeconds or 0))
+    -- g_logger.info(("TaskHuntingData received: slotId=%d, state=%d, freeRerollRemainingSeconds=%d")
+    -- :format(data.slotId, data.state, data.freeRerollRemainingSeconds or 0))
 
     local slotWidget = getSlotWidgetBySlotId(data.slotId)
     if not slotWidget then
@@ -984,21 +984,23 @@ function onTaskHuntingData(data)
 
     -- Locked
     if data.isPremium ~= nil then
-        g_logger.info(("  [Locked] isPremium=%s"):format(tostring(data.isPremium)))
+        -- g_logger.info(("  [Locked] isPremium=%s"):format(tostring(data.isPremium)))
     end
 
     -- Selection
     if data.selection then
-        g_logger.info(("  [Selection] %d entries"):format(#data.selection))
+        g_logger.info((" slot: %d, [Selection] %d entries"):format(data.slotId, #data.selection))
         for i, entry in ipairs(data.selection) do
             g_logger.info(("    [%d] raceId=%d, unlocked=%s")
                 :format(i, entry.raceId, tostring(entry.unlocked)))
+
+            applySelectionTask(slotWidget, data.selection)
         end
     end
 
     -- ListSelection
     if data.listSelection then
-        g_logger.info(("  [ListSelection] %d entries"):format(#data.listSelection))
+        -- g_logger.info(("  [ListSelection] %d entries"):format(#data.listSelection))
 
         selectListTask(slotWidget, data.listSelection)
 
@@ -1011,8 +1013,8 @@ function onTaskHuntingData(data)
     -- Active
     if data.active then
         local a = data.active
-        g_logger.info(("  [Active] selectedRaceId=%d, upgrade=%s, requiredKills=%d, currentKills=%d, rarity=%d")
-            :format(a.selectedRaceId, tostring(a.upgrade), a.requiredKills, a.currentKills, a.rarity))
+        -- g_logger.info(("  [Active] selectedRaceId=%d, upgrade=%s, requiredKills=%d, currentKills=%d, rarity=%d")
+        --     :format(a.selectedRaceId, tostring(a.upgrade), a.requiredKills, a.currentKills, a.rarity))
         applyActiveTask(slotWidget, a)
         return
     end
@@ -1020,8 +1022,8 @@ function onTaskHuntingData(data)
     -- Completed
     if data.completed then
         local c = data.completed
-        g_logger.info(("  [Completed] selectedRaceId=%d, upgrade=%s, requiredKills=%d, achievedKills=%d, rarity=%d")
-            :format(c.selectedRaceId, tostring(c.upgrade), c.requiredKills, c.achievedKills, c.rarity))
+        -- g_logger.info(("  [Completed] selectedRaceId=%d, upgrade=%s, requiredKills=%d, achievedKills=%d, rarity=%d")
+        --     :format(c.selectedRaceId, tostring(c.upgrade), c.requiredKills, c.achievedKills, c.rarity))
         applyInactiveTask(slotWidget, tr('Completed task'))
         return
     end

@@ -701,6 +701,9 @@ local function applySelectionTask(slotWidget, selection)
             item.huntingTaskSlotWidget = slotWidget
             item.huntingTaskEntry = entry
             item.onCheckChange = handleSelectionBoxCheck
+            if index == 1 then
+                item:setChecked(true)
+            end
 
             local raceData = resolveRaceData(entry.raceId)
             if raceData then

@@ -613,6 +613,9 @@ local function updateTaskProgress(progressBar, currentKills, requiredKills)
     progressBar:setTooltip(tr('Hunting task progress: %s', text))
 end
 
+local ensureSelectionAmountPanel
+local updateSelectionAmountOptions
+
 local function resolveRaceData(raceId)
     if not raceId or not g_things or not g_things.getRaceData then
         return nil
@@ -624,6 +627,250 @@ local function resolveRaceData(raceId)
     end
 
     return data
+end
+
+local function resolveRaceStars(raceData)
+    if type(raceData) ~= 'table' then
+        return nil
+    end
+
+    local possibleKeys = {
+        'taskHuntingStars',
+        'huntingTaskStars',
+        'preyTaskStars',
+        'taskStars',
+        'stars'
+    }
+
+    for _, key in ipairs(possibleKeys) do
+        local value = raceData[key]
+        if type(value) == 'number' then
+            return value
+        end
+    end
+
+    return nil
+end
+
+local function handleAmountOptionCheck(widget, checked)
+    if not widget or widget:isDestroyed() then
+        return
+    end
+
+    local slotWidget = widget.huntingTaskSlotWidget
+    if not slotWidget or slotWidget:isDestroyed() then
+        return
+    end
+
+    if checked then
+        slotWidget.__huntingTaskSelectedAmount = widget.huntingTaskAmountValue
+    elseif slotWidget.__huntingTaskSelectedAmount == widget.huntingTaskAmountValue then
+        slotWidget.__huntingTaskSelectedAmount = nil
+    end
+end
+
+local function ensureSelectionAmountPanel(slotWidget)
+    if not slotWidget or slotWidget:isDestroyed() then
+        return nil
+    end
+
+    if slotWidget.__huntingTaskAmountPanel and not slotWidget.__huntingTaskAmountPanel:isDestroyed() then
+        return slotWidget.__huntingTaskAmountPanel
+    end
+
+    if not g_ui or not g_ui.createWidget then
+        return nil
+    end
+
+    local inactivePanel = slotWidget:recursiveGetChildById('inactive')
+    if not inactivePanel or inactivePanel:isDestroyed() then
+        return nil
+    end
+
+    local listPanel = inactivePanel:recursiveGetChildById('list')
+    if not listPanel or listPanel:isDestroyed() then
+        return nil
+    end
+
+    local amountPanel = g_ui.createWidget('FlatPanel', inactivePanel)
+    if not amountPanel then
+        return nil
+    end
+
+    amountPanel:setId('huntingTaskAmountPanel')
+    amountPanel:setVisible(false)
+    amountPanel:setFocusable(false)
+    if amountPanel.breakAnchors then
+        amountPanel:breakAnchors()
+        amountPanel:addAnchor(AnchorTop, listPanel:getId(), AnchorBottom)
+        amountPanel:addAnchor(AnchorLeft, listPanel:getId(), AnchorLeft)
+        amountPanel:addAnchor(AnchorRight, listPanel:getId(), AnchorRight)
+        amountPanel:setMarginTop(6)
+    end
+    if amountPanel.setHeight then
+        amountPanel:setHeight(34)
+    end
+    if amountPanel.setLayout and UIHorizontalLayout and UIHorizontalLayout.create then
+        local layout = UIHorizontalLayout.create(amountPanel)
+        if layout and layout.setSpacing then
+            layout:setSpacing(8)
+        end
+    end
+
+    local label = g_ui.createWidget('Label', amountPanel)
+    if label then
+        label:setId('huntingTaskAmountLabel')
+        label:setText(tr('Amount:'))
+        if label.setColor then
+            label:setColor('#cfcfcf')
+        end
+        label:setFocusable(false)
+    end
+
+    local groupId = slotWidget:getId() or tostring(slotWidget)
+    groupId = string.format('huntingTaskAmountGroup-%s', groupId)
+
+    local radioFirst = g_ui.createWidget('UIRadioButton', amountPanel)
+    if radioFirst then
+        radioFirst:setId('huntingTaskAmountFirst')
+        radioFirst:setGroupId(groupId)
+        radioFirst:setMarginLeft(8)
+        radioFirst:setFocusable(false)
+        radioFirst.huntingTaskSlotWidget = slotWidget
+        radioFirst.onCheckChange = handleAmountOptionCheck
+    end
+
+    local radioSecond = g_ui.createWidget('UIRadioButton', amountPanel)
+    if radioSecond then
+        radioSecond:setId('huntingTaskAmountSecond')
+        radioSecond:setGroupId(groupId)
+        radioSecond:setMarginLeft(8)
+        radioSecond:setFocusable(false)
+        radioSecond.huntingTaskSlotWidget = slotWidget
+        radioSecond.onCheckChange = handleAmountOptionCheck
+    end
+
+    slotWidget.__huntingTaskAmountPanel = amountPanel
+    slotWidget.__huntingTaskAmountFirst = radioFirst
+    slotWidget.__huntingTaskAmountSecond = radioSecond
+
+    return amountPanel
+end
+
+local function updateSelectionAmountOptions(slotWidget, entry, entryWidget)
+    if not slotWidget or slotWidget:isDestroyed() then
+        return
+    end
+
+    local amountPanel = ensureSelectionAmountPanel(slotWidget)
+    if not amountPanel then
+        return
+    end
+
+    local radioFirst = slotWidget.__huntingTaskAmountFirst
+    local radioSecond = slotWidget.__huntingTaskAmountSecond
+    if (not radioFirst or radioFirst:isDestroyed()) or (not radioSecond or radioSecond:isDestroyed()) then
+        slotWidget.__huntingTaskAmountPanel = nil
+        slotWidget.__huntingTaskAmountFirst = nil
+        slotWidget.__huntingTaskAmountSecond = nil
+        return updateSelectionAmountOptions(slotWidget, entry, entryWidget)
+    end
+
+    if not entry then
+        amountPanel:setVisible(false)
+        radioFirst:setText('--')
+        radioFirst:setChecked(false)
+        radioFirst:setEnabled(false)
+        radioSecond:setText('--')
+        radioSecond:setChecked(false)
+        radioSecond:setEnabled(false)
+        slotWidget.__huntingTaskSelectedAmount = nil
+        slotWidget.__huntingTaskAmountData = nil
+        return
+    end
+
+    local difficulty = nil
+    if Tasks.BasicData and Tasks.BasicData.difficultyByRaceId then
+        difficulty = Tasks.BasicData.difficultyByRaceId[entry.raceId]
+    end
+
+    local options = nil
+    if difficulty and Tasks.BasicData and Tasks.BasicData.optionsByDifficulty then
+        options = Tasks.BasicData.optionsByDifficulty[difficulty]
+    end
+
+    local starLevel = entry.stars
+    if not starLevel and entryWidget and entryWidget.huntingTaskStars then
+        starLevel = entryWidget.huntingTaskStars
+    end
+    if not starLevel and entry.raceData then
+        starLevel = resolveRaceStars(entry.raceData)
+    end
+    if not starLevel and entryWidget and entryWidget.raceData then
+        starLevel = resolveRaceStars(entryWidget.raceData)
+    end
+
+    local optionData = nil
+    if type(options) == 'table' then
+        if starLevel and options[starLevel] then
+            optionData = options[starLevel]
+        else
+            local starIndices = {}
+            for key, value in pairs(options) do
+                if type(key) == 'number' and type(value) == 'table' then
+                    table.insert(starIndices, key)
+                end
+            end
+            table.sort(starIndices)
+            if starIndices[1] then
+                starLevel = starIndices[1]
+                optionData = options[starLevel]
+            end
+        end
+    end
+
+    local firstKill = optionData and optionData.firstKill or 0
+    local secondKill = optionData and optionData.secondKill or 0
+
+    radioFirst:setEnabled(firstKill > 0)
+    radioFirst:setText(firstKill > 0 and tostring(firstKill) or '--')
+    radioFirst.huntingTaskAmountValue = firstKill > 0 and firstKill or nil
+
+    local enableSecond = (secondKill > 0) and not entry.unlocked
+    radioSecond:setEnabled(enableSecond)
+    radioSecond:setText(secondKill > 0 and tostring(secondKill) or '--')
+    radioSecond.huntingTaskAmountValue = enableSecond and secondKill or nil
+
+    if firstKill > 0 then
+        radioFirst:setChecked(true)
+    else
+        radioFirst:setChecked(false)
+    end
+
+    if radioSecond:isChecked() then
+        if not enableSecond then
+            radioSecond:setChecked(false)
+        elseif enableSecond and secondKill <= 0 then
+            radioSecond:setChecked(false)
+        end
+    end
+
+    if radioFirst:isChecked() and firstKill > 0 then
+        slotWidget.__huntingTaskSelectedAmount = firstKill
+    elseif radioSecond:isChecked() and enableSecond then
+        slotWidget.__huntingTaskSelectedAmount = secondKill
+    else
+        slotWidget.__huntingTaskSelectedAmount = nil
+    end
+
+    slotWidget.__huntingTaskAmountData = {
+        difficulty = difficulty,
+        stars = starLevel,
+        firstKill = firstKill,
+        secondKill = secondKill
+    }
+
+    amountPanel:setVisible(true)
 end
 
 local function handleSelectionBoxCheck(widget, checked)
@@ -643,8 +890,14 @@ local function handleSelectionBoxCheck(widget, checked)
             previous:setChecked(false)
         end
         slotWidget.__huntingTaskSelectedCreature = widget
+        local entry = widget.huntingTaskEntry
+        if entry and widget.huntingTaskStars and not entry.stars then
+            entry.stars = widget.huntingTaskStars
+        end
+        updateSelectionAmountOptions(slotWidget, entry, widget)
     elseif slotWidget.__huntingTaskSelectedCreature == widget then
         slotWidget.__huntingTaskSelectedCreature = nil
+        updateSelectionAmountOptions(slotWidget, nil, widget)
     end
 end
 
@@ -692,9 +945,12 @@ local function applySelectionTask(slotWidget, selection)
 
     local entries = selection or {}
     if #entries == 0 then
+        updateSelectionAmountOptions(slotWidget, nil)
         return true
     end
 
+    local firstEntry
+    local firstWidget
     for index, entry in ipairs(entries) do
         local item = g_ui.createWidget('PreyCreatureBox', listPanel)
         if item then
@@ -703,11 +959,18 @@ local function applySelectionTask(slotWidget, selection)
             item.onCheckChange = handleSelectionBoxCheck
             if index == 1 then
                 item:setChecked(true)
+                firstEntry = entry
+                firstWidget = item
             end
 
             local raceData = resolveRaceData(entry.raceId)
             if raceData then
                 item.raceData = raceData
+                local stars = resolveRaceStars(raceData)
+                if stars then
+                    item.huntingTaskStars = stars
+                    entry.stars = entry.stars or stars
+                end
             end
 
             local name
@@ -739,6 +1002,12 @@ local function applySelectionTask(slotWidget, selection)
                 item:setBackgroundColor(backgroundColor)
             end
         end
+    end
+
+    if firstEntry then
+        updateSelectionAmountOptions(slotWidget, firstEntry, firstWidget)
+    else
+        updateSelectionAmountOptions(slotWidget, nil)
     end
 
     return true

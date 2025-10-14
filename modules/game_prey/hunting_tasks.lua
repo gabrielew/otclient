@@ -235,7 +235,7 @@ local function setCancelButtonVisible(slotWidget, visible)
         return
     end
 
-    local rerollButton = rerollPanel:recursiveGetChildById('rerollButton')
+    local rerollButton = rerollPanel:recursiveGetChildById('rerollSelectionButton')
     local buttonContainer = rerollPanel:recursiveGetChildById('button')
     local rerollVisible = not visible or not cancelButton
     if rerollButton and not rerollButton:isDestroyed() then
@@ -262,7 +262,7 @@ local function updateHigherStarsButton(activePanel)
         return
     end
 
-    local button = selectPanel:recursiveGetChildById('pickSpecificPrey')
+    local button = selectPanel:recursiveGetChildById('higherStarsButton')
     if not button or button:isDestroyed() then
         return
     end
@@ -844,7 +844,7 @@ local function applySelectionTask(slotWidget, selection)
     local choosePanel = inactivePanel:recursiveGetChildById('choose')
     if choosePanel then
         setWidgetMarginTop(choosePanel, BUTTON_TOP_MARGIN)
-        local chooseButton = choosePanel:recursiveGetChildById('selectPrey')
+        local chooseButton = choosePanel:recursiveGetChildById('claimRewardButton')
         if chooseButton then
             setWidgetMarginTop(chooseButton, BUTTON_TOP_MARGIN)
         end
@@ -856,7 +856,7 @@ local function applySelectionTask(slotWidget, selection)
     local selectPanel = inactivePanel:recursiveGetChildById('select')
     if selectPanel then
         setWidgetMarginTop(selectPanel, BUTTON_TOP_MARGIN)
-        local pickSpecificButton = selectPanel:recursiveGetChildById('pickSpecificPrey')
+        local pickSpecificButton = selectPanel:recursiveGetChildById('higherStarsButton')
         if pickSpecificButton then
             setWidgetMarginTop(pickSpecificButton, BUTTON_TOP_MARGIN)
         end
@@ -868,7 +868,7 @@ local function applySelectionTask(slotWidget, selection)
     local rerollPanel = inactivePanel:recursiveGetChildById('reroll')
     if rerollPanel then
         setWidgetMarginTop(rerollPanel, BUTTON_TOP_MARGIN)
-        local rerollButton = rerollPanel:recursiveGetChildById('rerollButton')
+        local rerollButton = rerollPanel:recursiveGetChildById('rerollSelectionButton')
         if rerollButton then
             setWidgetMarginTop(rerollButton, BUTTON_TOP_MARGIN)
         end

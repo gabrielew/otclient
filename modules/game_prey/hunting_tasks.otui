@@ -43,7 +43,7 @@ HuntingTaskClaimRewardPanel < FlatPanel
   focusable: false
 
   HuntingTaskClaimRewardButton
-    id: selectPrey
+    id: claimRewardButton
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
     margin-top: 0
@@ -132,7 +132,7 @@ HuntingTaskSelectPreyPanel < UIWidget
   focusable: false
 
   UIButton
-    id: pickSpecificPrey
+    id: higherStarsButton
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
     size: 64 69
@@ -169,7 +169,7 @@ HuntingTaskRerollButton < UIWidget
       background-color: #C28400
 
     UIButton
-      id: rerollButton
+      id: rerollSelectionButton
       anchors.top: parent.top
       anchors.left: parent.left
       anchors.right: parent.right

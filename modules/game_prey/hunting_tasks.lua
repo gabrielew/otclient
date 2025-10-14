@@ -829,6 +829,21 @@ local function applySelectionTask(slotWidget, selection)
         fullListPanel:setVisible(false)
     end
 
+    local choosePanel = inactivePanel:recursiveGetChildById('choose')
+    if choosePanel and choosePanel.setVisible then
+        choosePanel:setVisible(false)
+    end
+
+    local selectPanel = inactivePanel:recursiveGetChildById('select')
+    if selectPanel and selectPanel.setVisible then
+        selectPanel:setVisible(false)
+    end
+
+    local rerollPanel = inactivePanel:recursiveGetChildById('reroll')
+    if rerollPanel and rerollPanel.setVisible then
+        rerollPanel:setVisible(false)
+    end
+
     local listPanel = inactivePanel:recursiveGetChildById('list')
     if not listPanel or listPanel:isDestroyed() then
         return false

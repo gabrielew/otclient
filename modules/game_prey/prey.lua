@@ -107,7 +107,8 @@ function init()
   connect(g_game, {
     onGameStart = check,
     onGameEnd = hide,
-    onPreySelectionChangeMonster = getMonsterList,
+    -- onPreySelectionChangeMonster = getMonsterList,
+    onPreySelectionChangeMonster = onPreyWildcard,
     onResourceBalance = onResourceBalance,
     onPreyFreeRolls = onPreyFreeRolls,
     onPreyTimeLeft = onPreyTimeLeft,
@@ -179,7 +180,7 @@ local function getSlotIndexFromWidget(widget)
     if id then
       local slotNumber = id:match('^slot(%d+)$')
       if slotNumber then
-        return tonumber(slotNumber) - 1
+        return tonumber(slotNumber)
       end
     end
     widget = widget:getParent()
@@ -227,8 +228,8 @@ function onHover(widget)
 
   if id == "choosePreyButton" then
     local preySlot = preyWindow["slot" .. slotId]
-    local bonusType = preySlot.bonusType
-    local bonusValue = preySlot.bonusValue
+    local bonusType = preySlot.bonusType or 0
+    local bonusValue = preySlot.bonusValue or 0
     if bonusType > 0 then
       -- wildcard
       if preySlot.wildcard:isVisible() and preySlot.wildcard.monsterList:getFocusedChild() then
@@ -279,7 +280,7 @@ function terminate()
     onPreyTimeLeft = onPreyTimeLeft,
     onPreyPrice = onPreyPrice,
     onPreyLocked = onPreyLocked,
-    onPreyWildcard = onPreyWildcard,
+    onPreySelectionChangeMonster = onPreyWildcard,
     onPreyInactive = onPreyInactive,
     onPreyActive = onPreyActive,
     onPreySelection = onPreySelection
@@ -463,23 +464,21 @@ function show(position)
   preyWindow:show(true)
   preyWindow:raise()
   preyWindow:focus()
-  g_client.setInputLockWidget(preyWindow)
+  -- g_client.setInputLockWidget(preyWindow)
   if position ~= nil then
     preyWindow:setPosition(position)
   end
 
   g_keyboard.bindKeyPress('Tab', onSelectHunting, preyWindow)
+  local player = g_game.getLocalPlayer()
+  onResourceBalance(player:getResourceBalance(ResourceTypes.BANK_BALANCE), 0, ResourceTypes.BANK_BALANCE)
+  g_logger.info("RESOURCE BANK: " .. player:getResourceBalance(ResourceTypes.BANK_BALANCE))
 
-  local localPlayer = g_game.getLocalPlayer()
-  onResourceBalance(localPlayer:getResourceBalance(ResourceTypes.BANK_BALANCE), 0, ResourceTypes.BANK_BALANCE)
+  onResourceBalance(player:getResourceBalance(ResourceTypes.GOLD_EQUIPPED), 0, ResourceTypes.GOLD_EQUIPPED)
+  g_logger.info("RESOURCE INVENTORY: " .. player:getResourceBalance(ResourceTypes.GOLD_EQUIPPED))
 
-  g_logger.info("RESOURCE BANK: " .. localPlayer:getResourceBalance(ResourceBank))
-
-  onResourceBalance(localPlayer:getResourceBalance(ResourceTypes.GOLD_EQUIPPED), 0, ResourceTypes.GOLD_EQUIPPED)
-  g_logger.info("RESOURCE INVENTORY: " .. localPlayer:getResourceBalance(ResourceInventary))
-  onResourceBalance(localPlayer:getResourceBalance(ResourceTypes.PREY_WILDCARD), 0, ResourceTypes.PREY_WILDCARD)
-
-  g_logger.info("RESOURCE INVENTORY: " .. localPlayer:getResourceBalance(ResourceInventary))
+  onResourceBalance(player:getResourceBalance(ResourceTypes.PREY_WILDCARDS), 0, ResourceTypes.PREY_WILDCARDS)
+  g_logger.info("RESOURCE WILDCARDS: " .. player:getResourceBalance(ResourceTypes.PREY_WILDCARDS))
   -- if creatureList == nil then
   --   creatureList = g_things.getMonsterList()
   -- end
@@ -492,9 +491,7 @@ function toggle()
   if preyWindow:isVisible() then
     return hide(true)
   end
-  preyWindow:show(true)
-  preyWindow:raise()
-  preyWindow:focus()
+  show(preyWindow:getPosition())
 end
 
 function onPreyFreeRolls(slot, timeleft)
@@ -647,6 +644,7 @@ function getSmallIconPath(bonusType)
 end
 
 function getExtendIcon(lockType)
+  lockType = lockType or 0
   local path = "/images/game/prey/"
   local player = g_game.getLocalPlayer()
   if not player then
@@ -654,7 +652,7 @@ function getExtendIcon(lockType)
   end
 
   local balance = player:getResourceBalance(ResourceTypes.PREY_WILDCARDS)
-  g_logger.info("balance " .. balance .. " lockType " .. lockType)
+
   if lockType == 1 then
     return balance < 1 and (path .. "prey-auto-reroll-enabled-failing") or (path .. "prey-auto-reroll-enabled")
   elseif lockType == 2 then
@@ -712,7 +710,9 @@ function onItemBoxChecked(widget, lastWidget, slot)
     local name = tr("Selected: %s", widget.creature:getTooltip())
     preyWindow["slot" .. slot].title:setText(short_text(name, 28))
     preyWindow["slot" .. slot].select:recursiveGetChildById('choosePreyButton'):setOn(true)
-    preyWindow["slot" .. slot].select:recursiveGetChildById('choosePreyButton'):setActionId(slot)
+    preyWindow["slot" .. slot].select:recursiveGetChildById('choosePreyButton')
+
+    -- :setActionId(slot)
   end
 
   if widget.highlight then
@@ -758,7 +758,7 @@ function onWildcardChange(prey, selected, lastSelected, slot)
 
   if not selected then
     prey.wildcard.choose.button.choosePreyButton:setOn(false)
-    prey.wildcard.choose.button.choosePreyButton:setActionId(0)
+    -- prey.wildcard.choose.button.choosePreyButton:setActionId(0)
     lastSelectedLabel[slot] = nil
     selectedMonster[slot] = nil
     prey.title:setText("Select your prey creature")
@@ -767,7 +767,7 @@ function onWildcardChange(prey, selected, lastSelected, slot)
   end
 
   prey.wildcard.choose.button.choosePreyButton:setOn(true)
-  prey.wildcard.choose.button.choosePreyButton:setActionId(string.match(prey:getId(), "%d+$"))
+  -- prey.wildcard.choose.button.choosePreyButton:setActionId(string.match(prey:getId(), "%d+$"))
   selected:setBackgroundColor("#585858")
   if lastSelected then
     lastSelected:setBackgroundColor(lastSelected.background)
@@ -913,7 +913,7 @@ function onRerollButtonAction(slot, freeReroll)
     preyWindow:show(true)
     preyWindow:raise()
     preyWindow:focus()
-    g_client.setInputLockWidget(preyWindow)
+    -- g_client.setInputLockWidget(preyWindow)
   end
 
   local cancelFunc = function()
@@ -922,7 +922,7 @@ function onRerollButtonAction(slot, freeReroll)
     preyWindow:show(true)
     preyWindow:raise()
     preyWindow:focus()
-    g_client.setInputLockWidget(preyWindow)
+    -- g_client.setInputLockWidget(preyWindow)
   end
 
   local confirmText = "Are you sure you want to use the Free List Reroll?"
@@ -953,7 +953,7 @@ function onConfirmUsingWildcard(slot, price, action)
     preyWindow:show(true)
     preyWindow:raise()
     preyWindow:focus()
-    g_client.setInputLockWidget(preyWindow)
+    -- g_client.setInputLockWidget(preyWindow)
   end
 
   local cancelFunc = function()
@@ -962,7 +962,7 @@ function onConfirmUsingWildcard(slot, price, action)
     preyWindow:show(true)
     preyWindow:raise()
     preyWindow:focus()
-    g_client.setInputLockWidget(preyWindow)
+    -- g_client.setInputLockWidget(preyWindow)
   end
 
   local confirmText = tr("Are you sure you want to use %s of your remaining %s Prey Wildcards?", price, bonusRerolls)
@@ -986,7 +986,7 @@ function onEnableAutoReroll(slot)
     preyWindow:show(true)
     preyWindow:raise()
     preyWindow:focus()
-    g_client.setInputLockWidget(preyWindow)
+    -- g_client.setInputLockWidget(preyWindow)
   end
 
   local cancelFunc = function()
@@ -995,7 +995,7 @@ function onEnableAutoReroll(slot)
     preyWindow:show(true)
     preyWindow:raise()
     preyWindow:focus()
-    g_client.setInputLockWidget(preyWindow)
+    -- g_client.setInputLockWidget(preyWindow)
   end
 
   local confirmText = tr(
@@ -1020,7 +1020,7 @@ function onEnableLockPrey(slot)
     preyWindow:show(true)
     preyWindow:raise()
     preyWindow:focus()
-    g_client.setInputLockWidget(preyWindow)
+    -- g_client.setInputLockWidget(preyWindow)
   end
 
   local cancelFunc = function()
@@ -1029,7 +1029,7 @@ function onEnableLockPrey(slot)
     preyWindow:show(true)
     preyWindow:raise()
     preyWindow:focus()
-    g_client.setInputLockWidget(preyWindow)
+    -- g_client.setInputLockWidget(preyWindow)
   end
 
   local confirmText = tr(
@@ -1083,7 +1083,7 @@ function onPreyActive(slot, currentHolderName, currentHolderOutfit, bonusType, b
   updatePreyWidget(slot, SLOT_STATE_ACTIVE, currentHolderOutfit)
 end
 
-function onPreySelection(slot, bonusType, bonusValue, bonusGrade, names, outfits, timeUntilFreeReroll, lockType)
+function onPreySelection(slot, names, outfits, timeUntilFreeReroll, wildcards, lockType)
   g_logger.info("onPreySelection")
   local prey = preyWindow["slot" .. (slot + 1)]
   if not prey then
@@ -1091,7 +1091,7 @@ function onPreySelection(slot, bonusType, bonusValue, bonusGrade, names, outfits
   end
   g_logger.info(("slot %d, bonusType %d, bonusValue %d, bonusGrade %d, names %s, outfits %s, timeUntilFreeReroll %d, lockType %d")
     :format(
-      slot, bonusType, bonusValue, bonusGrade, table.concat(names, ", "), table.concat(outfits, ", "),
+      slot, -1, -1, -1, table.concat(names, ", "), table.concat(outfits, ", "),
       timeUntilFreeReroll,
       lockType))
 
@@ -1106,10 +1106,10 @@ function onPreySelection(slot, bonusType, bonusValue, bonusGrade, names, outfits
   list:destroyChildren()
 
   prey.select.buttonsPanel.choose.button.choosePreyButton:setOn(false)
-  prey.select.buttonsPanel.choose.button.choosePreyButton:setActionId(slot + 1)
+  -- prey.select.buttonsPanel.choose.button.choosePreyButton:setActionId(slot + 1)
   for i, name in ipairs(names) do
     local box = g_ui.createWidget("PreyCreatureBox", list)
-    box.onHoverChange = function(box, hovered) onSpecialHover("selectionList", bonusType, bonusValue) end
+    -- box.onHoverChange = function(box, hovered) onSpecialHover("selectionList", bonusType, bonusValue) end
     name = capitalFormatStr(name)
     box.creature:setTooltip(name)
     box.creature:setOutfit(outfits[i])
@@ -1141,8 +1141,8 @@ function onPreySelection(slot, bonusType, bonusValue, bonusGrade, names, outfits
   end
 
   prey.lockType = lockType
-  prey.bonusType = bonusType
-  prey.bonusValue = bonusValue
+  prey.bonusType = -1
+  prey.bonusValue = -1
   setTimeUntilFreeReroll(slot, timeUntilFreeReroll)
   setUnsupportedSettings()
   updatePreyWidget(slot, SLOT_STATE_SELECTION)
@@ -1186,13 +1186,13 @@ function updateSearchWildcard(prey)
       monsterLabel:setText(string.capitalize(creature[1]))
     end
 
-    if modules.game_prey_hunting.isHuntingActive(creature[1]) then
-      monsterLabel.icon:setVisible(true)
-      monsterLabel:setTextOffset("21 0")
-    else
-      monsterLabel.icon:setVisible(false)
-      monsterLabel:setTextOffset("0 0")
-    end
+    -- if modules.game_prey_hunting.isHuntingActive(creature[1]) then
+    --   monsterLabel.icon:setVisible(true)
+    --   monsterLabel:setTextOffset("21 0")
+    -- else
+    monsterLabel.icon:setVisible(false)
+    monsterLabel:setTextOffset("0 0")
+    -- end
     :: continue ::
   end
 
@@ -1238,13 +1238,13 @@ function onSearchValueChange(scrollbar, value, delta, slot)
       lastSelectedLabel[slot] = monsterLabel
     end
 
-    if modules.game_prey_hunting.isHuntingActive(creature[1]) then
-      monsterLabel.icon:setVisible(true)
-      monsterLabel:setTextOffset("21 0")
-    else
-      monsterLabel.icon:setVisible(false)
-      monsterLabel:setTextOffset("0 0")
-    end
+    -- if modules.game_prey_hunting.isHuntingActive(creature[1]) then
+    --   monsterLabel.icon:setVisible(true)
+    --   monsterLabel:setTextOffset("21 0")
+    -- else
+    monsterLabel.icon:setVisible(false)
+    monsterLabel:setTextOffset("0 0")
+    -- end
     :: continue ::
   end
 end
@@ -1281,13 +1281,13 @@ function onWildcardValueChange(scrollbar, value, delta, slot)
       lastSelectedLabel[slot] = monsterLabel
     end
 
-    if modules.game_prey_hunting.isHuntingActive(creature[1]) then
-      monsterLabel.icon:setVisible(true)
-      monsterLabel:setTextOffset("21 0")
-    else
-      monsterLabel.icon:setVisible(false)
-      monsterLabel:setTextOffset("0 0")
-    end
+    -- if modules.game_prey_hunting.isHuntingActive(creature[1]) then
+    --   monsterLabel.icon:setVisible(true)
+    --   monsterLabel:setTextOffset("21 0")
+    -- else
+    monsterLabel.icon:setVisible(false)
+    monsterLabel:setTextOffset("0 0")
+    -- end
   end
 end
 
@@ -1298,19 +1298,20 @@ function updateWildCardWindow()
       goto continue
     end
 
-    table.sort(currentRaces[i], function(a, b)
-      local creatureA = creatureList[a]
-      local creatureB = creatureList[b]
-      local hasA = modules.game_prey_hunting.isHuntingActive(creatureA[1])
-      local hasB = modules.game_prey_hunting.isHuntingActive(creatureB[1])
-      if hasA and not hasB then
-        return true
-      elseif not hasA and hasB then
-        return false
-      else
-        return creatureA[1] < creatureB[1]
-      end
-    end)
+    -- table.sort(currentRaces[i], function(a, b)
+    --   g_logger.info("sort: " .. a .. " " .. b)
+    --   local creatureA = creatureList[a]
+    --   local creatureB = creatureList[b]
+    --   -- local hasA = modules.game_prey_hunting.isHuntingActive(creatureA[1])
+    --   -- local hasB = modules.game_prey_hunting.isHuntingActive(creatureB[1])
+    --   -- if hasA and not hasB then
+    --   --   return true
+    --   -- elseif not hasA and hasB then
+    --   --   return false
+    --   -- else
+    --   return creatureA[1] < creatureB[1]
+    --   -- end
+    -- end)
 
     itemsPool[i] = {}
     prey.wildcard.monsterList:destroyChildren()
@@ -1324,7 +1325,7 @@ function updateWildCardWindow()
 
       local monster = g_ui.createWidget("WildcardLabel", prey.wildcard.monsterList)
       monster:setId(monsterInfo)
-      monster:setActionId(i + 1)
+      -- monster:setActionId(i + 1)
       monster:setTextAlign(AlignLeft)
       count = count + 1
       local color = ((count % 2 == 0) and '#484848' or '#414141')
@@ -1334,7 +1335,7 @@ function updateWildCardWindow()
       if creature then
         monster:setText(string.capitalize(creature[1]))
       end
-      local isInHunting = modules.game_prey_hunting.isHuntingActive(creature[1])
+      -- local isInHunting = modules.game_prey_hunting.isHuntingActive(creature[1])
       monster.icon:setVisible(isInHunting)
       monster:setTextOffset(isInHunting and "21 0" or "0 0")
       monster.onHoverChange = function(monster, hovered) onSpecialHover("selectionList", bonusType, bonusValue) end
@@ -1351,15 +1352,24 @@ function updateWildCardWindow()
   end
 end
 
-function onPreyWildcard(slot, races, timeUntilFreeReroll, lockType, bonusType, bonusValue, bonusGrade)
+function onPreyWildcard(slot, names, outfits, bonusType, bonusValue, bonusGrade, timeUntilFreeReroll,
+                        wildcards, option)
+  g_logger.info("onPreyWildcard:" .. slot)
   local prey = preyWindow["slot" .. (slot + 1)]
+  g_logger.info("slot: " .. (slot + 1))
   if not prey then
     return
   end
+  creatureList = {}
+
+  for raceId, name in ipairs(names) do
+    g_logger.info(">raceId: " .. raceId .. " name: " .. name)
+    creatureList[raceId] = creatureList[raceId] or name
+  end
 
   itemListMin[slot] = 0
-  itemListMax[slot] = #races
-  currentRaces[slot] = races
+  itemListMax[slot] = #names
+  currentRaces[slot] = names
   currentSearchRaces[slot] = {}
   itemSize[slot] = WILDCARD_LABEL_HEIGHT
   maxFitItems[slot] = 0
@@ -1378,7 +1388,7 @@ function onPreyWildcard(slot, races, timeUntilFreeReroll, lockType, bonusType, b
 
   local count = 0
   for i = 1, poolSize[slot] do
-    g_ui.createWidget("WildcardLabel", prey.wildcard.monsterList)
+    local monster = g_ui.createWidget("WildcardLabel", prey.wildcard.monsterList)
     table.insert(itemsPool[slot], monster)
   end
 
@@ -1396,17 +1406,17 @@ function onPreyWildcard(slot, races, timeUntilFreeReroll, lockType, bonusType, b
   end
 
   local preyPanel = prey.wildcard.panel
-  preyPanel.onHoverChange = function(preyPanel, hovered) onSpecialHover("selectionList", bonusType, bonusValue) end
+  -- preyPanel.onHoverChange = function(preyPanel, hovered) onSpecialHover("selectionList", bonusType, bonusValue) end
 
   monsterList = prey.wildcard.monsterList
-  prey.wildcard.choose.button.choosePreyButton:setActionId(slot + 1)
+  -- prey.wildcard.choose.button.choosePreyButton:setActionId(slot + 1)
   prey.wildcard.choose.button.choosePreyButton.onClick = function()
     return g_game.preyAction(slot, 4, selectedMonster[slot])
   end
 
-  prey.lockType = lockType
-  prey.bonusValue = bonusValue
-  prey.bonusType = bonusType
+  prey.lockType = option
+  prey.bonusValue = -1
+  prey.bonusType = -1
   setUnsupportedSettings()
   updatePreyWidget(slot, SLOT_STATE_WILDCARD)
   updateWildCardWindow()

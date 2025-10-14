@@ -1415,7 +1415,7 @@ updateRaceSelectionDisplay = function(slot)
             elseif scale > 100 then
                 scale = 100
             end
-            creatureWidget:setCreatureSize(size)
+            creatureWidget:setCreatureSize(scale)
             creatureWidget:setOutfit(entry.outfit)
             creatureWidget:setVisible(true)
             if placeholder then

@@ -626,6 +626,157 @@ local function resolveRaceData(raceId)
     return data
 end
 
+local function handleAmountRadioCheck(widget, checked)
+    if not widget or widget:isDestroyed() then
+        return
+    end
+
+    local slotWidget = widget.huntingTaskSlotWidget
+    if not slotWidget or slotWidget:isDestroyed() then
+        return
+    end
+
+    if checked then
+        local parent = widget:getParent()
+        if parent and not parent:isDestroyed() then
+            for _, child in ipairs(parent:getChildren()) do
+                if child ~= widget and child.setChecked and child:isChecked() then
+                    child:setChecked(false)
+                end
+            end
+        end
+
+        slotWidget.__huntingTaskSelectedAmountButton = widget
+        slotWidget.__huntingTaskSelectedAmountValue = widget.huntingTaskAmountValue
+    elseif slotWidget.__huntingTaskSelectedAmountButton == widget then
+        slotWidget.__huntingTaskSelectedAmountButton = nil
+        slotWidget.__huntingTaskSelectedAmountValue = nil
+    end
+end
+
+local function resolveAmountValues(slotWidget, entry)
+    if not entry or not entry.raceId then
+        return nil, nil
+    end
+
+    local difficultyByRaceId = Tasks.BasicData and Tasks.BasicData.difficultyByRaceId or {}
+    local optionsByDifficulty = Tasks.BasicData and Tasks.BasicData.optionsByDifficulty or {}
+    local difficulty = difficultyByRaceId[entry.raceId]
+    if not difficulty then
+        return nil, nil
+    end
+
+    local options = optionsByDifficulty[difficulty]
+    if type(options) ~= 'table' then
+        return nil, nil
+    end
+
+    local preferredStars = slotWidget and slotWidget.__huntingTaskSelectedRarity
+    local selectedOption = preferredStars and options[preferredStars] or nil
+
+    if not selectedOption then
+        for starIndex = 1, 6 do
+            local candidate = options[starIndex]
+            if candidate and type(candidate) == 'table' and candidate.firstKill then
+                selectedOption = candidate
+                break
+            end
+        end
+    end
+
+    if not selectedOption then
+        for _, candidate in pairs(options) do
+            if candidate and type(candidate) == 'table' and candidate.firstKill then
+                selectedOption = candidate
+                break
+            end
+        end
+    end
+
+    if not selectedOption then
+        return nil, nil
+    end
+
+    return selectedOption.firstKill, selectedOption.secondKill
+end
+
+local function updateSelectionAmountOptions(slotWidget, entry)
+    if not slotWidget or slotWidget:isDestroyed() then
+        return
+    end
+
+    local inactivePanel = slotWidget:recursiveGetChildById('inactive')
+    if not inactivePanel or inactivePanel:isDestroyed() then
+        return
+    end
+
+    local amountPanel = inactivePanel:recursiveGetChildById('amountPanel')
+    if not amountPanel or amountPanel:isDestroyed() then
+        return
+    end
+
+    local optionOne = amountPanel:recursiveGetChildById('amountOptionOne')
+    local optionTwo = amountPanel:recursiveGetChildById('amountOptionTwo')
+
+    local firstValue, secondValue = resolveAmountValues(slotWidget, entry)
+    local hasFirstValue = firstValue ~= nil
+    local hasSecondValue = secondValue ~= nil
+
+    local function setupOption(optionWidget, value, enabled)
+        if not optionWidget or optionWidget:isDestroyed() then
+            return
+        end
+
+        optionWidget.huntingTaskSlotWidget = slotWidget
+        optionWidget.huntingTaskAmountValue = value
+
+        if not optionWidget.__huntingTaskAmountHandlerSet then
+            optionWidget.onCheckChange = handleAmountRadioCheck
+            optionWidget.__huntingTaskAmountHandlerSet = true
+        end
+
+        if optionWidget.setText then
+            local text = value and tostring(value) or '--'
+            optionWidget:setText(text)
+        end
+
+        if optionWidget.setEnabled then
+            optionWidget:setEnabled(enabled and value ~= nil)
+        end
+
+        if (not enabled or value == nil) and optionWidget.isChecked and optionWidget:isChecked() then
+            optionWidget:setChecked(false)
+        end
+    end
+
+    local secondEnabled = hasSecondValue and not (entry and entry.unlocked)
+
+    setupOption(optionOne, firstValue, hasFirstValue)
+    setupOption(optionTwo, secondValue, secondEnabled)
+
+    if amountPanel.setVisible then
+        amountPanel:setVisible(entry ~= nil)
+    end
+
+    local defaultButton
+    if optionOne and not optionOne:isDestroyed() and hasFirstValue then
+        defaultButton = optionOne
+    elseif optionTwo and not optionTwo:isDestroyed() and secondEnabled then
+        defaultButton = optionTwo
+    end
+
+    if defaultButton then
+        if not defaultButton:isChecked() then
+            defaultButton:setChecked(true)
+        else
+            handleAmountRadioCheck(defaultButton, true)
+        end
+    else
+        slotWidget.__huntingTaskSelectedAmountButton = nil
+        slotWidget.__huntingTaskSelectedAmountValue = nil
+    end
+end
+
 local function handleSelectionBoxCheck(widget, checked)
     if not widget or widget:isDestroyed() then
         return
@@ -643,6 +794,7 @@ local function handleSelectionBoxCheck(widget, checked)
             previous:setChecked(false)
         end
         slotWidget.__huntingTaskSelectedCreature = widget
+        updateSelectionAmountOptions(slotWidget, widget.huntingTaskEntry)
     elseif slotWidget.__huntingTaskSelectedCreature == widget then
         slotWidget.__huntingTaskSelectedCreature = nil
     end
@@ -682,6 +834,11 @@ local function applySelectionTask(slotWidget, selection)
         return false
     end
 
+    local amountPanel = inactivePanel:recursiveGetChildById('amountPanel')
+    if amountPanel and amountPanel.setVisible then
+        amountPanel:setVisible(false)
+    end
+
     if listPanel.destroyChildren then
         listPanel:destroyChildren()
     end
@@ -692,6 +849,8 @@ local function applySelectionTask(slotWidget, selection)
 
     local entries = selection or {}
     if #entries == 0 then
+        slotWidget.__huntingTaskSelectedAmountButton = nil
+        slotWidget.__huntingTaskSelectedAmountValue = nil
         return true
     end
 
@@ -740,6 +899,8 @@ local function applySelectionTask(slotWidget, selection)
             end
         end
     end
+
+    updateSelectionAmountOptions(slotWidget, entries[1])
 
     return true
 end

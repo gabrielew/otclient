@@ -5,6 +5,7 @@ local Helper = require('helper.lua')
 Prey = {}
 preyWindow = nil
 preyButton = nil
+preyTracker = nil
 local preyTrackerButton
 local msgWindow
 local bankGold = 0

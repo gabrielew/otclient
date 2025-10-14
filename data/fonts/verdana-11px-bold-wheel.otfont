@@ -1,0 +1,6 @@
+Font
+  name: verdana-11px-bold-wheel
+  texture: verdana-11px-bold-wheel
+  height: 15
+  glyph-size: 22 15
+  space-width: 4

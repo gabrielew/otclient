@@ -11,6 +11,9 @@ local contentWidget
 local slotsContainer
 local placeholderWidget
 local slotWidgets = {}
+local listSelectionEntriesBySlot = {}
+local selectedListEntryBySlot = {}
+local selectedListWidgetBySlot = {}
 
 local CANCEL_BUTTON_STYLE = 'HuntingTaskCancelButton'
 local CANCEL_BUTTON_ID = 'HuntingTaskCancelButton'
@@ -238,6 +241,334 @@ local function setCancelButtonVisible(slotWidget, visible)
     end
 end
 
+local function getSlotIndex(slotWidget)
+    if not slotWidget or (slotWidget.isDestroyed and slotWidget:isDestroyed()) then
+        return nil
+    end
+
+    if slotWidget.taskSlotIndex then
+        return slotWidget.taskSlotIndex
+    end
+
+    local identifier = slotWidget.getId and slotWidget:getId() or nil
+    if not identifier then
+        return nil
+    end
+
+    local index = identifier:match('(\d+)$')
+    index = index and tonumber(index) or nil
+    if index then
+        slotWidget.taskSlotIndex = index
+    end
+
+    return index
+end
+
+local function getListSelectionPanel(slotWidget)
+    if not slotWidget or (slotWidget.isDestroyed and slotWidget:isDestroyed()) then
+        return nil
+    end
+
+    local inactivePanel = slotWidget:recursiveGetChildById('inactive')
+    if not inactivePanel or (inactivePanel.isDestroyed and inactivePanel:isDestroyed()) then
+        return nil
+    end
+
+    local listPanel = inactivePanel:recursiveGetChildById('listSelection')
+    if listPanel and listPanel.isDestroyed and listPanel:isDestroyed() then
+        return nil
+    end
+
+    return listPanel
+end
+
+local function getListEntriesContainer(listPanel)
+    if not listPanel or (listPanel.isDestroyed and listPanel:isDestroyed()) then
+        return nil, nil
+    end
+
+    local entriesScroll = listPanel:recursiveGetChildById('entries')
+    if not entriesScroll or (entriesScroll.isDestroyed and entriesScroll:isDestroyed()) then
+        return nil, nil
+    end
+
+    local container = entriesScroll.entriesContainer
+    if container and container.isDestroyed and container:isDestroyed() then
+        entriesScroll.entriesContainer = nil
+        container = nil
+    end
+
+    if not container and entriesScroll.getChildById then
+        container = entriesScroll:getChildById('entriesContainer')
+        if container and container.isDestroyed and container:isDestroyed() then
+            container = nil
+        end
+        if container then
+            entriesScroll.entriesContainer = container
+        end
+    end
+
+    return container, entriesScroll
+end
+
+local function clearListSelectionEntries(listPanel)
+    local container, scrollArea = getListEntriesContainer(listPanel)
+    if container then
+        container:destroyChildren()
+    end
+
+    if scrollArea and scrollArea.verticalScrollBar then
+        local scrollbar = scrollArea.verticalScrollBar
+        if scrollbar.getMinimum and scrollbar.setValue then
+            scrollbar:setValue(scrollbar:getMinimum())
+        end
+    end
+end
+
+local function formatCreatureName(raceId, raceData)
+    local name = raceData and raceData.name or nil
+    if name and name:len() > 0 then
+        local first = name:sub(1, 1):upper()
+        name = first .. name:sub(2)
+        return name
+    end
+
+    raceId = tonumber(raceId) or 0
+    return tr('Unknown Creature (%d)', raceId)
+end
+
+local function buildListSelectionEntry(entry)
+    if not entry then
+        return nil
+    end
+
+    local raceId = entry.raceId
+    local raceData = resolveRaceData(raceId)
+    local name = formatCreatureName(raceId, raceData)
+
+    local difficultyMap = Tasks.BasicData and Tasks.BasicData.difficultyByRaceId or nil
+    local difficulty = difficultyMap and difficultyMap[raceId] or nil
+    if type(difficulty) ~= 'number' then
+        difficulty = nil
+    end
+
+    local outfit = raceData and raceData.outfit or nil
+    local realSize
+    if outfit and outfit.type and g_things and g_things.getThingType then
+        local creatureType = g_things.getThingType(outfit.type, ThingCategoryCreature)
+        realSize = creatureType and creatureType:getRealSize() or nil
+    end
+
+    return {
+        raceId = raceId,
+        name = name,
+        searchName = name:lower(),
+        raceData = raceData,
+        outfit = outfit,
+        realSize = realSize,
+        difficulty = difficulty,
+        isUnlocked = entry.unlocked ~= false,
+        raw = entry
+    }
+end
+
+local function updateListPanelEmptyState(listPanel, isEmpty)
+    if not listPanel or (listPanel.isDestroyed and listPanel:isDestroyed()) then
+        return
+    end
+
+    local entries = listPanel:recursiveGetChildById('entries')
+    if entries and entries.setVisible then
+        entries:setVisible(not isEmpty)
+    end
+
+    local emptyLabel = listPanel:recursiveGetChildById('empty')
+    if emptyLabel and emptyLabel.setVisible then
+        emptyLabel:setVisible(isEmpty)
+    end
+end
+
+local function restoreTaskListItemAppearance(widget)
+    if not widget or widget:isDestroyed() then
+        return
+    end
+
+    local entry = widget.listEntry
+    local isUnlocked = not entry or entry.isUnlocked
+
+    local nameLabel = widget:getChildById('name')
+    local infoLabel = widget:getChildById('info')
+
+    if widget:isChecked() and isUnlocked then
+        if widget.checkedBackground then
+            widget:setBackgroundColor(widget.checkedBackground)
+        end
+        if nameLabel and nameLabel.setColor and widget.checkedNameColor then
+            nameLabel:setColor(widget.checkedNameColor)
+        elseif nameLabel and nameLabel.setColor and widget.baseNameColor then
+            nameLabel:setColor(widget.baseNameColor)
+        end
+        if infoLabel and infoLabel.setColor and widget.checkedInfoColor then
+            infoLabel:setColor(widget.checkedInfoColor)
+        elseif infoLabel and infoLabel.setColor and widget.baseInfoColor then
+            infoLabel:setColor(widget.baseInfoColor)
+        end
+        return
+    end
+
+    local background = widget.baseBackground
+    local nameColor = widget.baseNameColor
+    local infoColor = widget.baseInfoColor
+
+    if not isUnlocked then
+        background = widget.lockedBackground or background
+        nameColor = widget.lockedNameColor or nameColor
+        infoColor = widget.lockedInfoColor or infoColor
+    end
+
+    if background then
+        widget:setBackgroundColor(background)
+    end
+
+    if nameLabel and nameLabel.setColor and nameColor then
+        nameLabel:setColor(nameColor)
+    end
+
+    if infoLabel and infoLabel.setColor and infoColor then
+        infoLabel:setColor(infoColor)
+    end
+
+    if widget.setEnabled then
+        widget:setEnabled(isUnlocked)
+    end
+end
+
+local function updateTaskListSelectionDisplay(slotWidget, slotIndex)
+    if slotWidget and slotWidget.isDestroyed and slotWidget:isDestroyed() then
+        return
+    end
+
+    slotIndex = slotIndex or getSlotIndex(slotWidget)
+    if not slotIndex then
+        return
+    end
+
+    slotWidget = slotWidget or slotWidgets[slotIndex]
+    if not slotWidget or (slotWidget.isDestroyed and slotWidget:isDestroyed()) then
+        return
+    end
+
+    local entry = selectedListEntryBySlot[slotIndex]
+
+    local titleWidget = slotWidget:recursiveGetChildById('title')
+    if titleWidget and titleWidget.setText then
+        if entry then
+            titleWidget:setText(tr('Selected task: %s', entry.name))
+        else
+            titleWidget:setText(tr('Select a hunting task'))
+        end
+    end
+
+    local inactivePanel = slotWidget:recursiveGetChildById('inactive')
+    if not inactivePanel or (inactivePanel.isDestroyed and inactivePanel:isDestroyed()) then
+        return
+    end
+
+    local previewPanel = inactivePanel:recursiveGetChildById('preview')
+    if previewPanel and not (previewPanel.isDestroyed and previewPanel:isDestroyed()) then
+        local creatureWidget = previewPanel:recursiveGetChildById('creature')
+        local placeholder = previewPanel:recursiveGetChildById('placeholder')
+        local infoLabel = previewPanel:recursiveGetChildById('info')
+
+        if entry and entry.outfit and creatureWidget and creatureWidget.setOutfit then
+            creatureWidget:setOutfit(entry.outfit)
+            creatureWidget:setVisible(true)
+            if placeholder and placeholder.setVisible then
+                placeholder:setVisible(false)
+            end
+        else
+            if creatureWidget then
+                creatureWidget:setVisible(false)
+            end
+            if placeholder and placeholder.setVisible then
+                placeholder:setVisible(true)
+            end
+        end
+
+        if infoLabel and infoLabel.setText then
+            if entry and entry.difficulty then
+                infoLabel:setText(tr('Difficulty: %d', entry.difficulty))
+            else
+                infoLabel:setText(tr('Select a creature to view details'))
+            end
+        end
+    end
+end
+
+local function setTaskListSelection(slotIndex, widget, skipUncheck)
+    if not slotIndex then
+        return
+    end
+
+    local previousWidget = selectedListWidgetBySlot[slotIndex]
+
+    if widget and widget.isDestroyed and widget:isDestroyed() then
+        widget = nil
+    end
+
+    if widget and widget.listEntry and not widget.listEntry.isUnlocked then
+        widget = nil
+    end
+
+    if previousWidget and previousWidget ~= widget and previousWidget.setChecked then
+        previousWidget:setChecked(false)
+    end
+
+    if widget and widget.setChecked then
+        if skipUncheck then
+            if not widget:isChecked() then
+                widget:setChecked(true)
+            end
+        else
+            widget:setChecked(true)
+        end
+    end
+
+    if previousWidget and previousWidget ~= widget then
+        restoreTaskListItemAppearance(previousWidget)
+    end
+
+    selectedListWidgetBySlot[slotIndex] = widget
+    selectedListEntryBySlot[slotIndex] = widget and widget.listEntry or nil
+
+    if widget then
+        restoreTaskListItemAppearance(widget)
+    end
+
+    updateTaskListSelectionDisplay(nil, slotIndex)
+end
+
+local function setListItemInfoText(widget, entry)
+    if not widget or widget:isDestroyed() then
+        return
+    end
+
+    local infoLabel = widget:getChildById('info')
+    if not infoLabel or not infoLabel.setText then
+        return
+    end
+
+    local infoParts = {}
+    if entry and entry.difficulty then
+        table.insert(infoParts, tr('Difficulty: %d', entry.difficulty))
+    end
+    if entry and entry.isUnlocked == false then
+        table.insert(infoParts, tr('Locked'))
+    end
+
+    infoLabel:setText(table.concat(infoParts, ' · '))
+end
+
 local function updateHigherStarsButton(activePanel)
     if not activePanel or activePanel:isDestroyed() then
         return
@@ -312,6 +643,9 @@ local function clearSlotWidgets()
             destroyWidget(widget)
         end
         slotWidgets[index] = nil
+        listSelectionEntriesBySlot[index] = nil
+        selectedListEntryBySlot[index] = nil
+        selectedListWidgetBySlot[index] = nil
     end
 end
 
@@ -428,6 +762,7 @@ local function configureSlotWidget(slotWidget, index)
     end
 
     slotWidget:setId(string.format('huntingTaskSlot%d', index))
+    slotWidget.taskSlotIndex = index
     if slotWidget.breakAnchors then
         slotWidget:breakAnchors()
     end
@@ -627,7 +962,148 @@ local function resolveRaceData(raceId)
 end
 
 local function selectListTask(slotWidget, list)
+    if not slotWidget or slotWidget:isDestroyed() then
+        return false
+    end
 
+    local slotIndex = getSlotIndex(slotWidget)
+    if not slotIndex then
+        return false
+    end
+
+    hideSlotPanels(slotWidget)
+
+    local inactivePanel = slotWidget:recursiveGetChildById('inactive')
+    if not inactivePanel or (inactivePanel.isDestroyed and inactivePanel:isDestroyed()) then
+        return false
+    end
+
+    inactivePanel:setVisible(true)
+
+    local listPanel = getListSelectionPanel(slotWidget)
+    listSelectionEntriesBySlot[slotIndex] = {}
+
+    if not listPanel then
+        setTaskListSelection(slotIndex, nil, true)
+        updateTaskListSelectionDisplay(slotWidget, slotIndex)
+        return true
+    end
+
+    clearListSelectionEntries(listPanel)
+
+    local entriesContainer = select(1, getListEntriesContainer(listPanel))
+    if not entriesContainer then
+        setTaskListSelection(slotIndex, nil, true)
+        updateListPanelEmptyState(listPanel, true)
+        updateTaskListSelectionDisplay(slotWidget, slotIndex)
+        return true
+    end
+
+    local currentSelectionId = selectedListEntryBySlot[slotIndex] and selectedListEntryBySlot[slotIndex].raceId or nil
+    local selectionRestored = false
+    local firstUnlockedWidget
+
+    local backgroundA = '#2f2f2f'
+    local backgroundB = '#292929'
+    local useAlternate = false
+
+    for _, entry in ipairs(list or {}) do
+        local builtEntry = buildListSelectionEntry(entry)
+        if builtEntry then
+            table.insert(listSelectionEntriesBySlot[slotIndex], builtEntry)
+
+            local item = g_ui and g_ui.createWidget and g_ui.createWidget('HuntingTaskListItem', entriesContainer)
+            if item then
+                item.listEntry = builtEntry
+                item.taskSlotIndex = slotIndex
+
+                local creatureWidget = item:getChildById('creature')
+                if creatureWidget and creatureWidget.setVisible then
+                    if builtEntry.outfit and creatureWidget.setOutfit then
+                        creatureWidget:setOutfit(builtEntry.outfit)
+                        creatureWidget:setVisible(true)
+                    else
+                        creatureWidget:setVisible(false)
+                    end
+                end
+
+                local nameLabel = item:getChildById('name')
+                if nameLabel and nameLabel.setText then
+                    nameLabel:setText(builtEntry.name)
+                end
+
+                setListItemInfoText(item, builtEntry)
+
+                item.baseBackground = useAlternate and backgroundB or backgroundA
+                item.checkedBackground = '#3a4a39'
+                item.lockedBackground = '#3a2a2a'
+                item.baseNameColor = '#e3e3e3'
+                item.checkedNameColor = '#ffffff'
+                item.lockedNameColor = '#c88a8a'
+                item.baseInfoColor = '#b5b5b5'
+                item.checkedInfoColor = '#d5d5d5'
+                item.lockedInfoColor = '#d0a46a'
+
+                item.onCheckChange = function(widget)
+                    restoreTaskListItemAppearance(widget)
+                end
+
+                restoreTaskListItemAppearance(item)
+
+                if builtEntry.isUnlocked then
+                    if not firstUnlockedWidget then
+                        firstUnlockedWidget = item
+                    end
+                else
+                    if item.setEnabled then
+                        item:setEnabled(false)
+                    end
+                end
+
+                if currentSelectionId and builtEntry.raceId == currentSelectionId and builtEntry.isUnlocked then
+                    setTaskListSelection(slotIndex, item, true)
+                    selectionRestored = true
+                end
+
+                useAlternate = not useAlternate
+            end
+        end
+    end
+
+    if not selectionRestored then
+        if firstUnlockedWidget then
+            setTaskListSelection(slotIndex, firstUnlockedWidget, true)
+        else
+            setTaskListSelection(slotIndex, nil, true)
+        end
+    else
+        updateTaskListSelectionDisplay(slotWidget, slotIndex)
+    end
+
+    updateListPanelEmptyState(listPanel, #listSelectionEntriesBySlot[slotIndex] == 0)
+
+    return true
+end
+
+function Tasks.onListItemClicked(widget)
+    if not widget or widget:isDestroyed() then
+        return
+    end
+
+    local slotIndex = widget.taskSlotIndex
+    if not slotIndex then
+        return
+    end
+
+    if widget.listEntry and not widget.listEntry.isUnlocked then
+        return
+    end
+
+    setTaskListSelection(slotIndex, widget, false)
+end
+
+function Tasks.onListItemHoverChange(widget, hovered)
+    restoreTaskListItemAppearance(widget)
 end
 
 local function applyActiveTask(slotWidget, activeData)
@@ -864,6 +1340,8 @@ function onTaskHuntingData(data)
         return
     end
 
+    local handledSelection = false
+
     -- Locked
     if data.isPremium ~= nil then
         g_logger.info(("  [Locked] isPremium=%s"):format(tostring(data.isPremium)))
@@ -882,7 +1360,7 @@ function onTaskHuntingData(data)
     if data.listSelection then
         g_logger.info(("  [ListSelection] %d entries"):format(#data.listSelection))
 
-        selectListTask(slotWidget, data.listSelection)
+        handledSelection = selectListTask(slotWidget, data.listSelection) or handledSelection
 
         for i, entry in ipairs(data.listSelection) do
             g_logger.info(("    [%d] raceId=%d, unlocked=%s")
@@ -905,6 +1383,11 @@ function onTaskHuntingData(data)
         g_logger.info(("  [Completed] selectedRaceId=%d, upgrade=%s, requiredKills=%d, achievedKills=%d, rarity=%d")
             :format(c.selectedRaceId, tostring(c.upgrade), c.requiredKills, c.achievedKills, c.rarity))
         applyInactiveTask(slotWidget, tr('Completed task'))
+        return
+    end
+
+    if handledSelection then
+        updateTaskListSelectionDisplay(slotWidget, nil)
         return
     end
 

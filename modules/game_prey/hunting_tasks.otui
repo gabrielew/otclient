@@ -37,6 +37,19 @@ HuntingTaskClaimRewardButton < UIButton
   $disabled:
     image-clip: 0 182 65 91
 
+HuntingTaskClaimRewardPanel < FlatPanel
+  padding: 2
+  size: 70 95
+  focusable: false
+
+  HuntingTaskClaimRewardButton
+    id: selectPrey
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-top: 0
+    enabled: false
+    @onHoverChange: modules.game_prey.onHover(self)
+
 
 HuntingTaskActivePanel < Panel
   size: 215 335

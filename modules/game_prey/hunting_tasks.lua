@@ -626,13 +626,35 @@ local function resolveRaceData(raceId)
     return data
 end
 
+local function handleSelectionBoxCheck(widget, checked)
+    if not widget or widget:isDestroyed() then
+        return
+    end
+
+    local slotWidget = widget.huntingTaskSlotWidget
+    if not slotWidget or slotWidget:isDestroyed() then
+        return
+    end
+
+    if checked then
+        local previous = slotWidget.__huntingTaskSelectedCreature
+        if previous and previous ~= widget and previous.setChecked and not previous:isDestroyed() then
+            slotWidget.__huntingTaskSelectedCreature = nil
+            previous:setChecked(false)
+        end
+        slotWidget.__huntingTaskSelectedCreature = widget
+    elseif slotWidget.__huntingTaskSelectedCreature == widget then
+        slotWidget.__huntingTaskSelectedCreature = nil
+    end
+end
+
 local function applySelectionTask(slotWidget, selection)
     if not slotWidget or slotWidget:isDestroyed() then
         return false
     end
 
     hideSlotPanels(slotWidget)
-
+    slotWidget.__huntingTaskSelectedCreature = nil
     local inactivePanel = slotWidget:recursiveGetChildById('inactive')
     if not inactivePanel or inactivePanel:isDestroyed() then
         return false
@@ -678,6 +700,7 @@ local function applySelectionTask(slotWidget, selection)
         if item then
             item.huntingTaskSlotWidget = slotWidget
             item.huntingTaskEntry = entry
+            item.onCheckChange = handleSelectionBoxCheck
 
             local raceData = resolveRaceData(entry.raceId)
             if raceData then

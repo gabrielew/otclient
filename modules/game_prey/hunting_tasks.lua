@@ -626,8 +626,100 @@ local function resolveRaceData(raceId)
     return data
 end
 
-local function selectListTask(slotWidget, list)
+local function applySelectionTask(slotWidget, selection)
+    if not slotWidget or slotWidget:isDestroyed() then
+        return false
+    end
 
+    hideSlotPanels(slotWidget)
+
+    local inactivePanel = slotWidget:recursiveGetChildById('inactive')
+    if not inactivePanel or inactivePanel:isDestroyed() then
+        return false
+    end
+
+    inactivePanel:setVisible(true)
+
+    local titleWidget = slotWidget:recursiveGetChildById('title')
+    if titleWidget and titleWidget.setText then
+        titleWidget:setText(tr('Select monster'))
+    end
+
+    local previewPanel = inactivePanel:recursiveGetChildById('preview')
+    if previewPanel and previewPanel.setVisible then
+        previewPanel:setVisible(false)
+    end
+
+    local fullListPanel = inactivePanel:recursiveGetChildById('fullList')
+    if fullListPanel and fullListPanel.setVisible then
+        fullListPanel:setVisible(false)
+    end
+
+    local listPanel = inactivePanel:recursiveGetChildById('list')
+    if not listPanel or listPanel:isDestroyed() then
+        return false
+    end
+
+    if listPanel.destroyChildren then
+        listPanel:destroyChildren()
+    end
+
+    if not g_ui or not g_ui.createWidget then
+        return false
+    end
+
+    local entries = selection or {}
+    if #entries == 0 then
+        return true
+    end
+
+    for index, entry in ipairs(entries) do
+        local item = g_ui.createWidget('PreyCreatureBox', listPanel)
+        if item then
+            item.huntingTaskSlotWidget = slotWidget
+            item.huntingTaskEntry = entry
+
+            local raceData = resolveRaceData(entry.raceId)
+            if raceData then
+                item.raceData = raceData
+            end
+
+            local name
+            if raceData and raceData.name and raceData.name:len() > 0 then
+                name = raceData.name
+            elseif entry.raceId then
+                name = tr('Unknown Creature (%d)', entry.raceId)
+            else
+                name = tr('Unknown Creature')
+            end
+
+            local tooltipText = name
+            if item.setTooltip then
+                item:setTooltip(tooltipText)
+            end
+
+            local creatureWidget = item:recursiveGetChildById('creature')
+            if creatureWidget then
+                if raceData and raceData.outfit then
+                    creatureWidget:setOutfit(raceData.outfit)
+                    creatureWidget:setVisible(true)
+                else
+                    creatureWidget:setVisible(false)
+                end
+            end
+
+            local backgroundColor = (index % 2 == 1) and '#484848' or '#414141'
+            if item.setBackgroundColor then
+                item:setBackgroundColor(backgroundColor)
+            end
+        end
+    end
+
+    return true
+end
+
+local function selectListTask(slotWidget, list)
+    return false
 end
 
 local function applyActiveTask(slotWidget, activeData)

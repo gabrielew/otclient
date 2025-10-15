@@ -104,6 +104,41 @@ local function combine_for_context(parent_keys, parent_values, keys_str, values)
     return combined_keys, combined_values
 end
 
+local function collect_widget_for_context(widget)
+    local keys, values = '', nil
+    while widget do
+        local scope_keys = widget.__for_scope_keys or widget.__for_keys
+        local scope_values = widget.__for_scope_values or widget.__for_values
+        if scope_keys and scope_values then
+            keys, values = combine_for_context(scope_keys, scope_values, keys, values)
+        end
+        widget = widget:getParent()
+    end
+    return keys, values
+end
+
+local function build_widget_env(base, widget)
+    local env = base
+    while widget do
+        local scope_keys = widget.__for_scope_keys or widget.__for_keys
+        local scope_values = widget.__for_scope_values or widget.__for_values
+        if scope_keys and scope_values then
+            local names = parse_for_names(scope_keys)
+            if #names > 0 then
+                local locals = {}
+                local maxn = math.min(#names, scope_values and #scope_values or 0)
+                for i = 1, maxn do
+                    locals[names[i]] = scope_values[i]
+                end
+                setmetatable(locals, { __index = env })
+                env = locals
+            end
+        end
+        widget = widget:getParent()
+    end
+    return env
+end
+
 local function ExprHandlerError(runtime, error, widget, controller, nodeStr, onError)
     if runtime then
         error = "[Script runtime error]\n" .. error
@@ -264,15 +299,23 @@ local EVENTS_TRANSLATED = {
 }
 
 local parseEvents = function(widget, eventName, callStr, controller, NODE_STR)
-    local fnc = getFncByExpr('return function(self, event, target ' .. FOR_CTX.__keys .. ') ' .. callStr .. ' end',
+    local ctx_keys = FOR_CTX.__keys or ''
+    if widget then
+        local collected_keys = collect_widget_for_context(widget)
+        if collected_keys ~= '' then
+            ctx_keys = collected_keys
+        end
+    end
+
+    local fnc = getFncByExpr('return function(self, event, target ' .. ctx_keys .. ') ' .. callStr .. ' end',
         NODE_STR, widget, controller, function()
             return ('Event Error[%s]: %s'):format(eventName, callStr)
         end)
 
     local event = { target = widget }
-    local forCtx = FOR_CTX.__values
     local function execEventCall()
-        execFnc(fnc, { controller, event, widget, forCtx and unpack(forCtx) }, widget, controller, NODE_STR, function()
+        local _, values = collect_widget_for_context(widget)
+        execFnc(fnc, { controller, event, widget, values and unpack(values) }, widget, controller, NODE_STR, function()
             return ('Event Error[%s]: %s'):format(eventName, callStr)
         end)
     end
@@ -586,42 +629,8 @@ function UIWidget:__childFor(moduleName, expr, html, index)
 
         local widget = self.widget
 
-        local function merge_parent_for_env(base, w)
-            while w do
-                local scope_keys = w.__for_scope_keys or w.__for_keys
-                local scope_values = w.__for_scope_values or w.__for_values
-                if scope_keys and scope_values then
-                    local names = parse_for_names(scope_keys)
-                    if #names > 0 then
-                        local e = {}
-                        local maxn = math.min(#names, scope_values and #scope_values or 0)
-                        for i = 1, maxn do
-                            e[names[i]] = scope_values[i]
-                        end
-                        setmetatable(e, { __index = base })
-                        base = e
-                    end
-                end
-                w = w:getParent()
-            end
-            return base
-        end
-
-        local function collect_parent_for_context(w)
-            local keys, values = '', nil
-            while w do
-                local scope_keys = w.__for_scope_keys or w.__for_keys
-                local scope_values = w.__for_scope_values or w.__for_values
-                if scope_keys and scope_values then
-                    keys, values = combine_for_context(scope_keys, scope_values, keys, values)
-                end
-                w = w:getParent()
-            end
-            return keys, values
-        end
-
-        local env = merge_parent_for_env(baseEnv, widget)
-        local parent_keys, parent_values = collect_parent_for_context(widget)
+        local env = build_widget_env(baseEnv, widget)
+        local parent_keys, parent_values = collect_widget_for_context(widget)
         local prev_ctx_keys, prev_ctx_values, prev_ctx_key = FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key
         FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key = parent_keys, parent_values, nil
 
@@ -650,7 +659,7 @@ function UIWidget:__childFor(moduleName, expr, html, index)
         if isFirst then
             local watch = table.watchList(list, {
                 onInsert = function(i, it)
-                    local parent_keys, parent_values = collect_parent_for_context(widget)
+                    local parent_keys, parent_values = collect_widget_for_context(widget)
                     local scope_values = { it, i }
                     local combined_keys, combined_values = combine_for_context(parent_keys, parent_values, keys, scope_values)
                     local prev_keys, prev_values, prev_key = FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key

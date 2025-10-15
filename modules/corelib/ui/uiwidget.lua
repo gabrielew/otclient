@@ -594,7 +594,21 @@ function UIWidget:__childFor(moduleName, expr, html, index)
             return base
         end
 
+        local function collect_parent_for_context(w)
+            local keys, values = '', nil
+            while w do
+                if w.__for_keys and w.__for_values then
+                    keys, values = combine_for_context(keys, values, w.__for_keys, w.__for_values)
+                end
+                w = w:getParent()
+            end
+            return keys, values
+        end
+
         local env = merge_parent_for_env(baseEnv, widget)
+        local parent_keys, parent_values = collect_parent_for_context(widget)
+        local prev_ctx_keys, prev_ctx_values, prev_ctx_key = FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key
+        FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key = parent_keys, parent_values, nil
 
         local isFirst = (self.watchList == nil)
         local childindex = index
@@ -619,8 +633,7 @@ function UIWidget:__childFor(moduleName, expr, html, index)
         if isFirst then
             local watch = table.watchList(list, {
                 onInsert = function(i, it)
-                    local parent_keys = widget.__for_keys
-                    local parent_values = widget.__for_values
+                    local parent_keys, parent_values = collect_parent_for_context(widget)
                     local combined_keys, combined_values = combine_for_context(parent_keys, parent_values, keys, { it, i })
                     local prev_keys, prev_values, prev_key = FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key
                     FOR_CTX.__keys   = combined_keys
@@ -660,6 +673,8 @@ function UIWidget:__childFor(moduleName, expr, html, index)
         end
 
         self.watchList:scan()
+
+        FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key = prev_ctx_keys, prev_ctx_values, prev_ctx_key
     end
 
     WidgetWatch.register({

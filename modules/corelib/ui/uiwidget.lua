@@ -50,33 +50,45 @@ local FOR_CTX = {
     __values = nil
 }
 
-local function combine_for_context(parent_keys, parent_values, keys_str, values)
-    local entries = {}
-    local lookup = {}
+local function parse_for_names(keys)
+    local names = {}
+    if not keys or keys == '' then
+        return names
+    end
 
-    local function append(keys, vals)
-        if not keys or keys == '' then
-            return
-        end
-
-        local idx = 0
-        for name in keys:gmatch("[^,%s]+") do
-            if name ~= '' then
-                idx = idx + 1
-                local value = vals and vals[idx] or nil
-                local existing = lookup[name]
-                if existing then
-                    entries[existing].value = value
-                else
-                    entries[#entries + 1] = { name = name, value = value }
-                    lookup[name] = #entries
-                end
-            end
+    for name in keys:gmatch("[^,%s]+") do
+        if name ~= '' then
+            names[#names + 1] = name
         end
     end
 
-    append(parent_keys, parent_values)
-    append(keys_str, values)
+    return names
+end
+
+local function combine_for_context(parent_keys, parent_values, keys_str, values)
+    local child_names = parse_for_names(keys_str)
+    local parent_names = parse_for_names(parent_keys)
+
+    if #child_names == 0 and #parent_names == 0 then
+        return '', nil
+    end
+
+    local entries = {}
+    local lookup = {}
+
+    for i = 1, #child_names do
+        local name = child_names[i]
+        entries[#entries + 1] = { name = name, value = values and values[i] or nil }
+        lookup[name] = #entries
+    end
+
+    for i = 1, #parent_names do
+        local name = parent_names[i]
+        if not lookup[name] then
+            entries[#entries + 1] = { name = name, value = parent_values and parent_values[i] or nil }
+            lookup[name] = #entries
+        end
+    end
 
     if #entries == 0 then
         return '', nil
@@ -554,7 +566,9 @@ function ngfor_exec(content, env, fn)
             fn({
                 __keys   = combined_keys,
                 __values = combined_values,
-                __key    = FOR_CTX.__key
+                __key    = FOR_CTX.__key,
+                __scope_keys   = keys_str,
+                __scope_values = values
             })
 
             FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key = old_keys, old_values, old_key
@@ -574,20 +588,19 @@ function UIWidget:__childFor(moduleName, expr, html, index)
 
         local function merge_parent_for_env(base, w)
             while w do
-                if w.__for_keys and w.__for_values then
-                    local names = {}
-                    for name in string.gmatch(w.__for_keys, "[^,%s]+") do
-                        if name ~= "" then
-                            names[#names + 1] = name
+                local scope_keys = w.__for_scope_keys or w.__for_keys
+                local scope_values = w.__for_scope_values or w.__for_values
+                if scope_keys and scope_values then
+                    local names = parse_for_names(scope_keys)
+                    if #names > 0 then
+                        local e = {}
+                        local maxn = math.min(#names, scope_values and #scope_values or 0)
+                        for i = 1, maxn do
+                            e[names[i]] = scope_values[i]
                         end
+                        setmetatable(e, { __index = base })
+                        base = e
                     end
-                    local e = {}
-                    local maxn = math.min(#names, #w.__for_values)
-                    for i = 1, maxn do
-                        e[names[i]] = w.__for_values[i]
-                    end
-                    setmetatable(e, { __index = base })
-                    base = e
                 end
                 w = w:getParent()
             end
@@ -597,8 +610,10 @@ function UIWidget:__childFor(moduleName, expr, html, index)
         local function collect_parent_for_context(w)
             local keys, values = '', nil
             while w do
-                if w.__for_keys and w.__for_values then
-                    keys, values = combine_for_context(keys, values, w.__for_keys, w.__for_values)
+                local scope_keys = w.__for_scope_keys or w.__for_keys
+                local scope_values = w.__for_scope_values or w.__for_values
+                if scope_keys and scope_values then
+                    keys, values = combine_for_context(scope_keys, scope_values, keys, values)
                 end
                 w = w:getParent()
             end
@@ -621,9 +636,11 @@ function UIWidget:__childFor(moduleName, expr, html, index)
             FOR_CTX.__values = c.__values
             FOR_CTX.__key    = c.__key
             do
-                local __w        = widget:insert(childindex, html)
-                __w.__for_values = FOR_CTX.__values
-                __w.__for_keys   = FOR_CTX.__keys
+                local __w              = widget:insert(childindex, html)
+                __w.__for_values       = FOR_CTX.__values
+                __w.__for_keys         = FOR_CTX.__keys
+                __w.__for_scope_keys   = c.__scope_keys
+                __w.__for_scope_values = c.__scope_values
             end
             FOR_CTX.__keys   = prev_keys
             FOR_CTX.__values = prev_values
@@ -634,15 +651,18 @@ function UIWidget:__childFor(moduleName, expr, html, index)
             local watch = table.watchList(list, {
                 onInsert = function(i, it)
                     local parent_keys, parent_values = collect_parent_for_context(widget)
-                    local combined_keys, combined_values = combine_for_context(parent_keys, parent_values, keys, { it, i })
+                    local scope_values = { it, i }
+                    local combined_keys, combined_values = combine_for_context(parent_keys, parent_values, keys, scope_values)
                     local prev_keys, prev_values, prev_key = FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key
                     FOR_CTX.__keys   = combined_keys
                     FOR_CTX.__values = combined_values
                     FOR_CTX.__key    = nil
                     do
-                        local __w        = widget:insert(index + i, html)
-                        __w.__for_values = combined_values
-                        __w.__for_keys   = combined_keys
+                        local __w              = widget:insert(index + i, html)
+                        __w.__for_values       = combined_values
+                        __w.__for_keys         = combined_keys
+                        __w.__for_scope_keys   = keys
+                        __w.__for_scope_values = scope_values
                     end
                     FOR_CTX.__keys   = prev_keys
                     FOR_CTX.__values = prev_values
@@ -662,6 +682,9 @@ function UIWidget:__childFor(moduleName, expr, html, index)
                     while nextChild do
                         if not nextChild.__for_values then break end
                         nextChild.__for_values[2] = childIndex
+                        if nextChild.__for_scope_values then
+                            nextChild.__for_scope_values[2] = childIndex
+                        end
                         childIndex = childIndex + 1
                         nextChild = nextChild:getNextWidget()
                     end

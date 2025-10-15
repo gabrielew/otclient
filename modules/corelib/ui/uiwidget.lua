@@ -300,12 +300,20 @@ local EVENTS_TRANSLATED = {
 
 local parseEvents = function(widget, eventName, callStr, controller, NODE_STR)
     local ctx_keys = FOR_CTX.__keys or ''
+    local ctx_values = FOR_CTX.__values
+    local collected_keys, collected_values = '', nil
     if widget then
-        local collected_keys = collect_widget_for_context(widget)
+        collected_keys, collected_values = collect_widget_for_context(widget)
         if collected_keys ~= '' then
-            ctx_keys = collected_keys
+            if ctx_keys ~= '' then
+                ctx_keys = combine_for_context(ctx_keys, ctx_values, collected_keys, collected_values)
+            else
+                ctx_keys = collected_keys
+            end
         end
     end
+
+    local ctx_names = parse_for_names(ctx_keys)
 
     local fnc = getFncByExpr('return function(self, event, target ' .. ctx_keys .. ') ' .. callStr .. ' end',
         NODE_STR, widget, controller, function()
@@ -314,8 +322,35 @@ local parseEvents = function(widget, eventName, callStr, controller, NODE_STR)
 
     local event = { target = widget }
     local function execEventCall()
-        local _, values = collect_widget_for_context(widget)
-        execFnc(fnc, { controller, event, widget, values and unpack(values) }, widget, controller, NODE_STR, function()
+        local args = {}
+        if #ctx_names > 0 then
+            local values_keys, values = collect_widget_for_context(widget)
+            local values_map = {}
+            if values_keys and values_keys ~= '' and values then
+                local current_names = parse_for_names(values_keys)
+                local maxn = math.min(#current_names, values and #values or 0)
+                for i = 1, maxn do
+                    values_map[current_names[i]] = values[i]
+                end
+            end
+
+            if FOR_CTX.__keys and FOR_CTX.__keys ~= '' and FOR_CTX.__values then
+                local fallback_names = parse_for_names(FOR_CTX.__keys)
+                local maxn = math.min(#fallback_names, #FOR_CTX.__values)
+                for i = 1, maxn do
+                    local name = fallback_names[i]
+                    if values_map[name] == nil then
+                        values_map[name] = FOR_CTX.__values[i]
+                    end
+                end
+            end
+
+            for i = 1, #ctx_names do
+                args[i] = values_map[ctx_names[i]]
+            end
+        end
+
+        execFnc(fnc, { controller, event, widget, unpack(args) }, widget, controller, NODE_STR, function()
             return ('Event Error[%s]: %s'):format(eventName, callStr)
         end)
     end

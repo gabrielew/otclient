@@ -50,6 +50,48 @@ local FOR_CTX = {
     __values = nil
 }
 
+local function combine_for_context(parent_keys, parent_values, keys_str, values)
+    local entries = {}
+    local lookup = {}
+
+    local function append(keys, vals)
+        if not keys or keys == '' then
+            return
+        end
+
+        local idx = 0
+        for name in keys:gmatch("[^,%s]+") do
+            if name ~= '' then
+                idx = idx + 1
+                local value = vals and vals[idx] or nil
+                local existing = lookup[name]
+                if existing then
+                    entries[existing].value = value
+                else
+                    entries[#entries + 1] = { name = name, value = value }
+                    lookup[name] = #entries
+                end
+            end
+        end
+    end
+
+    append(parent_keys, parent_values)
+    append(keys_str, values)
+
+    if #entries == 0 then
+        return '', nil
+    end
+
+    local combined_keys = ''
+    local combined_values = {}
+    for i = 1, #entries do
+        combined_keys = combined_keys .. ',' .. entries[i].name
+        combined_values[i] = entries[i].value
+    end
+
+    return combined_keys, combined_values
+end
+
 local function ExprHandlerError(runtime, error, widget, controller, nodeStr, onError)
     if runtime then
         error = "[Script runtime error]\n" .. error
@@ -503,18 +545,19 @@ function ngfor_exec(content, env, fn)
                 values[idx] = locals[order[idx]]
             end
 
-            local old_keys, old_values = FOR_CTX.__keys, FOR_CTX.__values
-            FOR_CTX.__keys             = keys_str
-            FOR_CTX.__values           = values
-            FOR_CTX.__key              = evalKey and (pcall(evalKey, menv) and evalKey(menv) or nil) or nil
+            local old_keys, old_values, old_key = FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key
+            local combined_keys, combined_values = combine_for_context(old_keys, old_values, keys_str, values)
+            FOR_CTX.__keys   = combined_keys
+            FOR_CTX.__values = combined_values
+            FOR_CTX.__key    = evalKey and (pcall(evalKey, menv) and evalKey(menv) or nil) or nil
 
             fn({
-                __keys   = keys_str,
-                __values = values,
+                __keys   = combined_keys,
+                __values = combined_values,
                 __key    = FOR_CTX.__key
             })
 
-            FOR_CTX.__keys, FOR_CTX.__values = old_keys, old_values
+            FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key = old_keys, old_values, old_key
         end
     end
 
@@ -559,29 +602,38 @@ function UIWidget:__childFor(moduleName, expr, html, index)
         local list, keys = ngfor_exec(expr, env, function(c)
             if not isFirst then return end
             childindex       = childindex + 1
+            local prev_keys, prev_values, prev_key = FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key
             FOR_CTX.__keys   = c.__keys
             FOR_CTX.__values = c.__values
+            FOR_CTX.__key    = c.__key
             do
                 local __w        = widget:insert(childindex, html)
                 __w.__for_values = FOR_CTX.__values
                 __w.__for_keys   = FOR_CTX.__keys
             end
-            FOR_CTX.__keys   = ''
-            FOR_CTX.__values = nil
+            FOR_CTX.__keys   = prev_keys
+            FOR_CTX.__values = prev_values
+            FOR_CTX.__key    = prev_key
         end)
 
         if isFirst then
             local watch = table.watchList(list, {
                 onInsert = function(i, it)
-                    FOR_CTX.__keys   = keys
-                    FOR_CTX.__values = { it, i }
+                    local parent_keys = widget.__for_keys
+                    local parent_values = widget.__for_values
+                    local combined_keys, combined_values = combine_for_context(parent_keys, parent_values, keys, { it, i })
+                    local prev_keys, prev_values, prev_key = FOR_CTX.__keys, FOR_CTX.__values, FOR_CTX.__key
+                    FOR_CTX.__keys   = combined_keys
+                    FOR_CTX.__values = combined_values
+                    FOR_CTX.__key    = nil
                     do
                         local __w        = widget:insert(index + i, html)
-                        __w.__for_values = FOR_CTX.__values
-                        __w.__for_keys   = FOR_CTX.__keys
+                        __w.__for_values = combined_values
+                        __w.__for_keys   = combined_keys
                     end
-                    FOR_CTX.__keys   = ''
-                    FOR_CTX.__values = nil
+                    FOR_CTX.__keys   = prev_keys
+                    FOR_CTX.__values = prev_values
+                    FOR_CTX.__key    = prev_key
                 end,
                 onRemove = function(i)
                     local child = widget:getChildByIndex(index + i)

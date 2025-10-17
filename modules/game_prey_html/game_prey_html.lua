@@ -764,20 +764,18 @@ function PreyController:handleRerollBonus(slotId)
         self.rerollBonusPrice, self.wildcards
     ))
 
-    local shouldRestoreWindow = self.ui and self.ui:isVisible()
-    if shouldRestoreWindow then
-        self:hide()
-    end
+    local shouldRefocusWindow = self.ui and self.ui:isVisible()
 
-    local function restorePreyWindow()
-        if shouldRestoreWindow then
-            show()
+    local function refocusPreyWindow()
+        if shouldRefocusWindow and self.ui then
+            self.ui:raise()
+            self.ui:focus()
         end
     end
 
     showPreyConfirmationWindow('Confirmation of Using Prey Wildcards', description, function()
         g_game.preyAction(slotId, PREY_ACTION_BONUSREROLL, 0)
-    end, restorePreyWindow)
+    end, refocusPreyWindow)
 end
 
 function PreyController:handlePickSpecific(slotId)
@@ -786,20 +784,18 @@ function PreyController:handlePickSpecific(slotId)
         self.pickSpecificPrice, self.wildcards
     ))
 
-    local shouldRestoreWindow = self.ui and self.ui:isVisible()
-    if shouldRestoreWindow then
-        self:hide()
-    end
+    local shouldRefocusWindow = self.ui and self.ui:isVisible()
 
-    local function restorePreyWindow()
-        if shouldRestoreWindow then
-            show()
+    local function refocusPreyWindow()
+        if shouldRefocusWindow and self.ui then
+            self.ui:raise()
+            self.ui:focus()
         end
     end
 
     showPreyConfirmationWindow('Confirmation of Using Prey Wildcards', description, function()
         g_game.preyAction(slotId, PREY_ACTION_REQUEST_ALL_MONSTERS, 0)
-    end, restorePreyWindow)
+    end, refocusPreyWindow)
 end
 
 function PreyController:openStore(offerId)
@@ -843,20 +839,18 @@ function PreyController:listReroll(slotId)
         )
     end
 
-    local shouldRestoreWindow = self.ui and self.ui:isVisible()
-    if shouldRestoreWindow then
-        self:hide()
-    end
+    local shouldRefocusWindow = self.ui and self.ui:isVisible()
 
-    local function restorePreyWindow()
-        if shouldRestoreWindow then
-            show()
+    local function refocusPreyWindow()
+        if shouldRefocusWindow and self.ui then
+            self.ui:raise()
+            self.ui:focus()
         end
     end
 
     showPreyConfirmationWindow('Confirmation of Using List Reroll', description, function()
         g_game.preyAction(slotId, PREY_ACTION_LISTREROLL, 0)
-    end, restorePreyWindow)
+    end, refocusPreyWindow)
 end
 
 function PreyController:autoOptions(slotId, option)
@@ -885,14 +879,12 @@ function PreyController:autoOptions(slotId, option)
             self.lockPreyPrice, self.wildcards)
     end
 
-    local shouldRestoreWindow = self.ui and self.ui:isVisible()
-    if shouldRestoreWindow then
-        self:hide()
-    end
+    local shouldRefocusWindow = self.ui and self.ui:isVisible()
 
-    local function restorePreyWindow()
-        if shouldRestoreWindow then
-            show()
+    local function refocusPreyWindow()
+        if shouldRefocusWindow and self.ui then
+            self.ui:raise()
+            self.ui:focus()
         end
     end
 
@@ -907,7 +899,7 @@ function PreyController:autoOptions(slotId, option)
             end
         end
         g_game.preyAction(slotId, PREY_ACTION_OPTION, option)
-    end, restorePreyWindow, function()
+    end, refocusPreyWindow, function()
         self.preyData[slotId + 1][field] = self.preyData[slotId + 1][field]
     end)
 end

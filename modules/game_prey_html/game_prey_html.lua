@@ -702,43 +702,49 @@ local confirmWindow
 local function showPreyConfirmationWindow(title, description, confirmAction, afterCloseAction, cancelAction)
     -- toggle()
 
-
-    local function closeWindow()
-        if cancelAction and type(cancelAction) == "function" then
+    local function closeWindow(wasCancelled)
+        if wasCancelled and cancelAction and type(cancelAction) == "function" then
             cancelAction()
         end
+
         if confirmWindow then
             confirmWindow:destroy()
             confirmWindow = nil
             PreyController:handleResources()
-            -- toggle()
+
             if afterCloseAction then
                 afterCloseAction()
                 afterCloseAction = nil
             end
         end
     end
+
     if confirmWindow then
-        closeWindow()
+        closeWindow(false)
     end
 
     local function confirm()
         if confirmAction then
             confirmAction()
         end
-        closeWindow()
+
+        closeWindow(false)
+    end
+
+    local function cancel()
+        closeWindow(true)
     end
 
     confirmWindow = displayGeneralBox(tr(title), description, {
         {
             text = tr('No'),
-            callback = closeWindow
+            callback = cancel
         },
         {
             text = tr('Yes'),
             callback = confirm
         },
-    }, confirm, closeWindow)
+    }, confirm, cancel)
 
     if confirmWindow then
         confirmWindow.onDestroy = function()

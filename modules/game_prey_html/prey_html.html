@@ -301,7 +301,7 @@
                 id="auto-reroll"
                 type="checkbox"
                 *checked="slot.autoReroll"
-                onchange="self:autoOptions(slot.slotId, 1)"
+                onchange="self:autoOptions(slot.slotId, 1, event)"
               />
               <label for="auto-reroll">Automatic Bonus Reroll</label></span
             >
@@ -323,7 +323,7 @@
                 id="lock-prey"
                 type="checkbox"
                 *checked="slot.lockPrey"
-                onchange="self:autoOptions(slot.slotId, 2)"
+                onchange="self:autoOptions(slot.slotId, 2, event)"
               />
               <label for="lock-prey">Lock Prey</label></span
             >

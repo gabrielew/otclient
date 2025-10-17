@@ -853,7 +853,46 @@ function PreyController:listReroll(slotId)
     end, refocusPreyWindow)
 end
 
-function PreyController:autoOptions(slotId, option)
+local function setCheckboxState(widget, checked)
+    if not widget or type(widget.setChecked) ~= 'function' then
+        return
+    end
+
+    if type(widget.isDestroyed) == 'function' and widget:isDestroyed() then
+        return
+    end
+
+    widget:setChecked(checked)
+end
+
+local function findSiblingOptionCheckbox(currentCheckbox, selector)
+    if not currentCheckbox or not selector or type(currentCheckbox.getParent) ~= 'function' then
+        return nil
+    end
+
+    local parent = currentCheckbox:getParent()
+    local depth = 0
+
+    while parent and depth < 5 do
+        if type(parent.querySelector) == 'function' then
+            local candidate = parent:querySelector(selector)
+            if candidate and candidate ~= currentCheckbox then
+                return candidate
+            end
+        end
+
+        if type(parent.getParent) ~= 'function' then
+            break
+        end
+
+        parent = parent:getParent()
+        depth = depth + 1
+    end
+
+    return nil
+end
+
+function PreyController:autoOptions(slotId, option, event)
     local field = ""
     if option == PREY_OPTION_TOGGLE_AUTOREROLL then
         field = "autoReroll"
@@ -861,11 +900,23 @@ function PreyController:autoOptions(slotId, option)
         field = "lockPrey"
     end
 
-    if self.preyData[slotId + 1][field] then
-        self.preyData[slotId + 1][field] = false
+    local checkbox = event and event.target or nil
+    local slot = self.preyData[slotId + 1]
+    if not slot then
+        setCheckboxState(checkbox, false)
+        return
+    end
+    local otherCheckboxSelector = field == "autoReroll" and "input#lock-prey" or "input#auto-reroll"
+    local otherCheckbox = checkbox and findSiblingOptionCheckbox(checkbox, otherCheckboxSelector) or nil
+
+    if slot[field] then
+        slot[field] = false
+        setCheckboxState(checkbox, false)
         g_game.preyAction(slotId, PREY_ACTION_OPTION, PREY_OPTION_UNTOGGLE)
         return
     end
+
+    setCheckboxState(checkbox, false)
 
     local description = ""
 
@@ -889,17 +940,19 @@ function PreyController:autoOptions(slotId, option)
     end
 
     showPreyConfirmationWindow('Confirmation of Using List Reroll', description, function()
-        self.preyData[slotId + 1][field] = not self.preyData[slotId + 1][field]
+        slot[field] = true
 
-        if self.preyData[slotId + 1][field] then
-            if field == "autoReroll" then
-                self.preyData[slotId + 1]["lockPrey"] = false
-            else
-                self.preyData[slotId + 1]["autoReroll"] = false
-            end
+        if field == "autoReroll" then
+            slot["lockPrey"] = false
+        else
+            slot["autoReroll"] = false
         end
+
+        setCheckboxState(otherCheckbox, false)
+        setCheckboxState(checkbox, true)
+
         g_game.preyAction(slotId, PREY_ACTION_OPTION, option)
     end, refocusPreyWindow, function()
-        self.preyData[slotId + 1][field] = self.preyData[slotId + 1][field]
+        setCheckboxState(checkbox, false)
     end)
 end

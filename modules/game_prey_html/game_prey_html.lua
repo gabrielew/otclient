@@ -936,10 +936,15 @@ function PreyController:autoOptions(slotId, option, event)
             self.lockPreyPrice, self.wildcards)
     end
 
-    local shouldRefocusWindow = self.ui and self.ui:isVisible()
+    local shouldRestoreWindow = self.ui and self.ui:isVisible()
 
-    local function refocusPreyWindow()
-        if shouldRefocusWindow and self.ui then
+    if shouldRestoreWindow then
+        self.ui:hide()
+    end
+
+    local function restorePreyWindow()
+        if shouldRestoreWindow and self.ui then
+            self.ui:show()
             self.ui:raise()
             self.ui:focus()
         end
@@ -958,7 +963,8 @@ function PreyController:autoOptions(slotId, option, event)
         setCheckboxState(checkbox, true)
 
         g_game.preyAction(slotId, PREY_ACTION_OPTION, option)
-    end, refocusPreyWindow, function()
+    end, restorePreyWindow, function()
         setCheckboxState(checkbox, false)
     end)
+
 end

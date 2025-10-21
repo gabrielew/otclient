@@ -204,6 +204,10 @@ local function refreshQuadrantSelectionBorder(ui, quadrantKey, selectedIndex)
             local shouldShow = selectedIndex ~= nil and index == selectedIndex
             borderWidget:setVisible(shouldShow)
             if shouldShow then
+                local slotWidget = borderWidget:getParent()
+                if slotWidget then
+                    slotWidget:raise()
+                end
                 borderWidget:raise()
             end
         end

@@ -191,6 +191,30 @@ local selectedSlots = {
     [BOTTOM_RIGHT] = nil
 }
 
+local function resolveQuadrantSlotIndex(ui, quadrantKey, mousePos)
+    local config = QuadrantSlotConfig[quadrantKey]
+    if not config then
+        return nil
+    end
+
+    local bestIndex
+    local smallestArea
+
+    for index = 1, config.slotCount do
+        local slotId = string.format('%s%d', config.slotPrefix, index)
+        local slotWidget = ui:recursiveGetChildById(slotId)
+        if slotWidget and slotWidget:containsPoint(mousePos) then
+            local area = slotWidget:getWidth() * slotWidget:getHeight()
+            if area > 0 and (not smallestArea or area < smallestArea) then
+                smallestArea = area
+                bestIndex = index
+            end
+        end
+    end
+
+    return bestIndex
+end
+
 local function refreshQuadrantSelectionBorder(ui, quadrantKey, selectedIndex)
     local config = QuadrantSlotConfig[quadrantKey]
     if not config then
@@ -344,21 +368,9 @@ local UIConfigurator = {
                 local slotId = string.format('%s%d', config.slotPrefix, index)
                 local slotWidget = ui:recursiveGetChildById(slotId)
                 if slotWidget then
-                    slotWidget:setPhantom(false)
+                    slotWidget:setPhantom(true)
                     slotWidget:setFocusable(false)
 
-                    local slotIndex = index
-                    local quadrantId = quadrantKey
-                    connect(slotWidget, {
-                        onMousePress = function(widget, mousePos, mouseButton)
-                            if mouseButton ~= MouseLeftButton then
-                                return false
-                            end
-
-                            WheelOfDestiny.selectQuadrantSlot(quadrantId, slotIndex)
-                            return true
-                        end
-                    })
                 end
 
                 local borderId = string.format('%s%d', config.borderPrefix, index)
@@ -367,6 +379,30 @@ local UIConfigurator = {
                     borderWidget:setVisible(false)
                     borderWidget:setPhantom(true)
                 end
+            end
+
+            local quadrantContainerId = string.format('colorQuadrant%s', quadrantKey)
+            local quadrantContainer = ui:recursiveGetChildById(quadrantContainerId)
+            if quadrantContainer then
+                quadrantContainer:setPhantom(false)
+                quadrantContainer:setFocusable(false)
+
+                local quadrantId = quadrantKey
+                connect(quadrantContainer, {
+                    onMousePress = function(widget, mousePos, mouseButton)
+                        if mouseButton ~= MouseLeftButton then
+                            return false
+                        end
+
+                        local resolvedIndex = resolveQuadrantSlotIndex(ui, quadrantId, mousePos)
+                        if not resolvedIndex then
+                            return false
+                        end
+
+                        WheelOfDestiny.selectQuadrantSlot(quadrantId, resolvedIndex)
+                        return true
+                    end
+                })
             end
         end
     end,

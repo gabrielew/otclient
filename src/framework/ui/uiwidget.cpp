@@ -1483,7 +1483,7 @@ UIWidgetPtr UIWidget::recursiveGetChildByPos(const Point& childPos, const bool w
     if (isClipping() && !containsPaddingPoint(childPos))
         return nullptr;
 
-    if (getPixelHit() && isPixelTransparent(childPos))
+    if (getPixelHit() && containsPoint(childPos) && isPixelTransparent(childPos))
         return nullptr;
 
     for (auto& child : std::ranges::reverse_view(m_children)) {
@@ -2082,8 +2082,10 @@ bool UIWidget::propagateOnMouseEvent(const Point& mousePos, UIWidgetList& widget
         }
     }
 
-    if (!checkContainsPoint || containsPoint(mousePos)) {
-        if (!getPixelHit() || !isPixelTransparent(mousePos))
+    const bool inside = containsPoint(mousePos);
+
+    if (!checkContainsPoint || inside) {
+        if (!getPixelHit() || (inside && !isPixelTransparent(mousePos)))
             widgetList.emplace_back(static_self_cast<UIWidget>());
 
         if ((!isPhantom() && !isOnHtml()) || isDraggable())

@@ -35,6 +35,9 @@
 #include "framework/graphics/drawpool.h"
 #include "framework/graphics/texture.h"
 
+#include <optional>
+#include <vector>
+
 template<typename T = int>
 struct EdgeGroup
 {
@@ -348,6 +351,12 @@ protected:
 
     int m_insertChildIndex = -1;
 
+    int m_zIndex{ 0 };
+    bool m_hasCustomZIndex{ false };
+
+    std::vector<UIWidgetPtr> m_childrenByZIndex;
+    bool m_childrenByZIndexDirty{ true };
+
     Timer m_clickTimer;
     Fw::FocusReason m_lastFocusReason{ Fw::ActiveFocusReason };
     Fw::AutoFocusPolicy m_autoFocusPolicy{ Fw::AutoFocusLast };
@@ -441,6 +450,13 @@ public:
     void setFlexBasis(const FlexBasis& basis);
     void setAlignSelf(AlignSelf align);
     void setPlacement(const std::string& placement);
+
+    void setZIndex(std::optional<int> zIndex);
+    void setZIndex(int zIndex) { setZIndex(std::optional<int>(zIndex)); }
+    void resetZIndex();
+    [[nodiscard]] std::optional<int> getZIndex() const { return m_hasCustomZIndex ? std::optional<int>(m_zIndex) : std::nullopt; }
+    [[nodiscard]] int getEffectiveZIndex() const { return m_hasCustomZIndex ? m_zIndex : 0; }
+    [[nodiscard]] bool hasCustomZIndex() const { return m_hasCustomZIndex; }
 
     auto getPlacement() const { return m_placement; }
     FlexDirection getFlexDirection() const { return m_flexContainer.direction; }
@@ -856,6 +872,9 @@ public:
 
     // image
 private:
+    void invalidateChildrenZOrder();
+    const std::vector<UIWidgetPtr>& getChildrenInZOrder();
+
     void initImage();
     void parseImageStyle(const OTMLNodePtr& styleNode);
     void applyDimension(bool isWidth, std::string valueStr);

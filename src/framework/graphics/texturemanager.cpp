@@ -199,6 +199,9 @@ void TextureManager::loadTextureTransparentPixels(const std::string& fileName)
     if (!texture)
         return;
 
+    if (texture->hasTransparentPixels())
+        return;
+
     const auto& filePathEx = g_resources.guessFilePath(filePath, "png");
 
     std::stringstream file;

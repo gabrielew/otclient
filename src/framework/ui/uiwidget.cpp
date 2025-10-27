@@ -26,6 +26,7 @@
 #include "uitranslator.h"
 
 #include <framework/core/eventdispatcher.h>
+#include <algorithm>
 #include <framework/luaengine/luainterface.h>
 #include <framework/otml/otmlnode.h>
 #include <framework/html/htmlnode.h>
@@ -123,10 +124,44 @@ void UIWidget::drawSelf(const DrawPoolType drawPane)
         g_drawPool.resetShaderProgram();
 }
 
+void UIWidget::invalidateChildrenZOrder()
+{
+    m_childrenByZIndexDirty = true;
+    m_childrenByZIndex.clear();
+}
+
+const std::vector<UIWidgetPtr>& UIWidget::getChildrenInZOrder()
+{
+    if (!m_childrenByZIndexDirty)
+        return m_childrenByZIndex;
+
+    m_childrenByZIndex.clear();
+    m_childrenByZIndex.reserve(m_children.size());
+    for (const auto& child : m_children)
+        m_childrenByZIndex.emplace_back(child);
+
+    auto comparator = [](const UIWidgetPtr& a, const UIWidgetPtr& b) {
+        const int za = a ? a->getEffectiveZIndex() : 0;
+        const int zb = b ? b->getEffectiveZIndex() : 0;
+        if (za == zb) {
+            const int ia = a ? a->m_childIndex : 0;
+            const int ib = b ? b->m_childIndex : 0;
+            return ia < ib;
+        }
+        return za < zb;
+    };
+
+    std::stable_sort(m_childrenByZIndex.begin(), m_childrenByZIndex.end(), comparator);
+    m_childrenByZIndexDirty = false;
+    return m_childrenByZIndex;
+}
+
 void UIWidget::drawChildren(const Rect& visibleRect, const DrawPoolType drawPane)
 {
+    const auto& orderedChildren = getChildrenInZOrder();
+
     // draw children
-    for (const auto& child : m_children) {
+    for (const auto& child : orderedChildren) {
         // render only visible children with a valid rect inside parent rect
         if (!child || !child->isExplicitlyVisible() || child->getOpacity() <= Fw::MIN_ALPHA)
             continue;
@@ -189,6 +224,8 @@ void UIWidget::addChild(const UIWidgetPtr& child)
 
     m_children.emplace_back(child);
     m_childrenById[child->getId()] = child;
+
+    invalidateChildrenZOrder();
 
     // cache index
     child->m_childIndex = m_children.size();
@@ -255,6 +292,8 @@ void UIWidget::insertChild(int32_t index, const UIWidgetPtr& child)
     m_children.insert(it, child);
     m_childrenById[child->getId()] = child;
 
+    invalidateChildrenZOrder();
+
     { // cache index
         child->m_childIndex = index + 1;
         for (auto i = child->m_childIndex; i < m_children.size(); ++i)
@@ -304,6 +343,8 @@ void UIWidget::removeChild(const UIWidgetPtr& child)
         const auto it = std::ranges::find(m_children, child);
         m_children.erase(it);
         m_childrenById.erase(child->getId());
+
+        invalidateChildrenZOrder();
 
         { // cache index
             for (size_t i = child->m_childIndex - 1, s = m_children.size(); i < s; ++i)
@@ -485,6 +526,8 @@ void UIWidget::lowerChild(const UIWidgetPtr& child)
     m_children.erase(it);
     m_children.emplace_front(child);
 
+    invalidateChildrenZOrder();
+
     if (m_htmlNode && child->m_htmlNode) {
         m_htmlNode->remove(child->m_htmlNode);
         m_htmlNode->prepend(child->m_htmlNode);
@@ -516,6 +559,8 @@ void UIWidget::raiseChild(const UIWidgetPtr& child)
 
     m_children.erase(it);
     m_children.emplace_back(child);
+
+    invalidateChildrenZOrder();
 
     if (m_htmlNode && child->m_htmlNode) {
         m_htmlNode->remove(child->m_htmlNode);
@@ -559,6 +604,8 @@ void UIWidget::moveChildToIndex(const UIWidgetPtr& child, const int index)
     m_children.erase(it);
     m_children.insert(m_children.begin() + (index - 1), child);
 
+    invalidateChildrenZOrder();
+
     if (m_htmlNode && child->m_htmlNode) {
         m_htmlNode->remove(child->m_htmlNode);
         m_htmlNode->insert(child->m_htmlNode, index - 1);
@@ -594,6 +641,8 @@ void UIWidget::reorderChildren(const std::vector<UIWidgetPtr>& childrens) {
         if (m_htmlNode)
             m_htmlNode->append(children->m_htmlNode);
     }
+
+    invalidateChildrenZOrder();
 
     refreshHtml();
 
@@ -947,6 +996,8 @@ void UIWidget::internalDestroy()
         child->internalDestroy();
     m_children.clear();
 
+    invalidateChildrenZOrder();
+
     for (const auto& [id, destroyCallback] : m_onDestroyCallbacks)
         destroyCallback();
     m_onDestroyCallbacks.clear();
@@ -1007,6 +1058,8 @@ void UIWidget::destroyChildren()
             }
         }
     }
+
+    invalidateChildrenZOrder();
 
     if (layout)
         layout->enableUpdates();
@@ -1436,7 +1489,9 @@ UIWidgetPtr UIWidget::getChildByPos(const Point& childPos)
     if (!containsPaddingPoint(childPos))
         return nullptr;
 
-    for (auto& child : std::ranges::reverse_view(m_children)) {
+    const auto& orderedChildren = getChildrenInZOrder();
+    for (auto it = orderedChildren.rbegin(); it != orderedChildren.rend(); ++it) {
+        const auto& child = *it;
         if (child->isExplicitlyVisible() && child->containsPoint(childPos))
             return child;
     }
@@ -1455,7 +1510,9 @@ UIWidgetPtr UIWidget::getChildByIndex(int index)
 
 UIWidgetPtr UIWidget::getChildByState(const Fw::WidgetState state)
 {
-    for (auto& child : std::ranges::reverse_view(m_children)) {
+    const auto& orderedChildren = getChildrenInZOrder();
+    for (auto it = orderedChildren.rbegin(); it != orderedChildren.rend(); ++it) {
+        const auto& child = *it;
         if (child->hasState(state))
             return child;
     }
@@ -1482,7 +1539,9 @@ UIWidgetPtr UIWidget::recursiveGetChildByPos(const Point& childPos, const bool w
     if (isClipping() && !containsPaddingPoint(childPos))
         return nullptr;
 
-    for (auto& child : std::ranges::reverse_view(m_children)) {
+    const auto& orderedChildren = getChildrenInZOrder();
+    for (auto it = orderedChildren.rbegin(); it != orderedChildren.rend(); ++it) {
+        const auto& child = *it;
         if (child->isExplicitlyVisible()) {
             if (const auto& subChild = child->recursiveGetChildByPos(childPos, wantsPhantom))
                 return subChild;
@@ -1496,7 +1555,9 @@ UIWidgetPtr UIWidget::recursiveGetChildByPos(const Point& childPos, const bool w
 
 UIWidgetPtr UIWidget::recursiveGetChildByState(const Fw::WidgetState state, const bool wantsPhantom)
 {
-    for (auto& child : std::ranges::reverse_view(m_children)) {
+    const auto& orderedChildren = getChildrenInZOrder();
+    for (auto it = orderedChildren.rbegin(); it != orderedChildren.rend(); ++it) {
+        const auto& child = *it;
         if (child->hasState(state)) {
             if (const auto& subChild = child->recursiveGetChildByState(state, wantsPhantom))
                 return subChild;
@@ -1527,7 +1588,9 @@ UIWidgetList UIWidget::recursiveGetChildrenByPos(const Point& childPos)
     if (isClipping() && !containsPaddingPoint(childPos))
         return children;
 
-    for (auto& child : std::ranges::reverse_view(m_children)) {
+    const auto& orderedChildren = getChildrenInZOrder();
+    for (auto it = orderedChildren.rbegin(); it != orderedChildren.rend(); ++it) {
+        const auto& child = *it;
         if (child->isExplicitlyVisible()) {
             if (const UIWidgetList& subChildren = child->recursiveGetChildrenByPos(childPos); !subChildren.empty())
                 children.insert(children.end(), subChildren.begin(), subChildren.end());
@@ -1546,7 +1609,9 @@ UIWidgetList UIWidget::recursiveGetChildrenByMarginPos(const Point& childPos)
     if (isClipping() && !containsPaddingPoint(childPos))
         return children;
 
-    for (auto& child : std::ranges::reverse_view(m_children)) {
+    const auto& orderedChildren = getChildrenInZOrder();
+    for (auto it = orderedChildren.rbegin(); it != orderedChildren.rend(); ++it) {
+        const auto& child = *it;
         if (child->isExplicitlyVisible()) {
             UIWidgetList subChildren = child->recursiveGetChildrenByMarginPos(childPos);
             if (!subChildren.empty())
@@ -1559,7 +1624,9 @@ UIWidgetList UIWidget::recursiveGetChildrenByMarginPos(const Point& childPos)
 }
 
 UIWidgetPtr UIWidget::getChildByStyleName(const std::string_view styleName) {
-    for (auto& child : std::ranges::reverse_view(m_children)) {
+    const auto& orderedChildren = getChildrenInZOrder();
+    for (auto it = orderedChildren.rbegin(); it != orderedChildren.rend(); ++it) {
+        const auto& child = *it;
         if (child->getStyleName() == styleName)
             return child;
     }
@@ -1569,7 +1636,9 @@ UIWidgetPtr UIWidget::getChildByStyleName(const std::string_view styleName) {
 UIWidgetList UIWidget::recursiveGetChildrenByState(const Fw::WidgetState state)
 {
     UIWidgetList children;
-    for (auto& child : std::ranges::reverse_view(m_children)) {
+    const auto& orderedChildren = getChildrenInZOrder();
+    for (auto it = orderedChildren.rbegin(); it != orderedChildren.rend(); ++it) {
+        const auto& child = *it;
         if (child->hasState(state)) {
             UIWidgetList subChildren = child->recursiveGetChildrenByState(state);
             if (!subChildren.empty())
@@ -2067,7 +2136,9 @@ bool UIWidget::propagateOnMouseEvent(const Point& mousePos, UIWidgetList& widget
         return false;
 
     bool ret = false;
-    for (auto& child : std::ranges::reverse_view(m_children)) {
+    const auto& orderedChildren = getChildrenInZOrder();
+    for (auto it = orderedChildren.rbegin(); it != orderedChildren.rend(); ++it) {
+        const auto& child = *it;
         if (child->isExplicitlyEnabled() && child->isExplicitlyVisible()) {
             if (child->propagateOnMouseEvent(mousePos, widgetList, true)) {
                 ret = true;
@@ -2089,7 +2160,8 @@ bool UIWidget::propagateOnMouseEvent(const Point& mousePos, UIWidgetList& widget
 bool UIWidget::propagateOnMouseMove(const Point& mousePos, const Point& mouseMoved, UIWidgetList& widgetList)
 {
     if (containsPaddingPoint(mousePos)) {
-        for (const auto& child : m_children) {
+        const auto& orderedChildren = getChildrenInZOrder();
+        for (const auto& child : orderedChildren) {
             if (child->isExplicitlyVisible() && child->isExplicitlyEnabled() && child->containsPoint(mousePos))
                 child->propagateOnMouseMove(mousePos, mouseMoved, widgetList);
         }
@@ -2361,4 +2433,34 @@ void UIWidget::setAlignSelf(AlignSelf align)
 void UIWidget::setPlacement(const std::string& placement) {
     m_placement = Fw::translatePlacement(placement);
     scheduleHtmlTask(PropApplyAnchorAlignment);
+}
+
+void UIWidget::setZIndex(std::optional<int> zIndex)
+{
+    if (!zIndex.has_value()) {
+        resetZIndex();
+        return;
+    }
+
+    const int value = zIndex.value();
+    if (m_hasCustomZIndex && m_zIndex == value)
+        return;
+
+    m_hasCustomZIndex = true;
+    m_zIndex = value;
+
+    if (const auto& parent = getParent())
+        parent->invalidateChildrenZOrder();
+}
+
+void UIWidget::resetZIndex()
+{
+    if (!m_hasCustomZIndex && m_zIndex == 0)
+        return;
+
+    m_hasCustomZIndex = false;
+    m_zIndex = 0;
+
+    if (const auto& parent = getParent())
+        parent->invalidateChildrenZOrder();
 }

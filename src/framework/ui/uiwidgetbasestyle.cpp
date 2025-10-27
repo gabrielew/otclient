@@ -524,6 +524,22 @@ void UIWidget::parseBaseStyle(const OTMLNodePtr& styleNode)
             else if (v == "relative") type = PositionType::Relative;
 
             setPositionType(type);
+        } else if (node->tag() == "z-index") {
+            auto text = node->value<std::string>();
+            stdext::trim(text);
+
+            auto lowered = text;
+            stdext::tolower(lowered);
+
+            if (lowered.empty() || lowered == "auto" || lowered == "initial" || lowered == "inherit") {
+                resetZIndex();
+            } else {
+                int value = 0;
+                if (parseInt(text, value))
+                    setZIndex(value);
+                else
+                    resetZIndex();
+            }
         } else if (node->tag() == "float") {
             auto v = node->value<std::string>();
             stdext::tolower(v);

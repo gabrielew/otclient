@@ -29,6 +29,7 @@
 #include <framework/platform/platform.h>
 
 #include <set>
+#include <string>
 #include <type_traits>
 
 template<typename T>
@@ -334,7 +335,11 @@ bool luavalue_cast(const int index, std::function<void(Args...)>& func)
         // weak references are used here, this means that the script must hold another reference
         // to this function, otherwise it will expire
         const int funcWeakRef = g_lua.weakRef();
-        func = [funcWeakRef, callbackDescription](Args... args) {
+        const std::string callbackLabel = !callbackDescription.empty()
+            ? callbackDescription
+            : std::string("weakref#") + std::to_string(funcWeakRef);
+
+        func = [funcWeakRef, callbackLabel](Args... args) {
             // note that we must catch exceptions, because this lambda can be called from anywhere
             // and most of them won't catch exceptions (e.g. dispatcher)
             g_lua.getWeakRef(funcWeakRef);
@@ -345,16 +350,12 @@ bool luavalue_cast(const int index, std::function<void(Args...)>& func)
                     g_lua.pop(rets);
                 } else {
                     std::string errorMessage = "attempt to call an expired lua function from C++";
-                    if (!callbackDescription.empty())
-                        errorMessage += " (" + callbackDescription + ")";
+                    errorMessage += " (" + callbackLabel + ")";
                     errorMessage += ", did you forget to hold a reference for that function?";
                     throw LuaException(errorMessage, 0);
                 }
             } catch (const LuaException& e) {
-                if (!callbackDescription.empty())
-                    g_logger.error("lua function callback failed ({}): {}", callbackDescription, e.what());
-                else
-                    g_logger.error("lua function callback failed: {}", e.what());
+                g_logger.error("lua function callback failed ({}): {}", callbackLabel, e.what());
             }
         };
         return true;
@@ -387,26 +388,30 @@ luavalue_cast(const int index, std::function<Ret(Args...)>& func)
         // weak references are used here, this means that the script must hold another reference
         // to this function, otherwise it will expire
         const int funcWeakRef = g_lua.weakRef();
-        func = [funcWeakRef, callbackDescription](Args... args) -> Ret {
+        const std::string callbackLabel = !callbackDescription.empty()
+            ? callbackDescription
+            : std::string("weakref#") + std::to_string(funcWeakRef);
+
+        func = [funcWeakRef, callbackLabel](Args... args) -> Ret {
             // note that we must catch exceptions, because this lambda can be called from anywhere
             // and most of them won't catch exceptions (e.g. dispatcher)
             try {
                 g_lua.getWeakRef(funcWeakRef);
                 if (g_lua.isFunction()) {
-                    if (const int numArgs = g_lua.polymorphicPush(args...); g_lua.safeCall(numArgs) != 1)
-                        throw LuaException("a function from lua didn't retrieve the expected number of results", 0);
+                    const int numArgs = g_lua.polymorphicPush(args...);
+                    const int rets = g_lua.safeCall(numArgs);
+                    if (rets != 1) {
+                        std::string resultsMessage = "lua function (" + callbackLabel + ") didn't retrieve the expected number of results";
+                        throw LuaException(resultsMessage, 0);
+                    }
                     return g_lua.polymorphicPop<Ret>();
                 }
                 std::string errorMessage = "attempt to call an expired lua function from C++";
-                if (!callbackDescription.empty())
-                    errorMessage += " (" + callbackDescription + ")";
+                errorMessage += " (" + callbackLabel + ")";
                 errorMessage += ", did you forget to hold a reference for that function?";
                 throw LuaException(errorMessage, 0);
             } catch (const LuaException& e) {
-                if (!callbackDescription.empty())
-                    g_logger.error("lua function callback failed ({}): {}", callbackDescription, e.what());
-                else
-                    g_logger.error("lua function callback failed: {}", e.what());
+                g_logger.error("lua function callback failed ({}): {}", callbackLabel, e.what());
             }
             return Ret();
         };

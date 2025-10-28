@@ -29,6 +29,7 @@
 
 #include <framework/core/resourcemanager.h>
 #include <cstring>
+#include <sstream>
 
 LuaInterface g_lua;
 
@@ -1377,6 +1378,8 @@ std::string LuaInterface::describeFunction(const int index)
 
     pushValue(index);
 
+    const void* const pointer = lua_topointer(L, -1);
+
     lua_Debug ar;
     std::memset(&ar, 0, sizeof(ar));
     if (lua_getinfo(L, ">Snl", &ar) == 1) {
@@ -1406,6 +1409,16 @@ std::string LuaInterface::describeFunction(const int index)
     }
 
     pop();
+
+    if (pointer) {
+        std::ostringstream pointerStream;
+        pointerStream << "lua function@" << pointer;
+
+        if (description.empty())
+            description = pointerStream.str();
+        else
+            description += " [" + pointerStream.str() + "]";
+    }
 
     return description;
 }

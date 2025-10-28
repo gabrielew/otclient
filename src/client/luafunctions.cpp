@@ -413,6 +413,8 @@ void Client::registerLuaFunctions()
     g_lua.bindSingletonFunction("g_gameConfig", "getWidgetTextFontName", &GameConfig::getWidgetTextFontName, &g_gameConfig);
 
     g_lua.registerSingletonClass("g_client");
+    g_lua.bindSingletonFunction("g_client", "getLockWidget", &Client::getLockWidget, &g_client);
+    g_lua.bindSingletonFunction("g_client", "setLockWidget", &Client::setLockWidget, &g_client);
     g_lua.bindSingletonFunction("g_client", "setEffectAlpha", &Client::setEffectAlpha, &g_client);
     g_lua.bindSingletonFunction("g_client", "setMissileAlpha", &Client::setMissileAlpha, &g_client);
 

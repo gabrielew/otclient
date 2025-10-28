@@ -36,6 +36,11 @@
 
 Client g_client;
 
+namespace
+{
+constexpr const char* LOCK_WIDGET_CALLBACK_ID = "client-lock-widget";
+}
+
 void Client::init(std::vector<std::string>& /*args*/)
 {
     // register needed lua functions
@@ -53,6 +58,7 @@ void Client::init(std::vector<std::string>& /*args*/)
 
 void Client::terminate()
 {
+    setLockWidget(nullptr);
     m_mapWidget = nullptr;
 
 #ifdef FRAMEWORK_EDITOR
@@ -138,6 +144,41 @@ bool Client::isLoadingAsyncTexture()
 bool Client::isUsingProtobuf()
 {
     return g_game.isUsingProtobuf();
+}
+
+void Client::setLockWidget(const UIWidgetPtr& widget)
+{
+    auto newLockWidget = widget;
+    if (newLockWidget && newLockWidget->isDestroyed())
+        newLockWidget = nullptr;
+
+    const auto currentLockWidget = m_lockWidget;
+    if (currentLockWidget == newLockWidget)
+        return;
+
+    if (currentLockWidget)
+        currentLockWidget->removeOnDestroyCallback(LOCK_WIDGET_CALLBACK_ID);
+
+    if (!newLockWidget) {
+        if (currentLockWidget) {
+            if (g_ui.getMouseReceiver() == currentLockWidget)
+                g_ui.resetMouseReceiver();
+            if (g_ui.getKeyboardReceiver() == currentLockWidget)
+                g_ui.resetKeyboardReceiver();
+        }
+
+        m_lockWidget = nullptr;
+        return;
+    }
+
+    m_lockWidget = newLockWidget;
+
+    g_ui.setMouseReceiver(newLockWidget);
+    g_ui.setKeyboardReceiver(newLockWidget);
+
+    newLockWidget->addOnDestroyCallback(LOCK_WIDGET_CALLBACK_ID, [] {
+        g_client.setLockWidget(nullptr);
+    });
 }
 
 void Client::onLoadingAsyncTextureChanged(bool /*loadingAsync*/)

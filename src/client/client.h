@@ -46,6 +46,9 @@ public:
     void doMapScreenshot(std::string fileName) override;
 
     UIMapPtr getMapWidget() { return m_mapWidget; }
+    UIWidgetPtr getLockWidget() const { return m_lockWidget; }
+
+    void setLockWidget(const UIWidgetPtr& widget);
 
     float getEffectAlpha() const { return m_effectAlpha; }
     void setEffectAlpha(const float v) { m_effectAlpha = v; }
@@ -55,6 +58,7 @@ public:
 
 private:
     UIMapPtr m_mapWidget;
+    UIWidgetPtr m_lockWidget;
     float m_effectAlpha{ 1.f };
     float m_missileAlpha{ 1.f };
 };

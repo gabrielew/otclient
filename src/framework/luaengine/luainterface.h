@@ -364,6 +364,7 @@ public:
     bool hasIndex(const int index) { return (stackSize() >= (index < 0 ? -index : index) && index != 0); }
 
     std::string getSource(int level = 2);
+    std::string describeFunction(int index);
 
     void loadFiles(const std::string& directory, bool recursive = false, const std::string& contains = "");
 

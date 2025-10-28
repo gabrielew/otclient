@@ -28,6 +28,7 @@
 #endif
 
 #include <framework/core/resourcemanager.h>
+#include <cstring>
 
 LuaInterface g_lua;
 
@@ -902,7 +903,7 @@ std::string LuaInterface::functionSourcePath() const
 
     // gets function source path
     lua_Debug ar;
-    memset(&ar, 0, sizeof(ar));
+    std::memset(&ar, 0, sizeof(ar));
     lua_getinfo(L, ">Sn", &ar);
     if (ar.source) {
         // scripts coming from files has source beginning with '@'
@@ -1365,6 +1366,48 @@ std::string LuaInterface::getSource(const int level)
         lua_getinfo(L, "Sl", &ar);
     }
     return std::string(ar.short_src) + ":" + std::to_string(ar.currentline);
+}
+
+std::string LuaInterface::describeFunction(const int index)
+{
+    std::string description;
+
+    if (!hasIndex(index) || !isFunction(index))
+        return description;
+
+    pushValue(index);
+
+    lua_Debug ar;
+    std::memset(&ar, 0, sizeof(ar));
+    if (lua_getinfo(L, ">Snl", &ar) == 1) {
+        std::string source;
+
+        if (ar.source)
+            source = ar.source;
+
+        if (!source.empty() && source.front() == '@')
+            source.erase(source.begin());
+
+        if (source.empty() && ar.short_src[0] != '\0')
+            source = ar.short_src;
+
+        if (!source.empty()) {
+            description = source;
+            if (ar.linedefined >= 0)
+                description += ":" + std::to_string(ar.linedefined);
+        } else if (ar.linedefined >= 0)
+            description = std::to_string(ar.linedefined);
+
+        if (ar.name && ar.name[0] != '\0') {
+            if (!description.empty())
+                description += " ";
+            description += "(" + std::string(ar.name) + ")";
+        }
+    }
+
+    pop();
+
+    return description;
 }
 
 void LuaInterface::loadFiles(const std::string& directory, const bool recursive, const std::string& contains)

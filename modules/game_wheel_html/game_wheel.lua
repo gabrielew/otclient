@@ -53,6 +53,13 @@ local baseInfoData = {
     text = "\n\nFill or empty a slice with a\nright-click.",
 }
 
+local pointButtonSelectors = {
+    addAll = '#wheel-add-max-button',
+    addOne = '#wheel-add-one-button',
+    removeAll = '#wheel-remove-max-button',
+    removeOne = '#wheel-remove-one-button'
+}
+
 function WheelController.wheel:handleOnHover(slotId, forceUpdate)
     if slotId == WheelController.wheel.currentHoverSlotId and not forceUpdate then
         return
@@ -478,12 +485,15 @@ function WheelController:show(skipRequest)
 
     local needsReload = not self.ui or self.ui:isDestroyed()
     if needsReload then
+        self.pointButtonsInitialized = false
         self:loadHtml('game_wheel.html')
     end
 
     if not self.ui then
         return
     end
+
+    self:setupPointButtonCallbacks()
 
     self.ui:centerIn('parent')
     self.ui:show()
@@ -509,6 +519,38 @@ local function resetValues()
     WheelController.wheel.information.slotProgressWidth = 205
 
     resetSelection()
+end
+
+function WheelController:setupPointButtonCallbacks()
+    if self.pointButtonsInitialized or not self.ui then
+        return
+    end
+
+    self.pointButtonCallbacks = self.pointButtonCallbacks or {
+        addAll = function()
+            self.wheel:onAddAllPoints()
+        end,
+        addOne = function()
+            self.wheel:onAddOnePoint()
+        end,
+        removeAll = function()
+            self.wheel:onRemoveAllPoints()
+        end,
+        removeOne = function()
+            self.wheel:onRemoveOnePoint()
+        end,
+    }
+
+    for action, selector in pairs(pointButtonSelectors) do
+        local widget = self:findWidget(selector)
+        if widget then
+            self:registerUIEvents(widget, {
+                onClick = self.pointButtonCallbacks[action]
+            })
+        end
+    end
+
+    self.pointButtonsInitialized = true
 end
 
 function WheelController:handlePressEnter()
@@ -563,13 +605,30 @@ function WheelController:onInit()
         onWheelOfDestinyOpenWindow = onWheelOfDestinyOpenWindow
     })
 
+    if not self.toggleButtonCallback then
+        self.toggleButtonCallback = function()
+            self:toggle()
+        end
+    end
+
     if not WheelButton then
         WheelButton = modules.game_mainpanel.addToggleButton('WheelButton', tr('Open Wheel of Destiny'),
-            '/images/options/wheel', function() self:toggle() end)
+            '/images/options/wheel', self.toggleButtonCallback)
     end
 
     self.currentTab = 'wheel'
     WheelController:toggleMenu('wheel')
+end
+
+function WheelController:onTerminate()
+    if WheelButton then
+        WheelButton:destroy()
+        WheelButton = nil
+    end
+
+    self.toggleButtonCallback = nil
+    self.pointButtonsInitialized = false
+    self.pointButtonCallbacks = nil
 end
 
 function WheelController.wheel:handleMousePress(event, id)
@@ -841,7 +900,7 @@ function WheelController.wheel:onAddAllPoints()
     if WheelController.wheel.options ~= 1 then
         return false
     end
-    local pointInvested = WheelController.wheel.pointInvested[index]
+    local pointInvested = WheelController.wheel.pointInvested[index] or 0
     local bonus = helper.bonus.WheelBonus[index - 1]
     if pointInvested >= bonus.maxPoints then
         return
@@ -873,7 +932,7 @@ function WheelController.wheel:onAddOnePoint()
         return false
     end
 
-    local pointInvested = WheelController.wheel.pointInvested[index]
+    local pointInvested = WheelController.wheel.pointInvested[index] or 0
     local bonus = helper.bonus.WheelBonus[index - 1]
 
 
@@ -925,8 +984,9 @@ function WheelController.wheel:canAddPoints(index, ignoreMaxPoint)
     end
 
     local bonus = helper.bonus.WheelBonus[index - 1]
+    local investedPoints = WheelController.wheel.pointInvested[index] or 0
     if not ignoreMaxPoint then
-        if WheelController.wheel.pointInvested[index] >= bonus.maxPoints then
+        if investedPoints >= bonus.maxPoints then
             return false
         end
     end

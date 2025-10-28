@@ -334,30 +334,30 @@
                   >
                     <div>
                       <button
+                        id="wheel-add-max-button"
                         style="float: right"
-                        onclick="self.wheel:onAddAllPoints()"
                         *disabled="not self.wheel.selectionBonus.canAdd"
                       >
                         +Max
                       </button>
                       <button
+                        id="wheel-add-one-button"
                         *disabled="not self.wheel.selectionBonus.canAdd"
                         style="float: right"
-                        onclick="self.wheel:onAddOnePoint()"
                       >
                         +1
                       </button>
                     </div>
                     <div>
                       <button
+                        id="wheel-remove-max-button"
                         *disabled="not self.wheel.selectionBonus.canRemove"
-                        onclick="self.wheel:onRemoveAllPoints()"
                       >
                         -Max
                       </button>
                       <button
+                        id="wheel-remove-one-button"
                         *disabled="not self.wheel.selectionBonus.canRemove"
-                        onclick="self.wheel:onRemoveOnePoint()"
                       >
                         -1
                       </button>

@@ -46,7 +46,7 @@ public:
     void doMapScreenshot(std::string fileName) override;
 
     UIMapPtr getMapWidget() { return m_mapWidget; }
-    UIWidgetPtr getLockWidget() const { return m_lockWidget; }
+    UIWidgetPtr getLockWidget() { return m_lockWidget; }
 
     void setLockWidget(const UIWidgetPtr& widget);
 

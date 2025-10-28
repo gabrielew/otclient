@@ -444,6 +444,8 @@ function WheelController:show(skipRequest)
     self.ui:raise()
     self.ui:focus()
 
+    g_client.setLockWidget(self.ui)
+
     if WheelButton then
         WheelButton:setOn(true)
     end
@@ -469,6 +471,10 @@ function WheelController:hide()
     resetValues()
     if not self.ui then
         return
+    end
+
+    if g_client.getLockWidget() == self.ui then
+        g_client.setLockWidget(nil)
     end
 
     self.ui:hide()

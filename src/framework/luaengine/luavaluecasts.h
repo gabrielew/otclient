@@ -29,6 +29,7 @@
 #include <framework/platform/platform.h>
 
 #include <set>
+#include <string>
 #include <type_traits>
 
 template<typename T>
@@ -318,11 +319,27 @@ template<typename... Args>
 bool luavalue_cast(const int index, std::function<void(Args...)>& func)
 {
     if (g_lua.isFunction(index)) {
+        const std::string callbackDescription = [&]() {
+            std::string desc = g_lua.describeFunction(index);
+            if (!desc.empty())
+                return desc;
+
+            const std::string source = g_lua.getSource(1);
+            if (!source.empty() && source != ":0")
+                return source;
+
+            return std::string("unknown lua callback");
+        }();
+
         g_lua.pushValue(index);
         // weak references are used here, this means that the script must hold another reference
         // to this function, otherwise it will expire
         const int funcWeakRef = g_lua.weakRef();
-        func = [=](Args... args) {
+        const std::string callbackLabel = !callbackDescription.empty()
+            ? callbackDescription
+            : std::string("weakref#") + std::to_string(funcWeakRef);
+
+        func = [funcWeakRef, callbackLabel](Args... args) {
             // note that we must catch exceptions, because this lambda can be called from anywhere
             // and most of them won't catch exceptions (e.g. dispatcher)
             g_lua.getWeakRef(funcWeakRef);
@@ -332,11 +349,13 @@ bool luavalue_cast(const int index, std::function<void(Args...)>& func)
                     const int rets = g_lua.safeCall(numArgs);
                     g_lua.pop(rets);
                 } else {
-                    throw LuaException("attempt to call an expired lua function from C++,"
-                                       "did you forget to hold a reference for that function?", 0);
+                    std::string errorMessage = "attempt to call an expired lua function from C++";
+                    errorMessage += " (" + callbackLabel + ")";
+                    errorMessage += ", did you forget to hold a reference for that function?";
+                    throw LuaException(errorMessage, 0);
                 }
             } catch (const LuaException& e) {
-                g_logger.error("lua function callback failed: {}", e.what());
+                g_logger.error("lua function callback failed ({}): {}", callbackLabel, e.what());
             }
         };
         return true;
@@ -353,24 +372,46 @@ std::enable_if_t<!std::is_void_v<Ret>, bool>
 luavalue_cast(const int index, std::function<Ret(Args...)>& func)
 {
     if (g_lua.isFunction(index)) {
+        const std::string callbackDescription = [&]() {
+            std::string desc = g_lua.describeFunction(index);
+            if (!desc.empty())
+                return desc;
+
+            const std::string source = g_lua.getSource(1);
+            if (!source.empty() && source != ":0")
+                return source;
+
+            return std::string("unknown lua callback");
+        }();
+
         g_lua.pushValue(index);
         // weak references are used here, this means that the script must hold another reference
         // to this function, otherwise it will expire
         const int funcWeakRef = g_lua.weakRef();
-        func = [=](Args... args) -> Ret {
+        const std::string callbackLabel = !callbackDescription.empty()
+            ? callbackDescription
+            : std::string("weakref#") + std::to_string(funcWeakRef);
+
+        func = [funcWeakRef, callbackLabel](Args... args) -> Ret {
             // note that we must catch exceptions, because this lambda can be called from anywhere
             // and most of them won't catch exceptions (e.g. dispatcher)
             try {
                 g_lua.getWeakRef(funcWeakRef);
                 if (g_lua.isFunction()) {
-                    if (const int numArgs = g_lua.polymorphicPush(args...); g_lua.safeCall(numArgs) != 1)
-                        throw LuaException("a function from lua didn't retrieve the expected number of results", 0);
+                    const int numArgs = g_lua.polymorphicPush(args...);
+                    const int rets = g_lua.safeCall(numArgs);
+                    if (rets != 1) {
+                        std::string resultsMessage = "lua function (" + callbackLabel + ") didn't retrieve the expected number of results";
+                        throw LuaException(resultsMessage, 0);
+                    }
                     return g_lua.polymorphicPop<Ret>();
                 }
-                throw LuaException("attempt to call an expired lua function from C++,"
-                                   "did you forget to hold a reference for that function?", 0);
+                std::string errorMessage = "attempt to call an expired lua function from C++";
+                errorMessage += " (" + callbackLabel + ")";
+                errorMessage += ", did you forget to hold a reference for that function?";
+                throw LuaException(errorMessage, 0);
             } catch (const LuaException& e) {
-                g_logger.error("lua function callback failed: {}", e.what());
+                g_logger.error("lua function callback failed ({}): {}", callbackLabel, e.what());
             }
             return Ret();
         };
